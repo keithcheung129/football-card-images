@@ -133,16 +133,20 @@ function applyQS(){
 }
 
 async function callCollection(params){
-  const url = API_BASE;
-  const payload = { action: 'collection', secret: API_SECRET, ...params }; // << add secret in body
-  const res = await fetch(url, {
+  const payload = { action: 'collection', secret: API_SECRET, ...params };
+
+  // Simple request: no custom headers, and text/plain (NOT application/json)
+  const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },       // no custom secret header
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
   });
-  if (!res.ok) throw new Error('API ' + res.status);
-  return res.json();
+
+  const text = await res.text();
+  if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,500)}`);
+  return JSON.parse(text);
 }
+
 
 
 function render(items){
