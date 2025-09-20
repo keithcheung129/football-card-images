@@ -208,8 +208,7 @@ async function search() {
     render(items);
 
     // 5) Update balances and counts
-    document.getElementById('tickets').textContent = balances.tickets ?? 0;
-    document.getElementById('tokens').textContent  = balances.tokens  ?? 0;
+    updateBalances(balances);
     document.getElementById('pages').textContent   =
       Math.max(1, Math.ceil(total / Number(document.getElementById('pageSize').value || 48)));
     document.getElementById('countInfo').textContent =
