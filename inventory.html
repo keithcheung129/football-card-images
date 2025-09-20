@@ -158,7 +158,7 @@ function render(items){
     img.className='thumb';
     img.loading='lazy';
     img.src = it.image_url || it.image_ref || '';
-    img.alt = it.name || it.printcode || it.card_id '';
+    img.alt = it.name || it.printcode || it.card_id || '';
     div.appendChild(img);
     const meta = document.createElement('div');
     meta.className='meta';
