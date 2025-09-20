@@ -158,12 +158,12 @@ function render(items){
     img.className='thumb';
     img.loading='lazy';
     img.src = it.image_url || it.image_ref || '';
-    img.alt = it.name || it.printcode || '';
+    img.alt = it.name || it.printcode || it.card_id '';
     div.appendChild(img);
     const meta = document.createElement('div');
     meta.className='meta';
     const nm = document.createElement('div');
-    nm.className='name'; nm.textContent = it.name || it.player || it.printcode || '—';
+    nm.className='name'; nm.textContent = it.name || it.player || it.printcode || it.card_id'—';
     const sb = document.createElement('div');
     sb.className='sub';
     const bits = [it.rarity, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
@@ -188,20 +188,45 @@ function updateCounts(total, page, pageSize){
   $('#nextBtn').disabled = (page>=pages);
 }
 
-async function search(){
-  try{
+async function search() {
+  try {
+    // 1) Build query from inputs
     const q = buildQuery();
+
+    // 2) Call API
     const data = await callCollection(q);
-    // expected shape: { items:[{...}], total:123, balances:{tickets:0,tokens:0} }
-    render(data.items||[]);
-    updateBalances(data.balances||{});
-    updateCounts(data.total||0, q.page, q.page_size);
-    $('#subtitle').textContent = q.user_id ? `(user: ${q.user_id})` : '(enter a Discord ID and search)';
-  }catch(e){
-    console.error(e);
+
+    // 3) Normalize response
+    const items = (data.items || []).map(it => ({
+      ...it,
+      printcode: it.printcode ?? it.card_id // ensure renderer sees a printcode
+    }));
+    const total = Number(data.total ?? items.length);
+    const balances = data.balances || { tickets: 0, tokens: 0 };
+
+    // 4) Render cards
+    render(items);
+
+    // 5) Update balances and counts
+    document.getElementById('tickets').textContent = balances.tickets ?? 0;
+    document.getElementById('tokens').textContent  = balances.tokens  ?? 0;
+    document.getElementById('pages').textContent   =
+      Math.max(1, Math.ceil(total / Number(document.getElementById('pageSize').value || 48)));
+    document.getElementById('countInfo').textContent =
+      `${items.length} shown • ${total} total`;
+
+    // 6) Friendly empty state
+    if (!items.length) {
+      document.getElementById('dex').innerHTML =
+        '<div style="padding:12px;opacity:.7">No cards match your filters for this user.</div>';
+    }
+
+  } catch (err) {
+    console.error(err);
     alert('Failed to load collection. Check API base/secret in code.');
   }
 }
+
 
 // ---- Wire up safely after DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
