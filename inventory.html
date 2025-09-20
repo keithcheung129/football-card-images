@@ -163,7 +163,7 @@ function render(items){
     const meta = document.createElement('div');
     meta.className='meta';
     const nm = document.createElement('div');
-    nm.className='name'; nm.textContent = it.name || it.player || it.printcode || it.card_id'—';
+    nm.className='name'; nm.textContent = it.name || it.player || it.printcode || it.card_id || '—';
     const sb = document.createElement('div');
     sb.className='sub';
     const bits = [it.rarity, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
