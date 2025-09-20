@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TLK – Player Collection</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--line:#1f2937}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+    .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+    .hdr h1{font-size:18px;margin:0}
+    .muted{color:var(--muted);font-size:12px}
+    .row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:12px 16px}
+    .row .col-span-2{grid-column:span 2}
+    .input,select{width:100%;background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:10px;padding:10px;font-size:14px}
+    .btn{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn.alt{background:#334155}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
+    .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover}
+    .meta{padding:10px}
+    .meta .name{font-size:14px;font-weight:700}
+    .meta .sub{font-size:12px;color:var(--muted)}
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px}
+    .footer{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+    .page{display:flex;gap:8px;align-items:center}
+    .page input{width:72px;text-align:center}
+    .balances{display:flex;gap:8px}
+    .badge{background:#0b1220;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+    .hidden{display:none}
+    a{color:var(--accent2)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="hdr">
+        <h1>TLK Collection <span class="muted" id="subtitle">(enter a Discord ID and search)</span></h1>
+        <div class="balances">
+          <div class="badge">🎟 Tickets: <span id="tickets">–</span></div>
+          <div class="badge">🪙 Tokens: <span id="tokens">–</span></div>
+        </div>
+      </div>
+      <div class="row" id="filters">
+        <input id="userId" class="input col-span-2" placeholder="Discord ID (preferred) or @username" />
+        <select id="rarity" class="input">
+          <option value="ALL">Rarity: ALL</option>
+          <option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
+        </select>
+        <select id="position" class="input">
+          <option value="ALL">Position: ALL</option>
+          <option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
+        </select>
+        <select id="batch" class="input">
+          <option value="ALL">Batch: ALL</option>
+          <option value="Base">Base</option>
+          <option value="Base U">Base U</option>
+        </select>
+        <label class="pill"><input type="checkbox" id="uniqueOnly"/> Unique only</label>
+        <div class="toolbar">
+          <button class="btn" id="btnSearch">Search</button>
+          <button class="btn alt" id="btnReset">Reset</button>
+        </div>
+      </div>
+      <div id="dex" class="grid" aria-live="polite"></div>
+      <div class="footer">
+        <div class="muted" id="countInfo">0 cards</div>
+        <div class="page">
+          <button class="btn alt" id="prevBtn">Prev</button>
+          <input id="page" class="input" value="1" />
+          <span class="muted">/ <span id="pages">1</span></span>
+          <select id="pageSize" class="input">
+            <option>24</option><option selected>48</option><option>96</option>
+          </select>
+          <button class="btn alt" id="nextBtn">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted" style="margin:12px 4px">Tip: share a link like <code>?u=123456789012345678&r=SSR&p=ST</code> to pre-fill filters for a user.</p>
+  </div>
+
+<script>
+// ======= CONFIG =======
+// --- FORCE CONFIG: hardcoded (ignores localStorage) ---
+const API_BASE   = 'https://script.google.com/macros/s/AKfycbxo-PqbCMvHHXNryMkLmZJCzHHN3Ro_hEjrlMb_iunETBNXJOrhecXUhwg9pzVj-H6QMg/exec';  // <- paste your /exec here
+const API_SECRET = 'dudeisludwigandsicaischicken';
+
+// =======================
+
+const $ = (id)=>document.getElementById(id);
+const qs = new URLSearchParams(location.search);
+
+function saveConfig(base, secret){
+  if(base) localStorage.setItem('tlk_api_base', base);
+  if(secret) localStorage.setItem('tlk_api_secret', secret);
+}
+
+function buildQuery(){
+  return {
+    user_id: ($('#userId').value||'').trim(),
+    page: parseInt($('#page').value||'1')||1,
+    page_size: parseInt($('#pageSize').value||'48')||48,
+    unique_only: $('#uniqueOnly').checked,
+    rarity: $('#rarity').value||'ALL',
+    position: $('#position').value||'ALL',
+    batch: $('#batch').value||'ALL'
+  };
+}
+
+function applyQS(){
+  if(qs.get('u')) $('#userId').value = qs.get('u');
+  if(qs.get('r')) $('#rarity').value = qs.get('r');
+  if(qs.get('p')) $('#position').value = qs.get('p');
+  if(qs.get('b')) $('#batch').value = qs.get('b');
+  if(qs.get('page')) $('#page').value = qs.get('page');
+}
+
+async function callCollection(params){
+  const url = API_BASE;
+  const payload = { action: 'collection', secret: API_SECRET, ...params }; // << add secret in body
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },       // no custom secret header
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('API ' + res.status);
+  return res.json();
+}
+
+
+function render(items){
+  const root = $('#dex');
+  root.innerHTML = '';
+  for(const it of items){
+    const div = document.createElement('div');
+    div.className='card';
+    const img = document.createElement('img');
+    img.className='thumb';
+    img.loading='lazy';
+    img.src = it.image_url || it.image_ref || '';
+    img.alt = it.name || it.printcode || '';
+    div.appendChild(img);
+    const meta = document.createElement('div');
+    meta.className='meta';
+    const nm = document.createElement('div');
+    nm.className='name'; nm.textContent = it.name || it.player || it.printcode || '—';
+    const sb = document.createElement('div');
+    sb.className='sub';
+    const bits = [it.rarity, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
+    sb.textContent = bits.join(' • ');
+    meta.appendChild(nm); meta.appendChild(sb);
+    div.appendChild(meta);
+    root.appendChild(div);
+  }
+}
+
+function updateBalances(bal){
+  $('#tickets').textContent = bal?.tickets ?? '0';
+  $('#tokens').textContent = bal?.tokens ?? '0';
+}
+
+function updateCounts(total, page, pageSize){
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  $('#countInfo').textContent = `${total} card${total===1?'':'s'}`;
+  $('#pages').textContent = pages;
+  $('#page').value = Math.min(page, pages);
+  $('#prevBtn').disabled = (page<=1);
+  $('#nextBtn').disabled = (page>=pages);
+}
+
+async function search(){
+  try{
+    const q = buildQuery();
+    const data = await callCollection(q);
+    // expected shape: { items:[{...}], total:123, balances:{tickets:0,tokens:0} }
+    render(data.items||[]);
+    updateBalances(data.balances||{});
+    updateCounts(data.total||0, q.page, q.page_size);
+    $('#subtitle').textContent = q.user_id ? `(user: ${q.user_id})` : '(enter a Discord ID and search)';
+  }catch(e){
+    console.error(e);
+    alert('Failed to load collection. Check API base/secret in code.');
+  }
+}
+
+// ---- Wire up safely after DOM is ready ----
+document.addEventListener('DOMContentLoaded', () => {
+  applyQS();
+
+  const safeOn = (id, evt, fn) => {
+    const el = document.getElementById(id);
+    if (!el) { console.warn(`Missing element #${id}`); return; }
+    el.addEventListener(evt, fn);
+  };
+
+  safeOn('btnSearch', 'click', () => { document.getElementById('page').value = 1; search(); });
+  safeOn('btnReset',  'click', () => { location.href = location.pathname; });
+  safeOn('prevBtn',   'click', () => {
+    const cur = +(document.getElementById('page').value || 1);
+    document.getElementById('page').value = Math.max(1, cur - 1);
+    search();
+  });
+  safeOn('nextBtn',   'click', () => {
+    const cur = +(document.getElementById('page').value || 1);
+    document.getElementById('page').value = cur + 1;
+    search();
+  });
+  safeOn('pageSize',  'change', () => { document.getElementById('page').value = 1; search(); });
+
+  // Initial auto-search if URL has ?u=...
+  const u = new URLSearchParams(location.search).get('u');
+  if (u) search();
+});
+
+// Keep the config shortcut
+window.addEventListener('keydown', (ev) => {
+  if (ev.key === 'c' && (ev.ctrlKey || ev.metaKey)) {
+    const base = prompt('API base URL', API_BASE);
+    const secret = prompt('API secret', API_SECRET);
+    if (base) localStorage.setItem('tlk_api_base', base);
+    if (secret) localStorage.setItem('tlk_api_secret', secret);
+    location.reload();
+  }
+});
+</script>
+</body>
+</html>
