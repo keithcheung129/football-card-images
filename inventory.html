@@ -86,19 +86,17 @@
 
 <script>
 // ======= CONFIG =======
-// --- FORCE CONFIG: hardcoded (ignores localStorage) ---
-const API_BASE   = 'the-last-kick.keithcheung129.workers.dev';  // <- paste your /exec here
-const API_SECRET = 'dudeisludwigandsicaischicken';
+// Force config: no localStorage, no prompts
+const API_BASE   = 'https://the-last-kick.keithcheung129.workers.dev';
+const API_SECRET = ''; // not needed; Worker injects secret
+
 
 // =======================
 
 const $ = (id)=>document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 
-function saveConfig(base, secret){
-  if(base) localStorage.setItem('tlk_api_base', base);
-  if(secret) localStorage.setItem('tlk_api_secret', secret);
-}
+
 
 
 // helpers
@@ -138,9 +136,10 @@ async function callCollection(params){
   // Simple request: no custom headers, and text/plain (NOT application/json)
   const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
+    headers: { 'Content-Type': 'application/json' }, // JSON is fine; Worker handles CORS
+    body: JSON.stringify({ action: 'collection', ...params })
   });
+
 
   const text = await res.text();
   if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,500)}`);
@@ -234,8 +233,6 @@ window.addEventListener('keydown', (ev) => {
   if (ev.key === 'c' && (ev.ctrlKey || ev.metaKey)) {
     const base = prompt('API base URL', API_BASE);
     const secret = prompt('API secret', API_SECRET);
-    if (base) localStorage.setItem('tlk_api_base', base);
-    if (secret) localStorage.setItem('tlk_api_secret', secret);
     location.reload();
   }
 });
