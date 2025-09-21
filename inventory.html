@@ -63,13 +63,12 @@
         <label style="margin-left:8px">
           Sort:
           <select id="sortBy">
-            <option value="rarity_desc" selected>Rarity (high→low)</option>
-            <option value="rarity_asc">Rarity (low→high)</option>
+            <option value="rarity_club" selected>Rarity → Club → Position → Name</option>
+            <option value="club">Club</option>
             <option value="position">Position (GK→FW)</option>
+            <option value="name">Name (A→Z)</option>
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
-            <option value="name">Name (A→Z)</option>
-            <option value="batch">Batch</option>
           </select>
         </label>
         <label class="pill"><input type="checkbox" id="uniqueOnly"/> Unique only</label>
@@ -121,7 +120,7 @@ const val = (id, fallback = "") => (byId(id)?.value ?? fallback);
 const chk = (id) => !!byId(id)?.checked;
 
 // ---- sorting helpers ----
-const RARITY_ORDER   = ["SSR","SR","AR","R","N","U","ALL"];
+const RARITY_ORDER   = ["GOD","SSR","SR","AR","R","N","U","ALL"]; // put your exact tiers here
 const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE","ALL"];
 
 const U = (s) => String(s ?? "").toUpperCase();
@@ -129,30 +128,32 @@ const rank = (val, order) => {
   const i = order.indexOf(U(val));
   return i === -1 ? 999 : i;
 };
+const posRank = (p) => rank(p, POSITION_ORDER);
 
 function sortItems(items, mode) {
   items.sort((a, b) => {
-    const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
-    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
-    const ba = U(a.batch), bb = U(b.batch);
+    const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
+    const ca = (a.club || "").toString(),    cb = (b.club || "").toString();
+    const pa = posRank(a.position),           pb = posRank(b.position);
     const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
     const nb = (b.name || b.player || b.printcode || b.card_id || "").toString();
     const ta = Number(a.acquired_ts || a.acquiredAt || a.ts || 0);
     const tb = Number(b.acquired_ts || b.acquiredAt || b.ts || 0);
 
     switch (mode) {
-      case "rarity_asc":   return rb - ra || pa - pb || na.localeCompare(nb);
-      case "position":     return pa - pb || ra - rb || na.localeCompare(nb);
-      case "batch":        return ba.localeCompare(bb) || ra - rb || na.localeCompare(nb);
-      case "name":         return na.localeCompare(nb);
-      case "newest":       return tb - ta || ra - rb || na.localeCompare(nb);
-      case "oldest":       return ta - tb || ra - rb || na.localeCompare(nb);
-      case "rarity_desc":
-      default:             return ra - rb || pa - pb || na.localeCompare(nb);
+      case "club":        return ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case "position":    return pa - pb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "name":        return na.localeCompare(nb);
+      case "newest":      return tb - ta || ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case "oldest":      return ta - tb || ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case "rarity_club":
+      default:            // Rarity (high→low), then Club, then Position, then Name
+        return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
     }
   });
   return items;
 }
+
 
 
 
@@ -260,8 +261,9 @@ async function search() {
     }));
     const total = Number(data.total ?? items.length);
     const balances = data.balances || { tickets: 0, tokens: 0 };
-    const sortMode = $('#sortBy').value || 'rarity_desc';
+    const sortMode = $('#sortBy').value || 'rarity_club';
     sortItems(items, sortMode);
+
 
     // 4) Render cards
     render(items);
