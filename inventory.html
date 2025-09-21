@@ -131,8 +131,6 @@ function applyQS(){
 }
 
 async function callCollection(params){
-  const payload = { action: 'collection', secret: API_SECRET, ...params };
-
   // Simple request: no custom headers, and text/plain (NOT application/json)
   const res = await fetch(API_BASE, {
     method: 'POST',
@@ -143,7 +141,14 @@ async function callCollection(params){
 
   const text = await res.text();
   if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,500)}`);
-  return JSON.parse(text);
+  
+  let body;
+  try { body = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
+
+  // Worker returns { ok, data, status }. Fall back to raw for legacy.
+  return (body && typeof body === 'object' && 'ok' in body && 'data' in body) ? body.data : body;
+
+  
 }
 
 
@@ -256,8 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('keydown', (ev) => {
   if (ev.key === 'c' && (ev.ctrlKey || ev.metaKey)) {
     const base = prompt('API base URL', API_BASE);
-    const secret = prompt('API secret', API_SECRET);
+    if (base) localStorage.setItem('tlk_api_base', base);
     location.reload();
+
   }
 });
 </script>
