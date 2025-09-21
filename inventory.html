@@ -21,6 +21,12 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
     .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden}
     .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover}
+    /* make controls compact */
+    .toolbar .pill select,
+    .toolbar .pill input { width:auto; min-width:110px; }
+
+    #userId { max-width: 240px; }   /* shorter typing area for the ID */
+
     .meta{padding:10px}
     .meta .name{font-size:14px;font-weight:700}
     .meta .sub{font-size:12px;color:var(--muted)}
@@ -51,6 +57,12 @@
           <option value="ALL">Rarity: ALL</option>
           <option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
         </select>
+        <label class="pill">
+          Club
+          <select id="club">
+            <option value="ALL" selected>ALL</option>
+            </select>
+        </label>
         <select id="position" class="input">
           <option value="ALL">Position: ALL</option>
           <option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
@@ -128,27 +140,27 @@ const rank = (val, order) => {
   const i = order.indexOf(U(val));
   return i === -1 ? 999 : i;
 };
-const posRank = (p) => rank(p, POSITION_ORDER);
 
 function sortItems(items, mode) {
   items.sort((a, b) => {
-    const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
-    const ca = (a.club || "").toString(),    cb = (b.club || "").toString();
-    const pa = posRank(a.position),           pb = posRank(b.position);
+    const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
+    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
+    const ca = U(a.club), cb = U(b.club);                     // <-- add
+    const ba = U(a.batch), bb = U(b.batch);
     const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
     const nb = (b.name || b.player || b.printcode || b.card_id || "").toString();
     const ta = Number(a.acquired_ts || a.acquiredAt || a.ts || 0);
     const tb = Number(b.acquired_ts || b.acquiredAt || b.ts || 0);
 
     switch (mode) {
-      case "club":        return ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-      case "position":    return pa - pb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "name":        return na.localeCompare(nb);
-      case "newest":      return tb - ta || ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-      case "oldest":      return ta - tb || ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-      case "rarity_club":
-      default:            // Rarity (high→low), then Club, then Position, then Name
-        return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case "rarity_asc":   return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case "position":     return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "batch":        return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "name":         return na.localeCompare(nb);
+      case "newest":       return tb - ta || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "oldest":       return ta - tb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "rarity_desc":
+      default:             return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);  // <-- default
     }
   });
   return items;
@@ -166,6 +178,7 @@ function buildQuery() {
     rarity: val("rarity", "ALL") || "ALL",
     position: val("position", "ALL") || "ALL",
     batch: val("batch", "ALL") || "ALL",
+    club:     val("club", "ALL")     || "ALL",
   };
 }
 
@@ -177,6 +190,7 @@ function applyQS(){
   if(qs.get('p')) $('#position').value = qs.get('p');
   if(qs.get('b')) $('#batch').value = qs.get('b');
   if(qs.get('page')) $('#page').value = qs.get('page');
+  if(qs.get('c')) $('#club').value = qs.get('c');
 }
 
 
@@ -224,7 +238,7 @@ function render(items){
     nm.className='name'; nm.textContent = it.name || it.player || it.printcode || it.card_id || '—';
     const sb = document.createElement('div');
     sb.className='sub';
-    const bits = [it.rarity, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
+    const bits = [it.rarity, it.club, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
     sb.textContent = bits.join(' • ');
     meta.appendChild(nm); meta.appendChild(sb);
     div.appendChild(meta);
@@ -264,7 +278,24 @@ async function search() {
     const sortMode = $('#sortBy').value || 'rarity_club';
     sortItems(items, sortMode);
 
+    function populateClubs(items) {
+      const sel = byId('club');
+      if (!sel) return;
 
+      const cur = sel.value || 'ALL';
+      const clubs = Array.from(new Set(items.map(it => (it.club || '').trim()).filter(Boolean)))
+        .sort((a,b)=>a.localeCompare(b));
+
+      // rebuild options: ALL + unique clubs from results
+      sel.innerHTML = '<option value="ALL">ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
+
+      // keep prior selection if possible
+      if (Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
+    }
+
+    // in search(), after you compute `items` from the API response:
+    populateClubs(items);
+    
     // 4) Render cards
     render(items);
 
@@ -301,7 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
   safeOn('prevBtn',   'click', () => {
     const cur = +(val('page','1')); byId('page').value = Math.max(1, cur - 1); search();
   });
-    safeOn('sortBy', 'change', () => {
+  safeOn('club', 'change', () => { byId('page').value = 1; search(); });
+  safeOn('sortBy', 'change', () => {
     // Re-run search so the current page is re-fetched & re-sorted
     search();
   });
