@@ -93,7 +93,7 @@ const API_BASE   = 'https://the-last-kick.keithcheung129.workers.dev/api';
 
 // =======================
 
-const $ = (id)=>document.getElementById(id);
+const $ = (id) => document.getElementById(String(id).replace(/^#/, ''));
 const qs = new URLSearchParams(location.search);
 
 
