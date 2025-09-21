@@ -60,6 +60,18 @@
           <option value="Base">Base</option>
           <option value="Base U">Base U</option>
         </select>
+        <label style="margin-left:8px">
+          Sort:
+          <select id="sortBy">
+            <option value="rarity_desc" selected>Rarity (high→low)</option>
+            <option value="rarity_asc">Rarity (low→high)</option>
+            <option value="position">Position (GK→FW)</option>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name">Name (A→Z)</option>
+            <option value="batch">Batch</option>
+          </select>
+        </label>
         <label class="pill"><input type="checkbox" id="uniqueOnly"/> Unique only</label>
         <div class="toolbar">
           <button class="btn" id="btnSearch">Search</button>
@@ -108,6 +120,42 @@ const byId = (id) => {
 const val = (id, fallback = "") => (byId(id)?.value ?? fallback);
 const chk = (id) => !!byId(id)?.checked;
 
+// ---- sorting helpers ----
+const RARITY_ORDER   = ["SSR","SR","AR","R","N","U","ALL"];
+const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE","ALL"];
+
+const U = (s) => String(s ?? "").toUpperCase();
+const rank = (val, order) => {
+  const i = order.indexOf(U(val));
+  return i === -1 ? 999 : i;
+};
+
+function sortItems(items, mode) {
+  items.sort((a, b) => {
+    const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
+    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
+    const ba = U(a.batch), bb = U(b.batch);
+    const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
+    const nb = (b.name || b.player || b.printcode || b.card_id || "").toString();
+    const ta = Number(a.acquired_ts || a.acquiredAt || a.ts || 0);
+    const tb = Number(b.acquired_ts || b.acquiredAt || b.ts || 0);
+
+    switch (mode) {
+      case "rarity_asc":   return rb - ra || pa - pb || na.localeCompare(nb);
+      case "position":     return pa - pb || ra - rb || na.localeCompare(nb);
+      case "batch":        return ba.localeCompare(bb) || ra - rb || na.localeCompare(nb);
+      case "name":         return na.localeCompare(nb);
+      case "newest":       return tb - ta || ra - rb || na.localeCompare(nb);
+      case "oldest":       return ta - tb || ra - rb || na.localeCompare(nb);
+      case "rarity_desc":
+      default:             return ra - rb || pa - pb || na.localeCompare(nb);
+    }
+  });
+  return items;
+}
+
+
+
 function buildQuery() {
   return {
     user_id: val("userId").trim(),
@@ -129,6 +177,10 @@ function applyQS(){
   if(qs.get('b')) $('#batch').value = qs.get('b');
   if(qs.get('page')) $('#page').value = qs.get('page');
 }
+
+
+
+
 
 async function callCollection(params){
   // Simple request: no custom headers, and text/plain (NOT application/json)
@@ -208,6 +260,8 @@ async function search() {
     }));
     const total = Number(data.total ?? items.length);
     const balances = data.balances || { tickets: 0, tokens: 0 };
+    const sortMode = $('#sortBy').value || 'rarity_desc';
+    sortItems(items, sortMode);
 
     // 4) Render cards
     render(items);
@@ -244,6 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
   safeOn('btnReset',  'click', () => { location.href = location.pathname; });
   safeOn('prevBtn',   'click', () => {
     const cur = +(val('page','1')); byId('page').value = Math.max(1, cur - 1); search();
+  });
+    safeOn('sortBy', 'change', () => {
+    // Re-run search so the current page is re-fetched & re-sorted
+    search();
   });
   safeOn('nextBtn',   'click', () => {
     const cur = +(val('page','1')); byId('page').value = cur + 1; search();
