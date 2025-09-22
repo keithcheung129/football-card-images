@@ -205,15 +205,27 @@ async function loadCatalogue(){
   });
 
   ALL_CARDS = data.items || [];
-  console.log("Loaded cards:", ALL_CARDS.length);  // <--- helpful
-  // populate club dropdown from current results
-  const sel = $("#club");
-  const cur = sel.value || "ALL";
-  const clubs = Array.from(new Set(ALL_CARDS.map(c => (c.club||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  sel.innerHTML = '<option>ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
-  if (Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
-  $("#countInfo").textContent = `${ALL_CARDS.length} item${ALL_CARDS.length===1?'':'s'}`;
+  console.log("Loaded cards:", ALL_CARDS.length);
+
+  // Rebuild the Club dropdown only if it exists
+  const sel = document.getElementById("club");
+  if (sel) {
+    const cur = sel.value || "ALL";
+    const clubs = Array.from(new Set(
+      ALL_CARDS.map(x => (x.club || "").trim()).filter(Boolean)
+    )).sort((a,b)=>a.localeCompare(b));
+
+    sel.innerHTML = '<option>ALL</option>' + clubs.map(c => `<option>${c}</option>`).join('');
+
+    if (Array.from(sel.options).some(o => o.value === cur)) {
+      sel.value = cur;
+    }
+  }
+
+  const countEl = document.getElementById("countInfo");
+  if (countEl) countEl.textContent = `${ALL_CARDS.length} item${ALL_CARDS.length===1?'':'s'}`;
 }
+
 
 async function loadOwned(){
   const uid = getVal("userId", "").trim();
@@ -407,6 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
