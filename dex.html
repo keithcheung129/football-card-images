@@ -127,7 +127,29 @@ let BAL = { tickets:'–', tokens:'–' };
 /* ===== Popup ===== */
 const popup = $("#imgPopup");
 const popupImg = popup.querySelector("img");
-function openImg(src){ popupImg.src = src; popup.style.display = "flex"; popup.setAttribute("aria-hidden","false"); }
+// --- Image popup (null-safe) ---
+function openImg(src){
+  const el  = document.getElementById("imgPopup");
+  const img = el ? el.querySelector("img") : null;
+  if (!el || !img) return;
+  img.src = src;
+  el.style.display = "flex";
+  el.setAttribute("aria-hidden", "false");
+}
+function closeImg(){
+  const el  = document.getElementById("imgPopup");
+  const img = el ? el.querySelector("img") : null;
+  if (!el || !img) return;
+  el.style.display = "none";
+  img.src = "";
+  el.setAttribute("aria-hidden", "true");
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("imgPopup");
+  if (el) el.addEventListener("click", closeImg);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeImg(); });
+});
+
 function closeImg(){ popup.style.display = "none"; popupImg.src = ""; popup.setAttribute("aria-hidden","true"); }
 popup.addEventListener("click", closeImg);
 window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeImg(); });
@@ -166,16 +188,37 @@ async function loadCatalogue(){
 }
 
 async function loadOwned(){
-  const uid = $("#userId").value.trim();
+  const uid = document.getElementById("userId").value.trim();
   OWN_COUNTS = {};
-  BAL = { tickets:'–', tokens:'–' };
-  if (!uid) return;
+  // Don't fetch owned info unless a user ID is present
+  if (!uid) { 
+    // also clear balances display when no user
+    document.getElementById("tickets").textContent = "–";
+    document.getElementById("tokens").textContent  = "–";
+    return;
+  }
   const data = await api("collection", { user_id: uid, aggregate_only: true });
   OWN_COUNTS = data.counts_by_card || {};
-  BAL = data.balances || BAL;
-  $("#tickets").textContent = BAL.tickets ?? '–';
-  $("#tokens").textContent  = BAL.tokens ?? '–';
+  const bal = data.balances || {};
+  document.getElementById("tickets").textContent = bal.tickets ?? "–";
+  document.getElementById("tokens").textContent  = bal.tokens ?? "–";
 }
+
+// Debounced overlay update when typing Discord ID
+let ownedTimer;
+document.addEventListener("DOMContentLoaded", ()=>{
+  const uid = document.getElementById("userId");
+  if (uid){
+    uid.addEventListener("input", ()=>{
+      clearTimeout(ownedTimer);
+      ownedTimer = setTimeout(async ()=>{
+        await loadOwned();   // only fetches if ID present
+        render();            // re-render to apply dim/highlight/counts
+      }, 350);
+    });
+  }
+});
+
 
 /* ===== Sort & Render ===== */
 const RARITY_ORDER = ["SSR","SR","AR","R","N","U","ALL"];
@@ -205,21 +248,21 @@ function sortCards(arr){
 }
 
 function render(){
-  const root = $("#dex");
+  const root = document.getElementById("dex");
   root.innerHTML = "";
 
-  // optional: hide owned if "Missing only" toggled
-  const missingOnly = $("#missingOnly").checked;
+  const hasUser = (document.getElementById("userId").value.trim().length > 0);
+  const missingOnly = document.getElementById("missingOnly").checked && hasUser;
 
   const cards = sortCards(ALL_CARDS.slice())
-    .filter(c => !missingOnly || !OWN_COUNTS[c.card_id]);
+    .filter(c => !(missingOnly && (OWN_COUNTS[c.card_id] || 0) > 0)); // only hide owned if user entered
 
   for (const c of cards){
-    const ownedCount = OWN_COUNTS[c.card_id] || 0;
-    const owned = ownedCount > 0;
+    const ownedCount = hasUser ? (OWN_COUNTS[c.card_id] || 0) : 0;
+    const owned = hasUser && ownedCount > 0;
 
     const card = document.createElement("div");
-    card.className = "card" + (owned ? "" : " unowned");
+    card.className = "card" + (owned ? "" : " unowned");  // dims everything unless owned
 
     const img = document.createElement("img");
     img.className = "thumb";
@@ -229,7 +272,8 @@ function render(){
     img.addEventListener("click", ()=>openImg(img.src));
     card.appendChild(img);
 
-    if (owned){
+    // Show count badge only if user entered an ID AND owns it
+    if (hasUser && owned){
       const badge = document.createElement("div");
       badge.className = "badge";
       badge.textContent = `×${ownedCount}`;
@@ -270,11 +314,11 @@ function render(){
     root.appendChild(card);
   }
 
-  // empty state
   if (!root.children.length){
     root.innerHTML = '<div style="padding:12px;opacity:.7">No cards match your filters.</div>';
   }
 }
+
 
 /* ===== Orchestration ===== */
 async function run(){
@@ -293,9 +337,10 @@ async function run(){
 })();
 
 /* ===== Wire up ===== */
-document.addEventListener("DOMContentLoaded", ()=>{
-  $("#btnApply").addEventListener("click", run);
-  $("#btnClear").addEventListener("click", ()=>{
+document.addEventListener("DOMContentLoaded", () => {
+  $("#btnApply")?.addEventListener("click", run);
+
+  $("#btnClear")?.addEventListener("click", () => {
     $("#userId").value = "";
     $("#search").value = "";
     $("#club").value = "ALL";
@@ -307,6 +352,20 @@ document.addEventListener("DOMContentLoaded", ()=>{
     $("#sortBy").value = "rarity";
     run();
   });
+
+  // Live “owned overlay” update when typing Discord ID
+  let ownedTimer;
+  $("#userId")?.addEventListener("input", () => {
+    clearTimeout(ownedTimer);
+    ownedTimer = setTimeout(async () => {
+      await loadOwned();   // no-op if empty; fetch counts if provided
+      render();            // stays dimmed by default; lights owned when ID present
+    }, 300);
+  });
+
+  run(); // initial load: shows all cards dimmed
+});
+
 
   // auto-run on load
   run();
