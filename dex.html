@@ -98,6 +98,7 @@
         <button class="btn" id="btnApply">Apply</button>
         <button class="btn alt" id="btnClear">Clear</button>
       </div>
+      <div id="status" class="muted" style="padding:8px 16px;display:none"></div>
 
       <div id="dex" class="grid" aria-live="polite"></div>
 
@@ -162,10 +163,36 @@ async function api(action, payload){
     body: JSON.stringify({ action, ...payload })
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
-  let json; try { json = JSON.parse(text); } catch { throw new Error("Bad JSON"); }
-  return ("ok" in json && "data" in json) ? json.data : json;
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0,200)}`);
+
+  let json; try { json = JSON.parse(text); } catch { throw new Error("Bad JSON from API"); }
+
+  // Worker envelope: { ok, data, status }
+  if ("ok" in json && json.ok === false) {
+    const err = (json.data && json.data.error) || json.error || "Request failed";
+    throw new Error(err);
+  }
+  const payloadOut = ("data" in json) ? json.data : json;
+
+  // Script-level error (e.g., unknown_action) bubbles up
+  if (payloadOut && payloadOut.error) throw new Error(payloadOut.error);
+
+  return payloadOut;
 }
+
+function setStatus(msg) {
+  const el = document.getElementById("status");
+  if (!el) return;
+  if (!msg) { el.style.display = "none"; el.textContent = ""; return; }
+  el.style.display = "block";
+  el.textContent = msg;
+}
+function fail(msg) {
+  console.error(msg);
+  setStatus("⚠️ " + String(msg));
+}
+
+
 
 /* ===== Loaders ===== */
 async function loadCatalogue(){
@@ -178,6 +205,7 @@ async function loadCatalogue(){
     search: $("#search").value.trim()
   });
   ALL_CARDS = data.items || [];
+  console.log("Loaded cards:", ALL_CARDS.length);  // <--- helpful
   // populate club dropdown from current results
   const sel = $("#club");
   const cur = sel.value || "ALL";
@@ -322,10 +350,18 @@ function render(){
 
 /* ===== Orchestration ===== */
 async function run(){
-  await loadCatalogue();
-  await loadOwned();
-  render();
+  try {
+    setStatus("Loading cards…");
+    await loadCatalogue();      // fetches full catalogue
+    setStatus("");              // clear status after catalogue ok
+
+    await loadOwned();          // no-op if no ID typed
+    render();                   // renders (dimmed by default)
+  } catch (e) {
+    fail(e?.message || e);
+  }
 }
+
 
 /* ===== QS support (shareable links e.g. ?u=123&r=SR&club=Arsenal) ===== */
 (function applyQS(){
@@ -367,9 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-  // auto-run on load
-  run();
-});
 </script>
 </body>
 </html>
+
