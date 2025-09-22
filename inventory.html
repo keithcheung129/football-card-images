@@ -34,19 +34,28 @@
     .pill {
       display:flex; align-items:center; gap:8px;
       padding:6px 10px;
-      border:1px solid var(--border, #2a2f3a);
+      border:1px solid rgba(255,255,255,0.12);
       border-radius:9999px;
-      background: var(--bg-2, #111827);
-      color:inherit; white-space:nowrap;
+      background:#0b1220;
+      white-space:nowrap;
     }
     /* inputs/selects inside pills */
     .pill select,
     .pill input[type="text"] {
-      background:transparent; color:inherit;
+      appearance:none;
+      background:rgba(255,255,255,0.06);       /* lighter inner field for contrast */
+      color:#e5e7eb;                           /* light text */
       border:0; outline:0;
       height:32px; line-height:32px;
-      padding:0 6px;
-      min-width:120px;          /* compact */
+      padding:0 10px;
+      min-width:120px;
+      border-radius:8px;                       /* inner radius so it doesn’t look flat */
+    }
+    /* focus state for accessibility */
+    .pill select:focus,
+    .pill input[type="text"]:focus {
+      outline:2px solid #3b82f6;
+      outline-offset:2px;
     }
     /* checkbox pill */
     .pill-checkbox { padding-right:12px; }
@@ -79,19 +88,25 @@
       </div>
       <div class="row" id="filters">
         <input id="userId" class="input col-span-2" placeholder="Discord ID (preferred) or @username" />
-        <select id="rarity" class="input">
-          <option value="ALL">Rarity: ALL</option>
-          <option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
-        </select>
-        <select id="position" class="input">
-          <option value="ALL">Position: ALL</option>
-          <option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
-        </select>
-        <select id="batch" class="input">
-          <option value="ALL">Batch: ALL</option>
-          <option value="Base">Base</option>
-          <option value="Base U">Base U</option>
-        </select>
+        <label class="pill">Rarity:
+          <select id="rarity">
+            <option value="ALL">Rarity: ALL</option>
+            <option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
+          </select>
+        </label>
+        <label class="pill">position:
+          <select id="position">
+            <option value="ALL">Position: ALL</option>
+            <option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
+          </select>
+        </label>
+        <label class="pill">batch:
+          <select id="batch">
+            <option value="ALL">Batch: ALL</option>
+            <option value="Base">Base</option>
+            <option value="Base U">Base U</option>
+          </select>
+        </label>
         <label class="pill">Club:
           <select id="club">
             <option value="ALL" selected>ALL</option>
@@ -99,9 +114,9 @@
         </label>
         <label class="pill">Sort:
           <select id="sortBy">
-            <option value="rarity_club" selected>Rarity → Club → Pos → Name</option>
+            <option value="rarity_club" selected>Rarity</option>
             <option value="club">Club</option>
-            <option value="position">Position (GK→FW)</option>
+            <option value="position">Position (GK→ST)</option>
             <option value="name">Name (A→Z)</option>
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -180,6 +195,7 @@ function sortItems(items, mode) {
 
     switch (mode) {
       case "rarity_asc":   return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case "club":         return collator.compare(ca, cb) || collator.compare(na, nb) || (pa - pb);
       case "position":     return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "batch":        return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "name":         return na.localeCompare(nb);
