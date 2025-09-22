@@ -125,9 +125,6 @@ let ALL_CARDS = [];           // full catalogue from /cards
 let OWN_COUNTS = {};          // { card_id: copies }
 let BAL = { tickets:'–', tokens:'–' };
 
-/* ===== Popup ===== */
-const popup = $("#imgPopup");
-const popupImg = popup.querySelector("img");
 // --- Image popup (null-safe) ---
 function openImg(src){
   const el  = document.getElementById("imgPopup");
@@ -406,4 +403,5 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
