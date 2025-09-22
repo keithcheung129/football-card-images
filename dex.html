@@ -149,7 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function closeImg(){ popup.style.display = "none"; popupImg.src = ""; popup.setAttribute("aria-hidden","true"); }
-popup.addEventListener("click", closeImg);
 window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeImg(); });
 
 /* ===== API helper (unwrap Worker envelope) ===== */
@@ -403,5 +402,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
