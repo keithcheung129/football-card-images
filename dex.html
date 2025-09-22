@@ -279,7 +279,7 @@ function render(){
   const root = document.getElementById("dex");
   root.innerHTML = "";
 
-  const hasUser = getVal("userId", "").trim().length > 0);
+  const hasUser = getVal("userId", "").trim().length > 0;
   const missingOnly = getChecked("missingOnly") && hasUser;
 
   const cards = sortCards(ALL_CARDS.slice())
@@ -407,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
