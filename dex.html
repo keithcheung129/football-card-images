@@ -115,9 +115,12 @@
 <script>
 /* ===== Config ===== */
 const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
-
-/* ===== Dom helpers ===== */
-const $ = (id)=>document.getElementById(id);
+// Safe DOM helpers
+const $ = (id) => document.getElementById(id);
+const getVal = (id, def = "") => ($(`${id}`)?.value ?? def);
+const setVal = (id, v) => { const el = $(`${id}`); if (el) el.value = v; };
+const getChecked = (id) => !!$(`${id}`)?.checked;
+const setChecked = (id, v) => { const el = $(`${id}`); if (el && "checked" in el) el.checked = !!v; };
 const U = (s)=>String(s??'').toUpperCase();
 
 /* ===== State ===== */
@@ -193,13 +196,14 @@ function fail(msg) {
 /* ===== Loaders ===== */
 async function loadCatalogue(){
   const data = await api("cards", {
-    type: $("#type").value,
-    batch: $("#batch").value,
-    rarity: $("#rarity").value,
-    position: $("#position").value,
-    club: $("#club").value,
-    search: $("#search").value.trim()
+    type:     getVal("type", "player"),
+    batch:    getVal("batch", "ALL"),
+    rarity:   getVal("rarity", "ALL"),
+    position: getVal("position", "ALL"),
+    club:     getVal("club", "ALL"),
+    search:   getVal("search", "").trim()
   });
+
   ALL_CARDS = data.items || [];
   console.log("Loaded cards:", ALL_CARDS.length);  // <--- helpful
   // populate club dropdown from current results
@@ -212,7 +216,7 @@ async function loadCatalogue(){
 }
 
 async function loadOwned(){
-  const uid = document.getElementById("userId").value.trim();
+  const uid = getVal("userId", "").trim();
   OWN_COUNTS = {};
   // Don't fetch owned info unless a user ID is present
   if (!uid) { 
@@ -275,8 +279,8 @@ function render(){
   const root = document.getElementById("dex");
   root.innerHTML = "";
 
-  const hasUser = (document.getElementById("userId").value.trim().length > 0);
-  const missingOnly = document.getElementById("missingOnly").checked && hasUser;
+  const hasUser = getVal("userId", "").trim().length > 0);
+  const missingOnly = getChecked("missingOnly") && hasUser;
 
   const cards = sortCards(ALL_CARDS.slice())
     .filter(c => !(missingOnly && (OWN_COUNTS[c.card_id] || 0) > 0)); // only hide owned if user entered
@@ -373,15 +377,16 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btnApply")?.addEventListener("click", run);
 
   $("#btnClear")?.addEventListener("click", () => {
-    $("#userId").value = "";
-    $("#search").value = "";
-    $("#club").value = "ALL";
-    $("#rarity").value = "ALL";
-    $("#position").value = "ALL";
-    $("#batch").value = "ALL";
-    $("#type").value = "player";
-    $("#missingOnly").checked = false;
-    $("#sortBy").value = "rarity";
+    setVal("userId", "");
+    setVal("search", "");
+    setVal("club", "ALL");
+    setVal("rarity", "ALL");
+    setVal("position", "ALL");
+    setVal("batch", "ALL");
+    setVal("type", "player");
+    setChecked("missingOnly", false);
+    setVal("sortBy", "rarity");
+
     run();
   });
 
@@ -402,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
