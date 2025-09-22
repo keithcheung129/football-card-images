@@ -18,6 +18,7 @@
     .input,select{width:100%;background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:10px;padding:10px;font-size:14px}
     .btn{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
     .btn.alt{background:#334155}
+    .btn, .btn-ghost { height:34px; line-height:34px; padding:0 12px; border-radius:10px; }
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
     .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden}
     .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover}
@@ -25,13 +26,37 @@
     .toolbar .pill select,
     .toolbar .pill input { width:auto; min-width:110px; }
 
-    #userId { max-width: 240px; }   /* shorter typing area for the ID */
+    #userId { min-width: 220px; max-width: 260px; }
 
     .meta{padding:10px}
     .meta .name{font-size:14px;font-weight:700}
     .meta .sub{font-size:12px;color:var(--muted)}
-    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px}
+    .toolbar { display:flex; flex-wrap:wrap; align-items:center; gap: 10px 12px; }
+    .pill {
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--border, #2a2f3a);
+      border-radius:9999px;
+      background: var(--bg-2, #111827);
+      color:inherit; white-space:nowrap;
+    }
+    /* inputs/selects inside pills */
+    .pill select,
+    .pill input[type="text"] {
+      background:transparent; color:inherit;
+      border:0; outline:0;
+      height:32px; line-height:32px;
+      padding:0 6px;
+      min-width:120px;          /* compact */
+    }
+    /* checkbox pill */
+    .pill-checkbox { padding-right:12px; }
+    .pill-checkbox input[type="checkbox"] { width:16px; height:16px; }
+    /* small screens: allow nice wrapping */
+    @media (max-width: 820px) {
+      .pill select, .pill input[type="text"] { min-width: 140px; }
+      #userId { min-width: 200px; }
+    }
     .footer{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
     .page{display:flex;gap:8px;align-items:center}
     .page input{width:72px;text-align:center}
@@ -51,44 +76,55 @@
           <div class="badge">🪙 Tokens: <span id="tokens">–</span></div>
         </div>
       </div>
-      <div class="row" id="filters">
-        <input id="userId" class="input col-span-2" placeholder="Discord ID (preferred) or @username" />
-        <select id="rarity" class="input">
-          <option value="ALL">Rarity: ALL</option>
-          <option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
-        </select>
-        <label class="pill">
-          Club
-          <select id="club">
-            <option value="ALL" selected>ALL</option>
-            </select>
-        </label>
-        <select id="position" class="input">
-          <option value="ALL">Position: ALL</option>
-          <option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
-        </select>
-        <select id="batch" class="input">
-          <option value="ALL">Batch: ALL</option>
-          <option value="Base">Base</option>
-          <option value="Base U">Base U</option>
-        </select>
-        <label style="margin-left:8px">
-          Sort:
-          <select id="sortBy">
-            <option value="rarity_club" selected>Rarity → Club → Position → Name</option>
-            <option value="club">Club</option>
-            <option value="position">Position (GK→FW)</option>
-            <option value="name">Name (A→Z)</option>
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-        </label>
-        <label class="pill"><input type="checkbox" id="uniqueOnly"/> Unique only</label>
         <div class="toolbar">
-          <button class="btn" id="btnSearch">Search</button>
-          <button class="btn alt" id="btnReset">Reset</button>
+          <label class="pill">
+            <input id="userId" type="text" placeholder="Discord ID (preferred) or @username" />
+          </label>
+
+          <label class="pill">
+            Rarity:
+            <select id="rarity"></select>
+          </label>
+
+          <label class="pill">
+            Club:
+            <select id="club">
+              <option value="ALL" selected>ALL</option>
+            </select>
+          </label>
+
+          <label class="pill">
+            Position:
+             <select id="position"></select>
+          </label>
+
+          <label class="pill">
+            Batch:
+            <select id="batch"></select>
+          </label>
+
+  <!-- NEW: make Sort a pill and keep it on the same row -->
+          <label class="pill">
+            Sort:
+            <select id="sortBy">
+              <option value="rarity_club" selected>Rarity → Club → Pos → Name</option>
+              <option value="club">Club</option>
+              <option value="position">Position (GK→ST)</option>
+              <option value="name">Name (A→Z)</option>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </label>
+
+          <label class="pill pill-checkbox">
+            <input id="uniqueOnly" type="checkbox" />
+            Unique only
+          </label>
+
+          <button id="searchBtn" class="btn">Search</button>
+          <button id="resetBtn" class="btn btn-ghost">Reset</button>
         </div>
-      </div>
+
       <div id="dex" class="grid" aria-live="polite"></div>
       <div class="footer">
         <div class="muted" id="countInfo">0 cards</div>
