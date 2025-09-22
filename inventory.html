@@ -86,6 +86,24 @@
     .badge{background:#0b1220;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
     .hidden{display:none}
     a{color:var(--accent2)}
+    /* Image popup (lightbox) */
+    #imgPopup {
+      position: fixed;
+      display: none;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    #imgPopup img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+    #imgPopup.closeable { cursor: pointer; }
+
   </style>
 </head>
 <body>
@@ -159,7 +177,9 @@
 
     <p class="muted" style="margin:12px 4px">Tip: share a link like <code>?u=123456789012345678&r=SSR&p=ST</code> to pre-fill filters for a user.</p>
   </div>
-
+  <div id="imgPopup" class="closeable">
+    <img src="" alt="preview">
+  </div> 
 <script>
 // ======= CONFIG =======
 // Force config: no localStorage, no prompts
@@ -295,11 +315,32 @@ function render(items){
     const bits = [it.rarity, it.club, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
     sb.textContent = bits.join(' • ');
     meta.appendChild(nm); meta.appendChild(sb);
+    enableImagePopup(img);
     div.appendChild(meta);
     root.appendChild(div);
   }
 }
 
+// --- Image popup ---
+const popup = document.getElementById("imgPopup");
+const popupImg = popup.querySelector("img");
+
+// open when any thumbnail is clicked
+function enableImagePopup(img) {
+  img.addEventListener("click", () => {
+    popupImg.src = img.src;
+    popup.style.display = "flex";
+  });
+}
+
+// close popup on click
+popup.addEventListener("click", () => {
+  popup.style.display = "none";
+  popupImg.src = "";
+});
+
+
+  
 function updateBalances(bal){
   $('#tickets').textContent = bal?.tickets ?? '0';
   $('#tokens').textContent = bal?.tokens ?? '0';
@@ -413,5 +454,6 @@ window.addEventListener('keydown', (ev) => {
   }
 });
 </script>
+
 </body>
 </html>
