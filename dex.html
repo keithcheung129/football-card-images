@@ -155,8 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeImg(); });
 });
 
-function closeImg(){ popup.style.display = "none"; popupImg.src = ""; popup.setAttribute("aria-hidden","true"); }
-window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeImg(); });
 
 /* ===== API helper (unwrap Worker envelope) ===== */
 async function api(action, payload){
@@ -259,11 +257,12 @@ document.addEventListener("DOMContentLoaded", ()=>{
       clearTimeout(ownedTimer);
       ownedTimer = setTimeout(async ()=>{
         await loadOwned();   // only fetches if ID present
-        );            // re-render to apply dim/highlight/counts
+        render();            // apply dim/highlight/counts
       }, 350);
     });
   }
 });
+
 
 
 /* ===== Sort & Render ===== */
@@ -272,7 +271,7 @@ const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR",
 const rank = (v, arr)=>{ const i = arr.indexOf(U(v)); return i<0 ? 999 : i; };
 
 function sortCards(arr){
-  const mode = $("#sortBy").value;
+  const mode = getVal("sortBy", "rarity");
   arr.sort((a,b)=>{
     const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
     const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
@@ -425,6 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
