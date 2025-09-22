@@ -195,7 +195,7 @@ function sortItems(items, mode) {
 
     switch (mode) {
       case "rarity_asc":   return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-      case "club":         return collator.compare(ca, cb) || collator.compare(na, nb) || (pa - pb);
+      case "club":         return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
       case "position":     return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "batch":        return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "name":         return na.localeCompare(nb);
