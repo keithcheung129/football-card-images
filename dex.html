@@ -122,7 +122,11 @@ const setVal = (id, v) => { const el = $(`${id}`); if (el) el.value = v; };
 const getChecked = (id) => !!$(`${id}`)?.checked;
 const setChecked = (id, v) => { const el = $(`${id}`); if (el && "checked" in el) el.checked = !!v; };
 const U = (s)=>String(s??'').toUpperCase();
+// Return the first non-empty image field for a card
+const pickImg = (c) => c.image_url || c.image_ref || c.image || c.img || "";
 
+
+  
 /* ===== State ===== */
 let ALL_CARDS = [];           // full catalogue from /cards
 let OWN_COUNTS = {};          // { card_id: copies }
@@ -206,6 +210,8 @@ async function loadCatalogue(){
 
   ALL_CARDS = data.items || [];
   console.log("Loaded cards:", ALL_CARDS.length);
+  console.log("Sample card:", ALL_CARDS[0]);
+
 
   // Rebuild the Club dropdown only if it exists
   const sel = document.getElementById("club");
@@ -253,7 +259,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       clearTimeout(ownedTimer);
       ownedTimer = setTimeout(async ()=>{
         await loadOwned();   // only fetches if ID present
-        render();            // re-render to apply dim/highlight/counts
+        );            // re-render to apply dim/highlight/counts
       }, 350);
     });
   }
@@ -307,7 +313,7 @@ function render(){
     const img = document.createElement("img");
     img.className = "thumb";
     img.loading = "lazy";
-    img.src = c.image_url || "";
+    img.src = pickImg(c);
     img.alt = c.name || c.card_id || "";
     img.addEventListener("click", ()=>openImg(img.src));
     card.appendChild(img);
@@ -419,6 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
