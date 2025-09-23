@@ -492,6 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       if (btn) btn.disabled = false;
     }
+  run();
   });
 
 
@@ -506,7 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setChecked("missingOnly", false);
     setVal("sortBy", "rarity");
 
-    run();
+  run();
   });
 
   // Debounced overlay update when typing Discord ID
@@ -532,4 +533,5 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
