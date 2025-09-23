@@ -22,6 +22,22 @@
   .btn{height:34px;line-height:34px;padding:0 12px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
   .btn.alt{background:#334155}
 
+  /* Loading bar */
+  #loadingBar{
+    display:none; gap:8px; align-items:center; 
+    padding:8px 16px; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    background:#0b1220;
+  }
+  .spinner{
+    width:16px; height:16px;
+    border:2px solid rgba(255,255,255,.2);
+    border-top-color:#38bdf8;
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:16px}
   .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
   .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover;transition:opacity .2s, transform .08s}
@@ -98,6 +114,10 @@
         <button class="btn" id="btnApply">Apply</button>
         <button class="btn alt" id="btnClear">Clear</button>
       </div>
+      <div id="loadingBar">
+        <div class="spinner"></div>
+        <div class="muted" id="loadingText">Loading…</div>
+      </div>
       <div id="status" class="muted" style="padding:8px 16px;display:none"></div>
 
       <div id="dex" class="grid" aria-live="polite"></div>
@@ -125,6 +145,16 @@ const U = (s)=>String(s??'').toUpperCase();
 // Return the first non-empty image field for a card
 const pickImg = (c) => c.image_url || c.image_ref || c.image || c.img || "";
 
+const setLoading = (on, txt="Loading…") => {
+  const bar = document.getElementById("loadingBar");
+  const t   = document.getElementById("loadingText");
+  const applyBtn = document.getElementById("btnApply");
+  const clearBtn = document.getElementById("btnClear");
+  if (bar) bar.style.display = on ? "flex" : "none";
+  if (t)   t.textContent = txt;
+  if (applyBtn) applyBtn.disabled = !!on;
+  if (clearBtn) clearBtn.disabled = !!on;
+};
 
   
 /* ===== State ===== */
@@ -411,19 +441,27 @@ function render(){
 }
 
 
-/* ===== Orchestration ===== */
 async function run(){
   try {
-    setStatus("Loading cards…");
-    await loadCatalogue();      // fetches full catalogue
-    setStatus("");              // clear status after catalogue ok
+    setLoading(true, "Loading cards…");
+    await loadCatalogue();
 
-    await loadOwned();          // no-op if no ID typed
-    render();                   // renders (dimmed by default)
+    const hasUser = (getVal("userId","").trim().length > 0);
+    if (hasUser) setLoading(true, "Checking your collection…");
+    await loadOwned();
+
+    setLoading(true, "Rendering…");
+    render();
   } catch (e) {
-    fail(e?.message || e);
+    console.error(e);
+    setLoading(true, "Error: " + (e?.message || e));
+    // brief pause so the message is visible
+    setTimeout(()=>setLoading(false), 1200);
+    return;
   }
+  setLoading(false);
 }
+
 
 
 /* ===== QS support (shareable links e.g. ?u=123&r=SR&club=Arsenal) ===== */
@@ -470,6 +508,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
