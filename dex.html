@@ -231,17 +231,52 @@
   }
 
   // ==== DATA LAYER ==========================================================
-  async function fetchDex() {
-    const base = CONFIG.API_BASE.replace(/\/$/, '');
-    for (const ep of CONFIG.ENDPOINTS) {
-      try {
-        const res = await fetch(base + ep, { credentials: 'include' });
-        if (!res.ok) continue;
-        const data = await res.json();
-        const arr = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : (Array.isArray(data.cards) ? data.cards : null));
-        if (!arr) continue;
-        const normalized = arr.map(raw => normalizeItem(raw));
-        return normalized;
+    async function fetchDex() {
+    // The Worker accepts POST /api with action:"cards" for read-only browsing.
+    const res = await fetch(CONFIG.API_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'cards', type: 'ALL', batch: 'ALL', rarity: 'ALL', position: 'ALL', club: 'ALL' })
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,200)}`);
+    let data; try { data = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
+    // Worker envelope: { ok, data, status }
+    const payload = (data && typeof data === 'object' && 'ok' in data && 'data' in data) ? data.data : data;
+    const arr = Array.isArray(payload) ? payload : (Array.isArray(payload.items) ? payload.items : null);
+    if (!arr) throw new Error('Missing items array in API response');
+    // pick up economy meta if provided
+    if (payload && payload.meta) {
+    try {
+      const y = payload.meta.SELL_YIELD || {};
+      const craftSheet = payload.meta.CraftingCosts || payload.meta.CraftingCost; // script may use either name
+      if (y && Object.keys(y).length) CONFIG.SELL = y;
+      // parse CraftingCosts sheet (2D array with headers)
+      if (Array.isArray(craftSheet) && craftSheet.length > 1) {
+        const head = craftSheet[0];
+        const idx = Object.fromEntries(head.map((h,i)=>[String(h).trim(), i]));
+        const priceByR = {};
+        for (const r of craftSheet.slice(1)) {
+          const rarity = r[idx.rarity]; const allowed = r[idx.allowed]; const price = r[idx.price_amount];
+          const mode = (r[idx.mode]||'').toString().toLowerCase();
+          if (String(allowed) === '1' && rarity && price != null && (mode === 'random' || mode === 'specific')) {
+            // prefer specific over random for legend if both exist
+            priceByR[rarity] = (mode === 'specific') ? price : (priceByR[rarity] ?? price);
+          }
+        }
+        if (Object.keys(priceByR).length) CONFIG.CRAFT = priceByR;
+      }
+    } catch(_) { /* ignore meta parsing errors */ }
+  }
+  const normalized = arr.map(raw => normalizeItem(raw));
+  return normalized;
+});
+      if (!res.ok) continue;
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : (Array.isArray(data.cards) ? data.cards : null));
+      if (!arr) continue;
+      const normalized = arr.map(raw => normalizeItem(raw));
+      return normalized;
       } catch (e) { /* try next endpoint */ }
     }
     throw new Error('No dex endpoint responded with data. Ensure your Worker exposes /api/dex or /api/cards.');
@@ -464,5 +499,6 @@
   </script>
 </body>
 </html>
+
 
 
