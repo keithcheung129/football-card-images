@@ -162,49 +162,23 @@
       <div class="row">
         <label>
           <span class="lbl">Type</span>
-          <select id="fType">
-            <option value="">All</option>
-            <option>Player</option>
-            <option>Manager</option>
-            <option>Stadium</option>
-            <option>Event</option>
-          </select>
+          <select id="fType"><option value="">All</option></select>
         </label>
         <label>
           <span class="lbl">Rarity</span>
-          <select id="fRarity">
-            <option value="">All</option>
-            <option>N</option>
-            <option>R</option>
-            <option>AR</option>
-            <option>SR</option>
-            <option>SSR</option>
-          </select>
+          <select id="fRarity"><option value="">All</option></select>
         </label>
         <label>
           <span class="lbl">Position</span>
-          <select id="fPos">
-            <option value="">All</option>
-            <option>GK</option>
-            <option>DEF</option>
-            <option>MID</option>
-            <option>FWD</option>
-            <option>OT</option>
-          </select>
+          <select id="fPos"><option value="">All</option></select>
         </label>
         <label>
           <span class="lbl">Batch</span>
-          <select id="fBatch">
-            <option value="">All</option>
-            <option>Base</option>
-            <option>Base SSR</option>
-            <option>Base U</option>
-            <!-- add more as you release -->
-          </select>
+          <select id="fBatch"><option value="">All</option></select>
         </label>
         <label>
           <span class="lbl">Club</span>
-          <input id="fClub" type="text" placeholder="Search club…" />
+          <select id="fClub"><option value="">All</option></select>
         </label>
       </div>
 
@@ -263,95 +237,119 @@
   </div>
 
   <script>
-    // ==========================
-    // CONFIG – tweak to match your Worker
-    // ==========================
-    const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
-    const API = {
-      cards:   '/api/cards', // returns array of card objects
-      holding: (discordId) => `/api/collection?discord_id=${encodeURIComponent(discordId)}&active_only=1`,
-    };
+  // ======= CONFIG =======
+  const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
 
-    // Expected card fields (per /api/cards):
-    // {
-    //   card_id: "P0123", name: "Erling Haaland",
-    //   image_url: "https://...", // full-size card image
-    //   type: "Player" | "Manager" | "Stadium" | "Event",
-    //   rarity: "N"|"R"|"AR"|"SR"|"SSR",
-    //   position: "GK"|"DEF"|"MID"|"FWD"|"OT" (for players) or "" (others),
-    //   batch: "Base" | "Base SSR" | "Base U" | ...,
-    //   club: "Man City" | ...
-    //   dex_order: number // for default sort
-    // }
+  // ======= STATE =======
+  let ALL = [];        // full catalog
+  let FILTERED = [];   // filtered/sorted view
+  let HOLDINGS = {};   // { card_id: count }
 
-    // Rarity rank for sorting
-    const RANK = { SSR:5, SR:4, AR:3, R:2, N:1 };
+  // ======= SHORTCUTS =======
+  const $   = (id) => document.getElementById(String(id).replace(/^#/, ''));
+  const val = (id, fallback="") => ($(id)?.value ?? fallback);
+  const chk = (id) => !!$(id)?.checked;
+ 
+  // ======= API HELPER =======
+  async function callApi(action, payload={}) {
+    const res = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,200)}`);
+    const body = JSON.parse(text);
+    return ('ok' in body && 'data' in body) ? body.data : body;
+  }
 
-    // State
-    let ALL = [];               // all cards
-    let FILTERED = [];          // filtered cards
-    let HOLDINGS = {};          // { card_id: qty }
-    let PRICES = null;          // { byRarity: { R:{sell,craft}, ... } }
-    let META = null;   // will hold { CraftingCosts: {...}, SELL_YIELD: {...} } if present
+  // ======= SORTING =======
+  const RARITY_ORDER   = ["SSR","SR","AR","R","N"];
+  const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE"];
+
+  const U = (s) => String(s||"").toUpperCase();
+  const rank = (val, order) => {
+    const i = order.indexOf(U(val));
+    return i === -1 ? 999 : i;
+  };
+
+  function sortItems(items, mode) {
+    items.sort((a,b)=>{
+      const ra = rank(a.rarity,RARITY_ORDER), rb = rank(b.rarity,RARITY_ORDER);
+      const pa = rank(a.position,POSITION_ORDER), pb = rank(b.position,POSITION_ORDER);
+      const ca = U(a.club), cb = U(b.club);
+      const na = (a.name||a.card_id||"").toString();
+      const nb = (b.name||b.card_id||"").toString();
+
+      switch(mode){
+        case "club":     return ca.localeCompare(cb) || ra-rb || pa-pb || na.localeCompare(nb);
+        case "position": return pa-pb || ra-rb || ca.localeCompare(cb) || na.localeCompare(nb);
+        case "name":     return na.localeCompare(nb);
+        default:         return ra-rb || pa-pb || ca.localeCompare(cb) || na.localeCompare(nb);
+      }
+    });
+    return items;
+  }
+
+  // ======= LEGEND =======
+  function renderLegendFromMeta(meta){
+    const legend = $("#legend");
+    const legendRows = $("#legendRows");
+    legend.hidden = true;
+    legendRows.innerHTML = "";
+    if (!meta) return;
+
+    const sell  = meta.SELL_YIELD || {};
+    const craft = meta.CraftingCosts || {};
+    ["SSR","SR","AR","R","N"].forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><strong>${r}</strong></td>
+                      <td>${sell[r] ?? '—'}</td>
+                      <td>${craft[r] ?? '—'}</td>`;
+      legendRows.appendChild(tr);
+    });
+    legend.hidden = false;
+  }
+
+
+  // ======JS Helper =======
+  function hydrateFacets(cards){
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+
+    const clubs = uniq(cards.map(c => String(c.club||"").trim())).sort((a,b)=>a.localeCompare(b));
+
+    // populate club select
+    const selClub = document.getElementById("fClub");
+    if (selClub){
+      const cur = selClub.value;
+      selClub.innerHTML = '<option value="">All</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
+      if ([...selClub.options].some(o=>o.value===cur)) selClub.value = cur;
+    }
+  }
 
 
     
+  // ======= BOOT =======
+  async function boot() {
+    try {
+      const data = await callApi("cards", { type:"ALL" });
+      ALL = data.items || [];
+      if (data.meta) renderLegendFromMeta(data.meta);
 
-    // Elements
-    const el = (id) => document.getElementById(id);
-    const grid = el('grid');
-    const countTxt = el('countTxt');
-    const applyBtn = el('applyBtn');
-    const applySpin = el('applySpin');
-    const resetBtn = el('resetBtn');
-    const legend = el('legend');
-    const legendRows = el('legendRows');
-    const activeChips = el('activeChips');
+      hydrateFacets(ALL);
 
-    // Filters
-    const fType  = el('fType');
-    const fRar   = el('fRarity');
-    const fPos   = el('fPos');
-    const fBatch = el('fBatch');
-    const fClub  = el('fClub');
-    const sortBy = el('sortBy');
-    const discordId = el('discordId');
-
-    // Modal
-    const modal = el('modal');
-    const modalImg = el('modalImg');
-    const modalTitle = el('modalTitle');
-    const modalClose = el('modalClose');
-
-    // --------------------------
-    // Init
-    // --------------------------
-    boot();
-
-    async function boot() {
-      try {
-        // Load catalog + meta once
-        const data = await callApi("cards", { type:"ALL" });
-        ALL = data.items || [];
-
-        // Show Sell & Craft legend if meta is present
-        if (data.meta) renderLegendFromMeta(data.meta);
-
-        // Initial render: all cards dimmed
-        FILTERED = ALL.slice();
-        defaultSort(FILTERED);
-        render();
-
-        countTxt.textContent = `${FILTERED.length} cards`;
-      } catch (err) {
-        console.error("Failed to load cards:", err);
-        countTxt.textContent = "Failed to load cards.";
-      }
-
-      // Hook buttons
-      applyBtn.addEventListener("click", onApply);
-      resetBtn.addEventListener("click", onReset);
+      FILTERED = ALL.slice();
+      sortItems(FILTERED,"rarity");
+      render();
+      $("#countInfo").textContent = `${FILTERED.length} cards`;
+    } catch(err) {
+      console.error("Failed to load cards",err);
+      $("#countInfo").textContent = "Failed to load cards.";
     }
+
+    $("#applyBtn").addEventListener("click", onApply);
+    $("#resetBtn").addEventListener("click", ()=>location.reload());
+  }
 
 
 
@@ -370,25 +368,6 @@
 
 
 
-    function renderLegendFromMeta(meta) {
-      legend.hidden = true;
-      legendRows.innerHTML = '';
-      if (!meta) return;
-
-      const sell  = meta.SELL_YIELD || {};
-      const craft = meta.CraftingCosts || {};
-
-      const order = ['SSR','SR','AR','R','N'];
-      for (const r of order) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td><strong>${r}</strong></td>
-                         <td>${sell[r] ?? '—'}</td>
-                         <td>${craft[r] ?? '—'}</td>`;
-        legendRows.appendChild(row);
-      }
-
-      legend.hidden = false;
-    }
 
 
 
@@ -464,28 +443,22 @@
     // Filtering
     // --------------------------
     function applyFilters(){
-      const t = fType.value.trim();
-      const r = fRar.value.trim();
-      const p = fPos.value.trim();
-      const b = fBatch.value.trim();
-      const c = fClub.value.trim().toLowerCase();
-
-      activeChips.innerHTML = '';
-      if (t) addChip(`Type: ${t}`);
-      if (r) addChip(`Rarity: ${r}`);
-      if (p) addChip(`Pos: ${p}`);
-      if (b) addChip(`Batch: ${b}`);
-      if (c) addChip(`Club: ${c}`);
-
-      FILTERED = ALL.filter(card=>{
-        if (t && (card.type||'') !== t) return false;
-        if (r && (card.rarity||'') !== r) return false;
-        if (p && (card.position||'') !== p) return false;
-        if (b && (card.batch||'') !== b) return false;
-        if (c && !String(card.club||'').toLowerCase().includes(c)) return false;
+      const t = (document.getElementById('fType').value || '').trim();
+      const r = (document.getElementById('fRarity').value || '').trim();
+      const p = (document.getElementById('fPos').value || '').trim();
+      const b = (document.getElementById('fBatch').value || '').trim();
+      const clubVal = (document.getElementById("fClub").value||"").trim();
+    
+      FILTERED = ALL.filter(card => {
+        if (t && String(card.type||'').toLowerCase() !== t.toLowerCase()) return false;
+        if (r && String(card.rarity||'').toUpperCase() !== r.toUpperCase()) return false;
+        if (p && String(card.position||'').toUpperCase() !== p.toUpperCase()) return false;
+        if (b && String(card.batch||'') !== b) return false;
+        if (clubVal && card.club !== clubVal) return false;
         return true;
       });
     }
+
 
     function addChip(txt){
       const span = document.createElement('span');
@@ -655,5 +628,3 @@
   </script>
 </body>
 </html>
-
-
