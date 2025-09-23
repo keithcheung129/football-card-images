@@ -162,7 +162,7 @@
   // This page is designed to work with your Cloudflare Worker proxying Google Apps Script.
   // It will try a few conventional endpoints so you don't need to edit code if you kept naming similar to inventory.html.
   const CONFIG = {
-    API_BASE: '', // same origin by default. e.g. '' or 'https://yourdomain.tld'
+    API_BASE: 'https://the-last-kick.keithcheung129.workers.dev/api', // same origin by default. e.g. '' or 'https://yourdomain.tld'
     ENDPOINTS: [
       '/api/dex',                 // preferred: returns array of all cards
       '/api/cards',               // fallback: returns array
@@ -469,3 +469,4 @@
   </script>
 </body>
 </html>
+
