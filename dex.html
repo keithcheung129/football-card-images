@@ -1,554 +1,669 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TLK – Card Dex</title>
-<style>
-  :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--line:#1f2937}
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .wrap{max-width:1200px;margin:0 auto;padding:20px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-  .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
-  .hdr h1{font-size:18px;margin:0}
-  .muted{color:var(--muted);font-size:12px}
-
-  .toolbar{display:flex;flex-wrap:wrap;gap:10px 12px;padding:12px 16px;border-bottom:1px solid var(--line)}
-  .pill{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.12);border-radius:9999px;background:#0b1220;white-space:nowrap}
-  .pill input,.pill select{appearance:none;background:#0f172a;color:#fff;border:0;outline:0;height:32px;line-height:32px;padding:0 10px;border-radius:8px}
-  .pill input[type="checkbox"]{width:16px;height:16px}
-
-  .btn{height:34px;line-height:34px;padding:0 12px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
-  .btn.alt{background:#334155}
-
-  /* Loading bar */
-  #loadingBar{
-    display:none; gap:8px; align-items:center; 
-    padding:8px 16px; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
-    background:#0b1220;
-  }
-  .spinner{
-    width:16px; height:16px;
-    border:2px solid rgba(255,255,255,.2);
-    border-top-color:#38bdf8;
-    border-radius:50%;
-    animation:spin .8s linear infinite;
-  }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
-
-  
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:16px}
-  .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
-  .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover;transition:opacity .2s, transform .08s}
-  .card.unowned .thumb{opacity:.35}
-  .thumb:active{transform:scale(.99)}
-  .meta{padding:10px}
-  .name{font-size:13px;font-weight:700}
-  .sub{font-size:12px;color:var(--muted)}
-  .cid{display:flex;align-items:center;gap:6px;margin-top:6px}
-  .cid code{font-size:11px;background:#0f172a;border:1px solid #1f2937;border-radius:6px;padding:2px 6px;color:#cbd5e1}
-  .copy{font-size:11px;background:#0f172a;border:1px solid #1f2937;border-radius:6px;padding:2px 6px;color:#38bdf8;cursor:pointer}
-  .copy:active{transform:scale(.98)}
-
-  .badge{position:absolute;top:8px;right:8px;background:#111827;border:1px solid #374151;border-radius:10px;padding:3px 6px;font-size:12px}
-  .footer{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
-  .tiny{font-size:12px;color:var(--muted)}
-
-  /* popup */
-  #imgPopup{position:fixed;display:none;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);justify-content:center;align-items:center;z-index:9999}
-  #imgPopup img{max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
-  #imgPopup.closeable{cursor:pointer}
-</style>
+  <meta charset="utf-8" />
+  <title>The Last Kick — Dex</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0e0f12;
+      --panel:#151821;
+      --panel-2:#1c2030;
+      --text:#e8ecf6;
+      --muted:#9aa3b2;
+      --accent:#6ea8fe;
+      --accent-2:#7ee787;
+      --danger:#ff7b72;
+      --ring:#2d3a5c;
+      --chip:#242a3b;
+      --card-dim:0.35; /* darkness for unowned cards */
+      --grid-gap:14px;
+      --radius:14px;
+      --shadow:0 6px 20px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0b0c10 0%, #0e0f12 80%);
+      color:var(--text);
+      font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    }
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{
+      max-width:1200px;margin:28px auto;padding:0 16px;display:grid;grid-template-columns: 260px 1fr;gap:20px;
+    }
+    header{
+      grid-column:1/-1;display:flex;align-items:center;gap:16px;margin-bottom:2px;
+    }
+    .title{
+      font-weight:700;font-size:22px;letter-spacing:.3px;
+    }
+    .spacer{flex:1}
+    .ghost-link{
+      padding:10px 14px;border:1px solid var(--ring);border-radius:10px;background:transparent;color:var(--text);
+    }
+    .panel{
+      background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);
+      border:1px solid #23283a;border-radius:var(--radius);box-shadow:var(--shadow);
+    }
+    .filters{
+      padding:14px;position:sticky;top:14px;
+    }
+    .filters h3{margin:0 0 12px 0;font-weight:700;font-size:15px}
+    .row{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+    label{display:flex;flex-direction:column;gap:6px}
+    .lbl{font-size:12px;color:var(--muted)}
+    input[type="text"], select{
+      width:100%;padding:9px 10px;border-radius:10px;border:1px solid #2b334b;background:#0e111b;color:var(--text);
+      outline:none;
+    }
+    .inline{display:flex;gap:8px}
+    .btn{
+      appearance:none;border:0;border-radius:10px;padding:10px 12px;font-weight:600;cursor:pointer;
+    }
+    .btn-primary{background:var(--accent);color:#0a0a0a}
+    .btn-ghost{background:#20263a;color:var(--text);border:1px solid #2f3a5d}
+    .legend{
+      margin-top:14px;padding:12px;border-radius:10px;background:#111525;border:1px solid #28304a;color:var(--muted)
+    }
+    .legend h4{margin:0 0 8px 0;color:var(--text);font-size:13px}
+    .legend table{width:100%;border-collapse:collapse;font-size:12px}
+    .legend th,.legend td{padding:6px;border-bottom:1px solid #242b42;text-align:left}
+    .legend th{color:var(--muted);font-weight:600}
+    .legend .ok{color:var(--accent-2)}
+    .results-head{
+      display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #242a3b;
+    }
+    .results-count{color:var(--muted)}
+    .grid{
+      padding:14px;
+      display:grid;grid-template-columns:repeat( auto-fill, minmax(180px,1fr) );gap:var(--grid-gap);
+    }
+    .card{
+      position:relative;border-radius:12px;overflow:hidden;background:#0b0d14;border:1px solid #22283a;box-shadow:var(--shadow);
+      transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.45)}
+    .imgbox{
+      position:relative;aspect-ratio: 3/4;background:#0e111a;display:flex;align-items:center;justify-content:center;
+    }
+    .imgbox img{
+      width:100%;height:100%;object-fit:cover;display:block;filter:brightness(var(--card-dim));
+      transition:filter .2s ease;
+      background:#0c0f16;
+    }
+    .card.owned img{filter:none}
+    .badge{
+      position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);border:1px solid #2c3350;padding:4px 8px;border-radius:999px;font-size:12px
+    }
+    .owned .badge{background:rgba(9,14,30,.75);border-color:#345;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset}
+    .qty{
+      position:absolute;bottom:8px;right:8px;background:#0d1b10;color:#bff0bf;border:1px solid #274c2a;padding:4px 8px;border-radius:999px;font-size:12px;display:none;
+    }
+    .owned .qty{display:inline-block}
+    .meta{
+      padding:10px 10px 12px 10px;display:grid;gap:6px;background:linear-gradient(180deg,rgba(20,24,36,.6),rgba(12,14,22,.8));
+      border-top:1px solid #20263a
+    }
+    .name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sub{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+    .card-id{
+      font-size:12px;color:#a9b4c8;background:#0c1220;border:1px solid #1f2842;border-radius:8px;padding:3px 6px;display:inline-flex;gap:6px;align-items:center;
+      width:max-content;max-width:100%;
+    }
+    .copy{
+      cursor:pointer;border:0;background:transparent;color:var(--accent);font-weight:700
+    }
+    /* Loader */
+    .applybar{padding:12px 14px;display:flex;align-items:center;gap:8px;border-top:1px solid #242a3b}
+    .spinner{width:16px;height:16px;border:2px solid #2f3a5a;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:none}
+    .spinner.show{display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Modal */
+    .modal{
+      position:fixed;inset:0;background:rgba(3,5,12,.8);display:none;align-items:center;justify-content:center;padding:20px;z-index:20;
+    }
+    .modal.open{display:flex}
+    .modal-inner{
+      width:min(92vw,900px);background:#0b0d14;border:1px solid #2a314a;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.6);
+    }
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #242a3b}
+    .modal-body{padding:0;background:#0a0c12}
+    .modal-body img{display:block;max-width:100%;height:auto;width:100%}
+    .xbtn{background:transparent;border:1px solid #38425f;color:var(--text);padding:6px 10px;border-radius:10px;cursor:pointer}
+    /* Chips */
+    .chiprow{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--chip);border:1px solid #2b3450;border-radius:999px;padding:4px 8px;font-size:12px}
+    /* Mobile tweak */
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr}
+      .filters{position:static}
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="panel">
-      <div class="hdr">
-        <h1>TLK Card Dex <span class="muted">browse all cards & plan crafts</span></h1>
-        <div class="tiny">🎟 <span id="tickets">–</span> • 🪙 <span id="tokens">–</span></div>
+    <header>
+      <div class="title">Dex — All Cards</div>
+      <div class="spacer"></div>
+      <a class="ghost-link" href="./inventory.html">↩ Inventory</a>
+    </header>
+
+    <!-- Left: Filters -->
+    <aside class="panel filters">
+      <h3>Filters & Options</h3>
+      <div class="row">
+        <label>
+          <span class="lbl">Discord ID (optional)</span>
+          <input id="discordId" type="text" placeholder="e.g. 123456789012345678" />
+        </label>
+      </div>
+      <div class="row">
+        <label>
+          <span class="lbl">Type</span>
+          <select id="fType">
+            <option value="">All</option>
+            <option>Player</option>
+            <option>Manager</option>
+            <option>Stadium</option>
+            <option>Event</option>
+          </select>
+        </label>
+        <label>
+          <span class="lbl">Rarity</span>
+          <select id="fRarity">
+            <option value="">All</option>
+            <option>N</option>
+            <option>R</option>
+            <option>AR</option>
+            <option>SR</option>
+            <option>SSR</option>
+          </select>
+        </label>
+        <label>
+          <span class="lbl">Position</span>
+          <select id="fPos">
+            <option value="">All</option>
+            <option>GK</option>
+            <option>DEF</option>
+            <option>MID</option>
+            <option>FWD</option>
+            <option>OT</option>
+          </select>
+        </label>
+        <label>
+          <span class="lbl">Batch</span>
+          <select id="fBatch">
+            <option value="">All</option>
+            <option>Base</option>
+            <option>Base SSR</option>
+            <option>Base U</option>
+            <!-- add more as you release -->
+          </select>
+        </label>
+        <label>
+          <span class="lbl">Club</span>
+          <input id="fClub" type="text" placeholder="Search club…" />
+        </label>
       </div>
 
-      <div class="toolbar">
-        <label class="pill">Discord ID:
-          <input id="userId" placeholder="Optional — highlight owned">
-        </label>
-        <label class="pill">Type:
-          <select id="type">
-            <option>player</option><option>manager</option><option>stadium</option><option>event</option><option>ALL</option>
-          </select>
-        </label>
-        <label class="pill">Rarity:
-          <select id="rarity">
-            <option>ALL</option><option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
-          </select>
-        </label>
-        <label class="pill">Position:
-          <select id="position">
-            <option>ALL</option><option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
-          </select>
-        </label>
-        <label class="pill">Batch:
-          <select id="batch">
-            <option>ALL</option><option>Base</option><option>Base U</option>
-          </select>
-        </label>
-        <label class="pill">Club:
-          <select id="club">
-            <option>ALL</option>
-          </select>
-        </label>
-        <label class="pill">Search:
-          <input id="search" placeholder="name / club / card_id">
-        </label>
-        <label class="pill"><input type="checkbox" id="missingOnly"> Missing only</label>
-        <label class="pill">Sort:
+      <div class="row">
+        <label>
+          <span class="lbl">Sort by</span>
           <select id="sortBy">
-            <option value="rarity">Rarity</option>
-            <option value="club">Club</option>
-            <option value="position">Position</option>
-            <option value="name">Name</option>
-            <option value="owned">Owned first</option>
+            <option value="dex">Default (Dex)</option>
+            <option value="nameAZ">Name A → Z</option>
+            <option value="nameZA">Name Z → A</option>
+            <option value="rarHi">Rarity (SSR→N)</option>
+            <option value="rarLo">Rarity (N→SSR)</option>
+            <option value="clubAZ">Club A → Z</option>
+            <option value="batchAZ">Batch A → Z</option>
           </select>
         </label>
-        <button class="btn" id="btnApply">Apply</button>
-        <button class="btn alt" id="btnClear">Clear</button>
       </div>
-      <div id="loadingBar">
-        <div class="spinner"></div>
-        <div class="muted" id="loadingText">Loading…</div>
+
+      <div class="applybar">
+        <button id="applyBtn" class="btn btn-primary">Apply</button>
+        <div id="applySpin" class="spinner" aria-hidden="true"></div>
+        <button id="resetBtn" class="btn btn-ghost">Reset</button>
       </div>
-      <div id="status" class="muted" style="padding:8px 16px;display:none"></div>
 
-      <div id="dex" class="grid" aria-live="polite"></div>
+      <div id="legend" class="legend" hidden>
+        <h4>Sell & Craft (by rarity)</h4>
+        <table>
+          <thead><tr><th>Rarity</th><th>Sell</th><th>Craft</th></tr></thead>
+          <tbody id="legendRows"></tbody>
+        </table>
+      </div>
+    </aside>
 
-      <div class="footer">
-        <div class="tiny" id="countInfo">0 items</div>
-        <div class="tiny">Tip: enter your Discord ID to light up owned cards and see copy counts.</div>
+    <!-- Right: Results -->
+    <section class="panel">
+      <div class="results-head">
+        <div class="results-count" id="countTxt">Loading cards…</div>
+        <div class="spacer"></div>
+        <div class="chiprow" id="activeChips"></div>
+      </div>
+      <div id="grid" class="grid" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div id="modalTitle" class="name">Card</div>
+        <button class="xbtn" id="modalClose">Close</button>
+      </div>
+      <div class="modal-body">
+        <img id="modalImg" alt="Card full view" />
       </div>
     </div>
   </div>
 
-  <!-- image popup -->
-  <div id="imgPopup" class="closeable" aria-hidden="true"><img src="" alt="preview"></div>
-
-<script>
-/* ===== Config ===== */
-const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
-// Safe DOM helpers
-const $ = (id) => document.getElementById(id);
-const getVal = (id, def = "") => ($(`${id}`)?.value ?? def);
-const setVal = (id, v) => { const el = $(`${id}`); if (el) el.value = v; };
-const getChecked = (id) => !!$(`${id}`)?.checked;
-const setChecked = (id, v) => { const el = $(`${id}`); if (el && "checked" in el) el.checked = !!v; };
-const U = (s)=>String(s??'').toUpperCase();
-// Return the first non-empty image field for a card
-const pickImg = (c) => c.image_url || c.image_ref || c.image || c.img || "";
-
-const setLoading = (on, txt="Loading…") => {
-  const bar = document.getElementById("loadingBar");
-  const t   = document.getElementById("loadingText");
-  const applyBtn = document.getElementById("btnApply");
-  const clearBtn = document.getElementById("btnClear");
-  if (bar) bar.style.display = on ? "flex" : "none";
-  if (t)   t.textContent = txt;
-  if (applyBtn) applyBtn.disabled = !!on;
-  if (clearBtn) clearBtn.disabled = !!on;
-};
-
-  
-/* ===== State ===== */
-let ALL_CARDS = [];           // full catalogue from /cards
-let OWN_COUNTS = {};          // { card_id: copies }
-let BAL = { tickets:'–', tokens:'–' };
-
-// --- Image popup (null-safe) ---
-function openImg(src){
-  const el  = document.getElementById("imgPopup");
-  const img = el ? el.querySelector("img") : null;
-  if (!el || !img) return;
-  img.src = src;
-  el.style.display = "flex";
-  el.setAttribute("aria-hidden", "false");
-}
-function closeImg(){
-  const el  = document.getElementById("imgPopup");
-  const img = el ? el.querySelector("img") : null;
-  if (!el || !img) return;
-  el.style.display = "none";
-  img.src = "";
-  el.setAttribute("aria-hidden", "true");
-}
-document.addEventListener("DOMContentLoaded", () => {
-  const el = document.getElementById("imgPopup");
-  if (el) el.addEventListener("click", closeImg);
-  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeImg(); });
-});
-
-
-/* ===== API helper (unwrap Worker envelope) ===== */
-async function api(action, payload){
-  const res = await fetch(API_BASE, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...payload })
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0,200)}`);
-
-  let json; try { json = JSON.parse(text); } catch { throw new Error("Bad JSON from API"); }
-
-  // Worker envelope: { ok, data, status }
-  if ("ok" in json && json.ok === false) {
-    const err = (json.data && json.data.error) || json.error || "Request failed";
-    throw new Error(err);
-  }
-  const payloadOut = ("data" in json) ? json.data : json;
-
-  // Script-level error (e.g., unknown_action) bubbles up
-  if (payloadOut && payloadOut.error) throw new Error(payloadOut.error);
-
-  return payloadOut;
-}
-
-function setStatus(msg) {
-  const el = document.getElementById("status");
-  if (!el) return;
-  if (!msg) { el.style.display = "none"; el.textContent = ""; return; }
-  el.style.display = "block";
-  el.textContent = msg;
-}
-function fail(msg) {
-  console.error(msg);
-  setStatus("⚠️ " + String(msg));
-}
-
-
-
-/* ===== Loaders ===== */
-async function loadCatalogue(){
-  const data = await api("cards", {
-    type:     getVal("type", "player"),
-    batch:    getVal("batch", "ALL"),
-    rarity:   getVal("rarity", "ALL"),
-    position: getVal("position", "ALL"),
-    club:     getVal("club", "ALL"),
-    search:   getVal("search", "").trim()
-  });
-
-  ALL_CARDS = data.items || [];
-  console.log("Loaded cards:", ALL_CARDS.length);
-  console.log("Sample card:", ALL_CARDS[0]);
-
-
-  // Rebuild the Club dropdown only if it exists
-  const sel = document.getElementById("club");
-  if (sel) {
-    const cur = sel.value || "ALL";
-    const clubs = Array.from(new Set(
-      ALL_CARDS.map(x => (x.club || "").trim()).filter(Boolean)
-    )).sort((a,b)=>a.localeCompare(b));
-
-    sel.innerHTML = '<option>ALL</option>' + clubs.map(c => `<option>${c}</option>`).join('');
-
-    if (Array.from(sel.options).some(o => o.value === cur)) {
-      sel.value = cur;
-    }
-  }
-
-  const countEl = document.getElementById("countInfo");
-  if (countEl) countEl.textContent = `${ALL_CARDS.length} item${ALL_CARDS.length===1?'':'s'}`;
-}
-
-
-async function loadOwned(){
-  const uid = getVal("userId", "").trim();
-  OWN_COUNTS = {};
-  if (!uid) { 
-    document.getElementById("tickets").textContent = "–";
-    document.getElementById("tokens").textContent  = "–";
-    return;
-  }
-
-  // Fast path: expect aggregate_only
-  const data = await api("collection", { user_id: uid, aggregate_only: true });
-  if (data && data.counts_by_card) {
-    OWN_COUNTS = data.counts_by_card || {};
-    const bal = data.balances || {};
-    document.getElementById("tickets").textContent = bal.tickets ?? "–";
-    document.getElementById("tokens").textContent  = bal.tokens  ?? "–";
-    return;
-  }
-
-  // Fallback: page through collection and aggregate
-  let page = 1, page_size = 500, got = 0, total = 0;
-  const counts = {};
-  let balancesSeen = null;
-
-  do {
-    const res = await api("collection", { user_id: uid, page, page_size });
-    const items = res.items || [];
-    items.forEach(it => { counts[it.card_id] = (counts[it.card_id] || 0) + 1; });
-    if (!balancesSeen && res.balances) balancesSeen = res.balances;
-
-    total = Number(res.total || items.length);
-    got += items.length;
-    page++;
-  } while (got < total && page < 100);
-
-  OWN_COUNTS = counts;
-  document.getElementById("tickets").textContent = balancesSeen?.tickets ?? "–";
-  document.getElementById("tokens").textContent  = balancesSeen?.tokens  ?? "–";
-}
-
-// Debounced overlay update when typing Discord ID
-let ownedTimer;
-document.addEventListener("DOMContentLoaded", ()=>{
-  const uid = document.getElementById("userId");
-  if (uid){
-    uid.addEventListener("input", ()=>{
-      clearTimeout(ownedTimer);
-      ownedTimer = setTimeout(async ()=>{
-        await loadOwned();   // only fetches if ID present
-        render();            // apply dim/highlight/counts
-      }, 350);
-    });
-  }
-});
-
-
-
-/* ===== Sort & Render ===== */
-const RARITY_ORDER = ["SSR","SR","AR","R","N","U","ALL"];
-const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE","ALL"];
-const rank = (v, arr)=>{ const i = arr.indexOf(U(v)); return i<0 ? 999 : i; };
-
-function sortCards(arr){
-  const mode = getVal("sortBy", "rarity");
-  arr.sort((a,b)=>{
-    const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
-    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
-    const ca = U(a.club), cb = U(b.club);
-    const na = String(a.name||""), nb = String(b.name||"");
-    const oa = OWN_COUNTS[a.card_id] ? 0 : 1;
-    const ob = OWN_COUNTS[b.card_id] ? 0 : 1;
-
-    switch(mode){
-      case "club":     return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
-      case "position": return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "name":     return na.localeCompare(nb);
-      case "owned":    return oa - ob || ra - rb || na.localeCompare(nb);  // owned first
-      case "rarity":
-      default:         return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-    }
-  });
-  return arr;
-}
-
-function applyClientFilters(cards){
-  const t = getVal("type","ALL");
-  const r = U(getVal("rarity","ALL"));
-  const p = U(getVal("position","ALL"));
-  const b = getVal("batch","ALL");
-  const c = getVal("club","ALL");
-  const q = getVal("search","").trim().toLowerCase();
-
-  return cards.filter(x => {
-    if (t !== "ALL" && String(x.type||"") !== t) return false;
-    if (r !== "ALL" && U(x.rarity)   !== r)     return false;
-    if (p !== "ALL" && U(x.position) !== p)     return false;
-    if (b !== "ALL" && String(x.batch||"") !== b) return false;
-    if (c !== "ALL" && String(x.club||"")  !== c) return false;
-    if (q) {
-      const hay = `${x.card_id||""} ${x.name||""} ${x.club||""}`.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
-}
-
-  
-function render(){
-  const root = document.getElementById("dex");
-  root.innerHTML = "";
-
-  const hasUser = getVal("userId", "").trim().length > 0;
-  const missingOnly = getChecked("missingOnly") && hasUser;
-
-  // 1) filter, then 2) sort, then 3) optional "missing only"
-  const cards = sortCards(applyClientFilters(ALL_CARDS.slice()))
-    .filter(c => !(getChecked("missingOnly") && getVal("userId","").trim() && OWN_COUNTS[String(c.card_id)]));
-
-
-  for (const c of cards){
-    const ownedCount = hasUser ? (OWN_COUNTS[c.card_id] || 0) : 0;
-    const owned = hasUser && ownedCount > 0;
-
-    const card = document.createElement("div");
-    card.className = "card" + (owned ? "" : " unowned");  // dims everything unless owned
-
-    const img = document.createElement("img");
-    img.className = "thumb";
-    img.loading = "lazy";
-    img.src = pickImg(c);
-    img.alt = c.name || c.card_id || "";
-    img.addEventListener("click", ()=>openImg(img.src));
-    card.appendChild(img);
-
-    // Show count badge only if user entered an ID AND owns it
-    if (hasUser && owned){
-      const badge = document.createElement("div");
-      badge.className = "badge";
-      badge.textContent = `×${ownedCount}`;
-      card.appendChild(badge);
-    }
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-
-    const nameEl = document.createElement("div");
-    nameEl.className = "name";
-    nameEl.textContent = c.name || "—";
-
-    const subEl = document.createElement("div");
-    subEl.className  = "sub";
-    subEl.textContent = [c.rarity, c.club, c.position, c.batch].filter(Boolean).join(" • ");
-
-    const cidRow = document.createElement("div");
-    cidRow.className = "cid";
-    const codeEl = document.createElement("code");
-    codeEl.textContent = c.card_id;
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "copy";
-    copyBtn.type = "button";
-    copyBtn.textContent = "Copy ID";
-    copyBtn.addEventListener("click", async ()=>{
-      try { await navigator.clipboard.writeText(c.card_id); copyBtn.textContent = "Copied!"; setTimeout(()=>copyBtn.textContent="Copy ID", 900); }
-      catch { copyBtn.textContent = "Failed"; setTimeout(()=>copyBtn.textContent="Copy ID", 900); }
-    });
-    cidRow.appendChild(codeEl);
-    cidRow.appendChild(copyBtn);
-
-    meta.appendChild(nameEl);
-    meta.appendChild(subEl);
-    meta.appendChild(cidRow);
-
-    card.appendChild(meta);
-    root.appendChild(card);
-  }
-
-  if (!root.children.length){
-    root.innerHTML = '<div style="padding:12px;opacity:.7">No cards match your filters.</div>';
-  }
-}
-
-
-async function run(){
-  try {
-    setLoading(true, "Loading cards…");
-    await loadCatalogue();
-
-    const hasUser = (getVal("userId","").trim().length > 0);
-    if (hasUser) setLoading(true, "Checking your collection…");
-    await loadOwned();
-
-    setLoading(true, "Rendering…");
-    render();
-  } catch (e) {
-    console.error(e);
-    setLoading(true, "Error: " + (e?.message || e));
-    // brief pause so the message is visible
-    setTimeout(()=>setLoading(false), 1200);
-    return;
-  }
-  setLoading(false);
-}
-
-
-
-/* ===== QS support (shareable links e.g. ?u=123&r=SR&club=Arsenal) ===== */
-(function applyQS(){
-  const qs = new URLSearchParams(location.search);
-  const set = (id,key)=>{ if(qs.get(key)) $(id).value = qs.get(key); };
-  set("userId","u"); set("rarity","r"); set("position","p"); set("batch","b");
-  set("type","t");   set("club","club"); set("search","q"); set("sortBy","s");
-  if (qs.get("missing")==="1") $("#missingOnly").checked = true;
-})();
-
-/* ===== Wire up ===== */
-// Apply = (re)load catalogue → (optionally) overlay owned → render
-$("#btnApply")?.addEventListener("click", async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById("btnApply");
-  if (btn) btn.disabled = true;
-  if (typeof setStatus === "function") setStatus("Applying filters…");
-  if (typeof setLoading === "function") setLoading(true, "Applying filters…");
-
-  try {
-    // Always refresh the catalogue (server may ignore filters; that's OK)
-    await loadCatalogue();
-
-    // If a Discord ID is present, refresh owned overlay; otherwise skip
-    const uid = (typeof getVal === "function"
-      ? getVal("userId", "").trim()
-      : (document.getElementById("userId")?.value || "").trim());
-
-    if (uid && typeof loadOwned === "function") {
-      await loadOwned();
-    }
-
-    // Re-render (your render() should apply the current UI filters client-side)
-    if (typeof render === "function") render();
-
-    if (typeof setStatus === "function") setStatus("");
-  } catch (err) {
-    console.error(err);
-    if (typeof setStatus === "function") setStatus("⚠️ " + (err?.message || err));
-  } finally {
-    if (typeof setLoading === "function") setLoading(false);
-    if (btn) btn.disabled = false;
-  }
-});
-
-
-
-  $("#btnClear")?.addEventListener("click", () => {
-    setVal("userId", "");
-    setVal("search", "");
-    setVal("club", "ALL");
-    setVal("rarity", "ALL");
-    setVal("position", "ALL");
-    setVal("batch", "ALL");
-    setVal("type", "player");
-    setChecked("missingOnly", false);
-    setVal("sortBy", "rarity");
-
-  run();
-  });
-
-  // Debounced overlay update when typing Discord ID
-  let ownedTimer;
-  document.getElementById("userId")?.addEventListener("input", () => {
-    clearTimeout(ownedTimer);
-    ownedTimer = setTimeout(async () => {
-      setLoading(true, "Checking your collection…");
+  <script>
+    // ==========================
+    // CONFIG – tweak to match your Worker
+    // ==========================
+    const API = {
+      cards:   '/api/cards', // returns array of card objects
+      holding: (discordId) => `/api/collection?discord_id=${encodeURIComponent(discordId)}&active_only=1`,
+    };
+
+    // Expected card fields (per /api/cards):
+    // {
+    //   card_id: "P0123", name: "Erling Haaland",
+    //   image_url: "https://...", // full-size card image
+    //   type: "Player" | "Manager" | "Stadium" | "Event",
+    //   rarity: "N"|"R"|"AR"|"SR"|"SSR",
+    //   position: "GK"|"DEF"|"MID"|"FWD"|"OT" (for players) or "" (others),
+    //   batch: "Base" | "Base SSR" | "Base U" | ...,
+    //   club: "Man City" | ...
+    //   dex_order: number // for default sort
+    // }
+
+    // Rarity rank for sorting
+    const RANK = { SSR:5, SR:4, AR:3, R:2, N:1 };
+
+    // State
+    let ALL = [];               // all cards
+    let FILTERED = [];          // filtered cards
+    let HOLDINGS = {};          // { card_id: qty }
+    let PRICES = null;          // { byRarity: { R:{sell,craft}, ... } }
+    let META = null;   // will hold { CraftingCosts: {...}, SELL_YIELD: {...} } if present
+
+
+    // Elements
+    const el = (id) => document.getElementById(id);
+    const grid = el('grid');
+    const countTxt = el('countTxt');
+    const applyBtn = el('applyBtn');
+    const applySpin = el('applySpin');
+    const resetBtn = el('resetBtn');
+    const legend = el('legend');
+    const legendRows = el('legendRows');
+    const activeChips = el('activeChips');
+
+    // Filters
+    const fType  = el('fType');
+    const fRar   = el('fRarity');
+    const fPos   = el('fPos');
+    const fBatch = el('fBatch');
+    const fClub  = el('fClub');
+    const sortBy = el('sortBy');
+    const discordId = el('discordId');
+
+    // Modal
+    const modal = el('modal');
+    const modalImg = el('modalImg');
+    const modalTitle = el('modalTitle');
+    const modalClose = el('modalClose');
+
+    // --------------------------
+    // Init
+    // --------------------------
+    boot();
+
+    async function boot(){
       try {
-        await loadOwned();   // builds OWN_COUNTS
-        render();            // lights owned + counts
-      } finally {
-        setLoading(false);
+        // hydrate from URL params
+        readParams();
+
+        // parallel fetch core data
+        const [cardsRes] = await Promise.allSettled([
+          fetch(API.cards, { credentials:'include' })
+        ]);
+
+        if (cardsRes.status === 'fulfilled') {
+          const raw = await cardsRes.value.json();
+          if (Array.isArray(raw)) {
+            ALL = raw;
+            META = null;
+          } else {
+            ALL  = raw.cards || [];
+            META = raw.meta  || null;   // look for CraftingCosts / SELL_YIELD here
+          }
+        } else {
+          throw new Error('Failed to load cards list.');
+        }
+
+        renderLegendFromMeta(META);
+
+
+        if (pricesRes.status === 'fulfilled' && pricesRes.value.ok) {
+          PRICES = await pricesRes.value.json();
+          renderLegend(PRICES);
+        } // else silently hide legend
+
+        // initial render: show all cards DIMMED (owned overlay will update after holdings load)
+        FILTERED = ALL.slice();
+        defaultSort(FILTERED);
+        render();
+
+        
+
+        countTxt.textContent = `${FILTERED.length} cards`;
+      } catch (err) {
+        countTxt.textContent = 'Failed to load. Check API / origin.';
+        console.error(err);
       }
-    }, 300);
-  });
+
+      // bind events
+      applyBtn.addEventListener('click', onApply);
+      resetBtn.addEventListener('click', onReset);
+
+      // modal events
+      modal.addEventListener('click', (e)=> {
+        if (e.target === modal) closeModal();
+      });
+      modalClose.addEventListener('click', closeModal);
+    }
 
 
-  run(); // initial load: shows all cards dimmed
-});
+    function renderLegendFromMeta(meta){
+      legend.hidden = true;
+      legendRows.innerHTML = '';
+      if (!meta) return;
+
+      const craft = meta.CraftingCosts || meta.craftingCosts || null;
+      const sell  = meta.SELL_YIELD    || meta.sell_yield    || null;
+
+      // Need at least one of them to show the table
+      if (!craft && !sell) return;
+
+      const order = ['SSR','SR','AR','R','N'];
+      for (const r of order){
+        const tr = document.createElement('tr');
+        const craftVal = craft?.[r] ?? '—';
+        const sellVal  = sell?.[r]  ?? '—';
+        tr.innerHTML = `<td><strong>${r}</strong></td><td>${sellVal}</td><td>${craftVal}</td>`;
+        legendRows.appendChild(tr);
+      }
+      legend.hidden = false;
+    }
 
 
-</script>
+    async function loadHoldings(id){
+      HOLDINGS = {};
+      if (!id) return;
+      try{
+        const res = await fetch(API.holding(id), { credentials:'include' });
+        if (!res.ok) throw new Error('Holdings fetch failed');
+        const data = await res.json();
+        HOLDINGS = data?.holdings || {};
+        addChip(`Owned view for ${shortId(id)}`);
+      }catch(e){
+        console.warn('Could not load holdings for', id, e);
+        addChip('Owned view unavailable');
+      }
+    }
+
+    // --------------------------
+    // Apply / Reset
+    // --------------------------
+    async function onApply(){
+      // loader visible immediately; Apply must work even with NO ID
+      setApplying(true);
+      try {
+        // 1) Update holdings (if any ID given). Never block filtering on missing ID.
+        const id = discordId.value.trim();
+        if (id) {
+          await loadHoldings(id);
+        } else {
+          HOLDINGS = {}; // clear if removed
+          addChip('Showing all cards (no ID)');
+        }
+
+        // 2) Filter/sort
+        applyFilters();
+        applySort();
+
+        // 3) Persist to URL for shareability
+        writeParams();
+
+        // 4) Render
+        render();
+
+        countTxt.textContent = `${FILTERED.length} cards`;
+      } finally {
+        setApplying(false);
+      }
+    }
+
+    function onReset(){
+      // clear inputs
+      [fType,fRar,fPos,fBatch,sortBy].forEach(x=>x.value='');
+      fClub.value = '';
+      discordId.value = '';
+      HOLDINGS = {};
+      activeChips.innerHTML = '';
+      // reset list
+      FILTERED = ALL.slice();
+      defaultSort(FILTERED);
+      writeParams(); // clear URL state
+      render();
+      countTxt.textContent = `${FILTERED.length} cards`;
+    }
+
+    function setApplying(on){
+      applyBtn.disabled = on;
+      resetBtn.disabled = on;
+      applySpin.classList.toggle('show', on);
+    }
+
+    // --------------------------
+    // Filtering
+    // --------------------------
+    function applyFilters(){
+      const t = fType.value.trim();
+      const r = fRar.value.trim();
+      const p = fPos.value.trim();
+      const b = fBatch.value.trim();
+      const c = fClub.value.trim().toLowerCase();
+
+      activeChips.innerHTML = '';
+      if (t) addChip(`Type: ${t}`);
+      if (r) addChip(`Rarity: ${r}`);
+      if (p) addChip(`Pos: ${p}`);
+      if (b) addChip(`Batch: ${b}`);
+      if (c) addChip(`Club: ${c}`);
+
+      FILTERED = ALL.filter(card=>{
+        if (t && (card.type||'') !== t) return false;
+        if (r && (card.rarity||'') !== r) return false;
+        if (p && (card.position||'') !== p) return false;
+        if (b && (card.batch||'') !== b) return false;
+        if (c && !String(card.club||'').toLowerCase().includes(c)) return false;
+        return true;
+      });
+    }
+
+    function addChip(txt){
+      const span = document.createElement('span');
+      span.className = 'chip';
+      span.textContent = txt;
+      activeChips.appendChild(span);
+    }
+
+    // --------------------------
+    // Sorting
+    // --------------------------
+    function defaultSort(arr){
+      // by dex_order asc, then rarity hi→lo, then name
+      arr.sort((a,b)=>{
+        const dx = (a.dex_order??999999) - (b.dex_order??999999);
+        if (dx) return dx;
+        const rr = (RANK[b.rarity]||0) - (RANK[a.rarity]||0);
+        if (rr) return rr;
+        return strCmp(a.name,b.name);
+      });
+    }
+    function applySort(){
+      const mode = sortBy.value;
+      const s = (a,b)=>0;
+      switch(mode){
+        case 'nameAZ':
+          FILTERED.sort((a,b)=>strCmp(a.name,b.name));break;
+        case 'nameZA':
+          FILTERED.sort((a,b)=>strCmp(b.name,a.name));break;
+        case 'rarHi':
+          FILTERED.sort((a,b)=>(RANK[b.rarity]||0)-(RANK[a.rarity]||0) || strCmp(a.name,b.name));break;
+        case 'rarLo':
+          FILTERED.sort((a,b)=>(RANK[a.rarity]||0)-(RANK[b.rarity]||0) || strCmp(a.name,b.name));break;
+        case 'clubAZ':
+          FILTERED.sort((a,b)=>strCmp(a.club,b.club) || strCmp(a.name,b.name));break;
+        case 'batchAZ':
+          FILTERED.sort((a,b)=>strCmp(a.batch,b.batch) || strCmp(a.name,b.name));break;
+        default:
+          defaultSort(FILTERED);
+      }
+    }
+    function strCmp(a,b){
+      return String(a||'').localeCompare(String(b||''), undefined, { sensitivity:'base' });
+    }
+
+    // --------------------------
+    // Render
+    // --------------------------
+    function render(){
+      grid.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      for (const card of FILTERED){
+        const ownedQty = HOLDINGS[card.card_id] || 0;
+
+        const item = document.createElement('div');
+        item.className = 'card' + (ownedQty>0? ' owned' : '');
+        item.dataset.cardId = card.card_id;
+
+        const imgbox = document.createElement('div');
+        imgbox.className = 'imgbox';
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = card.name || card.card_id;
+        img.src = card.image_url;
+        img.addEventListener('click', ()=> openModal(card));
+        imgbox.appendChild(img);
+
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = `${card.rarity || '—'}`;
+        imgbox.appendChild(badge);
+
+        const qty = document.createElement('div');
+        qty.className = 'qty';
+        qty.textContent = `× ${ownedQty}`;
+        imgbox.appendChild(qty);
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = card.name || '—';
+
+        const sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.innerHTML = [
+          card.type ? `<span>${card.type}</span>` : '',
+          card.position ? `<span>${card.position}</span>` : '',
+          card.batch ? `<span>${card.batch}</span>` : '',
+          card.club ? `<span>${card.club}</span>` : '',
+        ].filter(Boolean).join('');
+
+        const idrow = document.createElement('div');
+        idrow.className = 'card-id';
+        idrow.innerHTML = `<span>${card.card_id}</span><button class="copy" title="Copy ID">Copy</button>`;
+        idrow.querySelector('.copy').addEventListener('click', ()=>{
+          navigator.clipboard.writeText(card.card_id).then(()=>{
+            toast(`Copied ${card.card_id}`);
+          });
+        });
+
+        meta.appendChild(name);
+        meta.appendChild(sub);
+        meta.appendChild(idrow);
+
+        item.appendChild(imgbox);
+        item.appendChild(meta);
+        frag.appendChild(item);
+      }
+      grid.appendChild(frag);
+    }
+
+    // --------------------------
+    // Modal
+    // --------------------------
+    function openModal(card){
+      modal.classList.add('open');
+      modalImg.src = card.image_url;
+      modalTitle.textContent = `${card.name} — ${card.card_id}`;
+    }
+    function closeModal(){
+      modal.classList.remove('open');
+      modalImg.src = '';
+    }
+
+    // --------------------------
+    // URL State
+    // --------------------------
+    function readParams(){
+      const p = new URLSearchParams(location.search);
+      discordId.value = p.get('id') || '';
+      fType.value = p.get('t') || '';
+      fRar.value  = p.get('r') || '';
+      fPos.value  = p.get('p') || '';
+      fBatch.value= p.get('b') || '';
+      fClub.value = p.get('c') || '';
+      sortBy.value= p.get('s') || '';
+    }
+    function writeParams(){
+      const p = new URLSearchParams();
+      if (discordId.value.trim()) p.set('id',discordId.value.trim());
+      if (fType.value) p.set('t',fType.value);
+      if (fRar.value) p.set('r',fRar.value);
+      if (fPos.value) p.set('p',fPos.value);
+      if (fBatch.value) p.set('b',fBatch.value);
+      if (fClub.value.trim()) p.set('c',fClub.value.trim());
+      if (sortBy.value) p.set('s',sortBy.value);
+      const q = p.toString();
+      const url = q ? `?${q}` : location.pathname;
+      history.replaceState(null,'',url);
+    }
+    function shortId(s){ return s.length>6 ? s.slice(0,3)+'…'+s.slice(-3) : s }
+
+    // --------------------------
+    // Tiny toast
+    // --------------------------
+    function toast(msg){
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.position='fixed';t.style.bottom='18px';t.style.left='50%';t.style.transform='translateX(-50%)';
+      t.style.background='#101526';t.style.border='1px solid #2a3352';t.style.padding='8px 12px';t.style.borderRadius='10px';
+      t.style.boxShadow='0 8px 24px rgba(0,0,0,.45)';t.style.zIndex='30';
+      document.body.appendChild(t);
+      setTimeout(()=>{ t.remove(); }, 1400);
+    }
+  </script>
 </body>
 </html>
-
-
-
