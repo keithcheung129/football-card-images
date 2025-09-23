@@ -476,24 +476,40 @@ async function run(){
 })();
 
 /* ===== Wire up ===== */
-document.addEventListener("DOMContentLoaded", () => {
-  $("#btnApply")?.addEventListener("click", async () => {
-    const btn = $("#btnApply");
-    if (btn) btn.disabled = true;
-    setStatus("Applying filters…");
-    try {
-      await loadCatalogue();                              // always refetch
-      if (getVal("userId","").trim()) await loadOwned();  // overlay if ID present
-      render();                                           // client-side filters run inside render()
-      setStatus("");                                      // hide status
-    } catch (e) {
-      console.error(e);
-      setStatus("⚠️ " + (e?.message || e));
-    } finally {
-      if (btn) btn.disabled = false;
+// Apply = (re)load catalogue → (optionally) overlay owned → render
+$("#btnApply")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("btnApply");
+  if (btn) btn.disabled = true;
+  if (typeof setStatus === "function") setStatus("Applying filters…");
+  if (typeof setLoading === "function") setLoading(true, "Applying filters…");
+
+  try {
+    // Always refresh the catalogue (server may ignore filters; that's OK)
+    await loadCatalogue();
+
+    // If a Discord ID is present, refresh owned overlay; otherwise skip
+    const uid = (typeof getVal === "function"
+      ? getVal("userId", "").trim()
+      : (document.getElementById("userId")?.value || "").trim());
+
+    if (uid && typeof loadOwned === "function") {
+      await loadOwned();
     }
-  run();
-  });
+
+    // Re-render (your render() should apply the current UI filters client-side)
+    if (typeof render === "function") render();
+
+    if (typeof setStatus === "function") setStatus("");
+  } catch (err) {
+    console.error(err);
+    if (typeof setStatus === "function") setStatus("⚠️ " + (err?.message || err));
+  } finally {
+    if (typeof setLoading === "function") setLoading(false);
+    if (btn) btn.disabled = false;
+  }
+});
+
 
 
   $("#btnClear")?.addEventListener("click", () => {
@@ -533,5 +549,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
