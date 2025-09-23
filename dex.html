@@ -232,45 +232,21 @@ async function loadCatalogue(){
 
 
 async function loadOwned(){
-  const uid = getVal("userId","").trim();
+  const uid = getVal("userId", "").trim();
   OWN_COUNTS = {};
-  if (!uid) {
-    $("#tickets").textContent = "–";
-    $("#tokens").textContent  = "–";
+  // Don't fetch owned info unless a user ID is present
+  if (!uid) { 
+    // also clear balances display when no user
+    document.getElementById("tickets").textContent = "–";
+    document.getElementById("tokens").textContent  = "–";
     return;
   }
-
-  // Try fast path first
   const data = await api("collection", { user_id: uid, aggregate_only: true });
-  if (data && data.counts_by_card) {
-    OWN_COUNTS = data.counts_by_card || {};
-    const bal = data.balances || {};
-    $("#tickets").textContent = bal.tickets ?? "–";
-    $("#tokens").textContent  = bal.tokens ?? "–";
-    return;
-  }
-
-  // Fallback: page through collection and count
-  let page = 1, page_size = 500, total = 0, got = 0;
-  const counts = {};
-  let balancesSeen = null;
-
-  do {
-    const res = await api("collection", { user_id: uid, page, page_size });
-    const items = res.items || [];
-    items.forEach(it => { counts[it.card_id] = (counts[it.card_id] || 0) + 1; });
-    if (!balancesSeen && res.balances) balancesSeen = res.balances;
-
-    total = Number(res.total || items.length);
-    got += items.length;
-    page++;
-  } while (got < total && page < 100);
-
-  OWN_COUNTS = counts;
-  $("#tickets").textContent = balancesSeen?.tickets ?? "–";
-  $("#tokens").textContent  = balancesSeen?.tokens  ?? "–";
+  OWN_COUNTS = data.counts_by_card || {};
+  const bal = data.balances || {};
+  document.getElementById("tickets").textContent = bal.tickets ?? "–";
+  document.getElementById("tokens").textContent  = bal.tokens ?? "–";
 }
-
 
 // Debounced overlay update when typing Discord ID
 let ownedTimer;
@@ -316,30 +292,6 @@ function sortCards(arr){
   return arr;
 }
 
-function applyClientFilters(cards){
-  const t  = getVal("type","ALL");
-  const r  = U(getVal("rarity","ALL"));
-  const p  = U(getVal("position","ALL"));
-  const b  = getVal("batch","ALL");
-  const c  = getVal("club","ALL");
-  const q  = getVal("search","").trim().toLowerCase();
-
-  return cards.filter(x => {
-    if (t !== "ALL" && String(x.type||"") !== t) return false;
-    if (r !== "ALL" && U(x.rarity)   !== r)     return false;
-    if (p !== "ALL" && U(x.position) !== p)     return false;
-    if (b !== "ALL" && String(x.batch||"") !== b) return false;
-    if (c !== "ALL" && String(x.club||"")  !== c) return false;
-    if (q) {
-      const hay = `${x.card_id||""} ${x.name||""} ${x.club||""}`.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
-}
-
-
-  
 function render(){
   const root = document.getElementById("dex");
   root.innerHTML = "";
@@ -347,7 +299,7 @@ function render(){
   const hasUser = getVal("userId", "").trim().length > 0;
   const missingOnly = getChecked("missingOnly") && hasUser;
 
-  const cards = applyClientFilters(sortCards(ALL_CARDS.slice()))
+  const cards = sortCards(ALL_CARDS.slice())
     .filter(c => !(missingOnly && (OWN_COUNTS[c.card_id] || 0) > 0)); // only hide owned if user entered
 
   for (const c of cards){
@@ -472,7 +424,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
-
 
 
 
