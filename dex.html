@@ -266,6 +266,7 @@
     // ==========================
     // CONFIG – tweak to match your Worker
     // ==========================
+    const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
     const API = {
       cards:   '/api/cards', // returns array of card objects
       holding: (discordId) => `/api/collection?discord_id=${encodeURIComponent(discordId)}&active_only=1`,
@@ -293,6 +294,10 @@
     let PRICES = null;          // { byRarity: { R:{sell,craft}, ... } }
     let META = null;   // will hold { CraftingCosts: {...}, SELL_YIELD: {...} } if present
 
+
+    
+    // fetch holdings / active items
+    const data = await callApi('collection', { user_id: discordId });
 
     // Elements
     const el = (id) => document.getElementById(id);
@@ -325,83 +330,68 @@
     // --------------------------
     boot();
 
-    async function boot(){
+    async function boot() {
       try {
-        // hydrate from URL params
-        readParams();
+        // Load catalog + meta once
+        const data = await callApi("cards", {});
+        ALL = Array.isArray(data) ? data : (data.items || []);
 
-        // parallel fetch core data
-        const [cardsRes] = await Promise.allSettled([
-          fetch(API.cards, { credentials:'include' })
-        ]);
+        // Show Sell & Craft legend if meta is present
+        if (data.meta) renderLegendFromMeta(data.meta);
 
-        if (cardsRes.status === 'fulfilled') {
-          const raw = await cardsRes.value.json();
-          if (Array.isArray(raw)) {
-            ALL = raw;
-            META = null;
-          } else {
-            ALL  = raw.cards || [];
-            META = raw.meta  || null;   // look for CraftingCosts / SELL_YIELD here
-          }
-        } else {
-          throw new Error('Failed to load cards list.');
-        }
-
-        renderLegendFromMeta(META);
-
-
-        if (pricesRes.status === 'fulfilled' && pricesRes.value.ok) {
-          PRICES = await pricesRes.value.json();
-          renderLegend(PRICES);
-        } // else silently hide legend
-
-        // initial render: show all cards DIMMED (owned overlay will update after holdings load)
+        // Initial render: all cards dimmed
         FILTERED = ALL.slice();
         defaultSort(FILTERED);
         render();
 
-        
-
         countTxt.textContent = `${FILTERED.length} cards`;
       } catch (err) {
-        countTxt.textContent = 'Failed to load. Check API / origin.';
-        console.error(err);
+        console.error("Failed to load cards:", err);
+        countTxt.textContent = "Failed to load cards.";
       }
 
-      // bind events
-      applyBtn.addEventListener('click', onApply);
-      resetBtn.addEventListener('click', onReset);
-
-      // modal events
-      modal.addEventListener('click', (e)=> {
-        if (e.target === modal) closeModal();
-      });
-      modalClose.addEventListener('click', closeModal);
+      // Hook buttons
+      applyBtn.addEventListener("click", onApply);
+      resetBtn.addEventListener("click", onReset);
     }
 
 
-    function renderLegendFromMeta(meta){
+
+
+    async function callApi(action, payload = {}) {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,500)}`);
+      const body = JSON.parse(text);
+      return ('ok' in body && 'data' in body) ? body.data : body;
+    }
+
+
+
+    function renderLegendFromMeta(meta) {
       legend.hidden = true;
       legendRows.innerHTML = '';
       if (!meta) return;
 
-      const craft = meta.CraftingCosts || meta.craftingCosts || null;
-      const sell  = meta.SELL_YIELD    || meta.sell_yield    || null;
-
-      // Need at least one of them to show the table
-      if (!craft && !sell) return;
+      const sell  = meta.SELL_YIELD || {};
+      const craft = meta.CraftingCosts || {};
 
       const order = ['SSR','SR','AR','R','N'];
-      for (const r of order){
-        const tr = document.createElement('tr');
-        const craftVal = craft?.[r] ?? '—';
-        const sellVal  = sell?.[r]  ?? '—';
-        tr.innerHTML = `<td><strong>${r}</strong></td><td>${sellVal}</td><td>${craftVal}</td>`;
-        legendRows.appendChild(tr);
+      for (const r of order) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td><strong>${r}</strong></td>
+                         <td>${sell[r] ?? '—'}</td>
+                         <td>${craft[r] ?? '—'}</td>`;
+        legendRows.appendChild(row);
       }
+
       legend.hidden = false;
     }
+
 
 
     async function loadHoldings(id){
@@ -422,34 +412,34 @@
     // --------------------------
     // Apply / Reset
     // --------------------------
-    async function onApply(){
-      // loader visible immediately; Apply must work even with NO ID
+    async function onApply() {
       setApplying(true);
       try {
-        // 1) Update holdings (if any ID given). Never block filtering on missing ID.
         const id = discordId.value.trim();
+        HOLDINGS = {};
+
         if (id) {
-          await loadHoldings(id);
-        } else {
-          HOLDINGS = {}; // clear if removed
-          addChip('Showing all cards (no ID)');
+          const data = await callApi("collection", { user_id: id });
+          HOLDINGS = (data.items || []).reduce((acc, it) => {
+            acc[it.card_id] = (acc[it.card_id] || 0) + 1;
+            return acc;
+          }, {});
         }
 
-        // 2) Filter/sort
         applyFilters();
         applySort();
-
-        // 3) Persist to URL for shareability
-        writeParams();
-
-        // 4) Render
         render();
 
         countTxt.textContent = `${FILTERED.length} cards`;
+      } catch (err) {
+        console.error("Apply failed:", err);
+        countTxt.textContent = "Error applying filters.";
       } finally {
         setApplying(false);
       }
     }
+
+
 
     function onReset(){
       // clear inputs
