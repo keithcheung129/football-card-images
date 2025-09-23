@@ -271,16 +271,7 @@
     const normalized = arr.map(raw => normalizeItem(raw));
     return normalized;
   });
-        if (!res.ok) continue;
-        const data = await res.json();
-        const arr = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : (Array.isArray(data.cards) ? data.cards : null));
-        if (!arr) continue;
-        const normalized = arr.map(raw => normalizeItem(raw));
-        return normalized;
-      } catch (e) { /* try next endpoint */ }
-    }
-    throw new Error('No dex endpoint responded with data. Ensure your Worker exposes /api/dex or /api/cards.');
-  }
+        
 
   function normalizeItem(raw){
     const F = CONFIG.FIELDS;
@@ -499,6 +490,7 @@
   </script>
 </body>
 </html>
+
 
 
 
