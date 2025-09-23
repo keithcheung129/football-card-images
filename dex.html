@@ -21,6 +21,7 @@
     .fade-in { animation: fade .35s ease-in both; }
     @keyframes fade { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
     .badge { font-variant-numeric: tabular-nums; }
+    .copy-toast { position: fixed; inset-inline: 0; bottom: 16px; margin: auto; max-width: 320px; }
   </style>
 </head>
 <body class="bg-neutral-950 text-neutral-100">
@@ -29,11 +30,14 @@
       <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400/20 to-cyan-400/20 grid place-items-center ring-1 ring-emerald-300/30">
         <span class="font-extrabold text-emerald-300">TLK</span>
       </div>
-      <div class="flex-1">
-        <h1 class="text-lg sm:text-xl font-bold tracking-tight">The Last Kick — Card Dex</h1>
-        <p class="text-xs text-neutral-400">Browse every card across batches, clubs, rarities & more.</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-lg sm:text-xl font-bold tracking-tight truncate">The Last Kick — Card Dex</h1>
+        <p class="text-xs text-neutral-400 truncate">Browse every card across batches, clubs, rarities & more.</p>
       </div>
-      <!-- Right: soft stats -->
+      <!-- Right: links & soft stats -->
+      <nav class="hidden sm:flex items-center gap-3">
+        <a href="./inventory.html" class="text-sm text-emerald-300 hover:text-emerald-200 underline underline-offset-4">Open Inventory →</a>
+      </nav>
       <div id="stats" class="text-xs text-neutral-400 hidden sm:block"></div>
     </div>
   </header>
@@ -41,10 +45,15 @@
   <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
     <!-- Controls -->
     <section class="mb-4 grid grid-cols-1 md:grid-cols-12 gap-3">
-      <div class="md:col-span-5">
+      <div class="md:col-span-4">
         <label class="sr-only" for="q">Search</label>
         <input id="q" type="search" placeholder="Search name, club, effect…"
                class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-400 shadow-soft" />
+      </div>
+      <div class="md:col-span-2">
+        <select id="club" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
+          <option value="">All Clubs</option>
+        </select>
       </div>
       <div class="md:col-span-2">
         <select id="rarity" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
@@ -74,13 +83,33 @@
           <option value="Base U">Base U</option>
         </select>
       </div>
-      <div class="md:col-span-1 flex items-center gap-2">
-        <button id="resetBtn" class="w-full rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-3 py-2.5 text-sm">Reset</button>
+      <div class="md:col-span-12 flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <label for="sort" class="text-xs text-neutral-400">Sort</label>
+          <select id="sort" class="rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400">
+            <option value="rarity-desc">Rarity (SSR→N)</option>
+            <option value="name-asc">Name (A→Z)</option>
+            <option value="club-asc">Club (A→Z)</option>
+            <option value="batch-asc">Batch (A→Z)</option>
+            <option value="id-asc">ID (A→Z)</option>
+          </select>
+        </div>
+        <button id="resetBtn" class="rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-3 py-2 text-sm">Reset</button>
+        <a href="./inventory.html" class="ml-auto text-sm text-emerald-300 hover:text-emerald-200 underline underline-offset-4">Open Inventory →</a>
       </div>
     </section>
 
     <!-- Grid -->
     <section id="grid" class="grid grid-auto gap-4"></section>
+
+    <!-- Economy Legend -->
+    <section class="mt-8">
+      <div class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
+        <h2 class="font-semibold mb-3">Crafting & Selling — Legend</h2>
+        <div id="legend" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm"></div>
+        <p class="text-xs text-neutral-400 mt-2">Values pulled from page config. Adjust in <code>CONFIG.CRAFT</code> and <code>CONFIG.SELL</code>.</p>
+      </div>
+    </section>
 
     <!-- Sentinel for lazy rendering -->
     <div id="sentinel" class="h-16"></div>
@@ -117,15 +146,23 @@
         </div>
         <p class="text-xs text-neutral-400 truncate"></p>
       </div>
+      <!-- Card footer: copyable ID -->
+      <div class="mt-2">
+        <button class="copy-id w-full text-[11px] text-neutral-300/90 bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700 rounded-xl px-2 py-1">Copy ID</button>
+      </div>
     </article>
   </template>
+
+  <div id="toast" class="copy-toast hidden">
+    <div class="rounded-xl bg-emerald-600 text-white px-3 py-2 text-sm shadow-soft border border-emerald-300/40">Copied!</div>
+  </div>
 
   <script>
   // ==== CONFIG ==============================================================
   // This page is designed to work with your Cloudflare Worker proxying Google Apps Script.
   // It will try a few conventional endpoints so you don't need to edit code if you kept naming similar to inventory.html.
   const CONFIG = {
-    API_BASE: 'https://the-last-kick.keithcheung129.workers.dev/api', // same origin by default. e.g. '' or 'https://yourdomain.tld'
+    API_BASE: '', // same origin by default. e.g. '' or 'https://yourdomain.tld'
     ENDPOINTS: [
       '/api/dex',                 // preferred: returns array of all cards
       '/api/cards',               // fallback: returns array
@@ -140,11 +177,14 @@
       batch: ['batch','set'],
       club: ['club','team'],
       position: ['pos','position'],
-      type: ['type','gk_outfield','class'], // accepts GK/OT or Speed/Technical/Physical
-      image: ['image','image_url','img','url'], // full-size image URL
+      type: ['type'], // accepts GK/OT or Speed/Technical/Physical
+      image: ['image','image_url','image_ref','url'], // full-size image URL
       thumb: ['thumb','thumb_url','thumbnail'] // optional small image URL
     },
-    PAGE_SIZE: 48
+    PAGE_SIZE: 48,
+    // Economy config (edit to your real values)
+    CRAFT: { N: 6, R: 10, AR: 20, SR: 60, SSR: 200 },
+    SELL:  { N: 1,  R: 1,  AR: 3, SR: 8,  SSR: 30 }
   };
 
   // ==== UTILITIES ===========================================================
@@ -179,11 +219,20 @@
   }
 
   function buildQueryIndex(items){
-    // Build a basic index string for each item to speed up filtering
     for (const it of items){
       const hay = [it.name, it.club, it.batch, it.position, it.type, it.id].filter(Boolean).join(' ').toLowerCase();
       it.__hay = hay;
     }
+  }
+
+  function uniqSorted(values){
+    return Array.from(new Set(values.filter(Boolean))).sort((a,b)=>toStr(a).localeCompare(toStr(b)));
+  }
+
+  function showToast(){
+    const t = qs('#toast');
+    if (!t) return; t.classList.remove('hidden');
+    setTimeout(()=>t.classList.add('hidden'), 900);
   }
 
   // ==== DATA LAYER ==========================================================
@@ -218,13 +267,14 @@
   }
 
   // ==== RENDERING ===========================================================
-  const state = { all: [], filt: [], page: 0 };
+  const state = { all: [], filt: [], page: 0, sort: 'rarity-desc' };
 
   function applyFilters(){
     const q = qs('#q').value.trim().toLowerCase();
     const rarity = qs('#rarity').value;
     const type = qs('#type').value;
     const batch = qs('#batch').value;
+    const club = qs('#club').value;
 
     state.page = 0;
     state.filt = state.all.filter(it => {
@@ -239,11 +289,26 @@
         }
       }
       if (batch && it.batch !== batch) return false;
+      if (club && it.club !== club) return false;
       return true;
     });
 
+    sortItems();
     renderChunk(true);
     updateStats();
+  }
+
+  function sortItems(){
+    const s = state.sort;
+    const ord = ['SSR','SR','AR','R','N'];
+    const cmp = {
+      'rarity-desc': (a,b)=> ord.indexOf(a.rarity) - ord.indexOf(b.rarity) || toStr(a.name).localeCompare(toStr(b.name)),
+      'name-asc':   (a,b)=> toStr(a.name).localeCompare(toStr(b.name)) || ord.indexOf(a.rarity) - ord.indexOf(b.rarity),
+      'club-asc':   (a,b)=> toStr(a.club).localeCompare(toStr(b.club)) || toStr(a.name).localeCompare(toStr(b.name)),
+      'batch-asc':  (a,b)=> toStr(a.batch).localeCompare(toStr(b.batch)) || toStr(a.name).localeCompare(toStr(b.name)),
+      'id-asc':     (a,b)=> toStr(a.id).localeCompare(toStr(b.id))
+    }[s] || ((a,b)=>0);
+    state.filt.sort(cmp);
   }
 
   function updateStats(){
@@ -253,7 +318,7 @@
     const shown = state.filt.length;
     const byRar = groupCount(state.filt, 'rarity');
     const chips = Object.entries(byRar).sort((a,b)=>rarOrder(b[0])-rarOrder(a[0]))
-      .map(([r,c])=>`<span class="ml-2">${rarityEmoji(r)} <span class="text-neutral-200">${r}</span> ${c}</span>`).join('');
+      .map(([r,c])=>`<span class=\"ml-2\">${rarityEmoji(r)} <span class=\"text-neutral-200\">${r}</span> ${c}</span>`).join('');
     s.innerHTML = `<span class="text-neutral-300">${shown}</span>/<span>${total}</span> cards ${chips}`;
   }
 
@@ -286,6 +351,7 @@
     const sub = tpl.querySelector('p');
     const badge = tpl.querySelector('.badge');
     const openBtn = tpl.querySelector('button');
+    const copyBtn = tpl.querySelector('.copy-id');
 
     img.loading = 'lazy';
     img.decoding = 'async';
@@ -304,11 +370,17 @@
 
     openBtn.addEventListener('click', () => openModal(it));
 
+    // copy ID footer
+    copyBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try { await navigator.clipboard.writeText(it.id || ''); showToast(); } catch(_) {}
+    });
+    copyBtn.textContent = (it.id ? `Copy ID: ${it.id}` : 'Copy ID');
+
     return root;
   }
 
   function placeholder(it){
-    // minimal inline SVG placeholder with rarity color hint
     const col = ({SSR:'#f5d90a', SR:'#f59f0b', AR:'#a78bfa', R:'#60a5fa', N:'#e5e7eb'})[it.rarity] || '#94a3b8';
     const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='840'>\n<defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='${col}' stop-opacity='.25'/><stop offset='1' stop-color='#111827' stop-opacity='.9'/></linearGradient></defs>\n<rect width='100%' height='100%' fill='url(#g)'/>\n<text x='50%' y='50%' text-anchor='middle' fill='white' font-size='28' font-family='Inter, Arial' opacity='.8'>${(it.name||'Unknown').replace(/</g,'&lt;')}</text>\n</svg>`);
     return `data:image/svg+xml;charset=utf-8,${svg}`;
@@ -339,27 +411,51 @@
     }
   }, { rootMargin: '800px 0px' });
 
+  function renderLegend(){
+    const root = qs('#legend');
+    const rarOrder = ['SSR','SR','AR','R','N'];
+    root.innerHTML = '';
+    for (const r of rarOrder){
+      const box = document.createElement('div');
+      box.className = 'rounded-xl border border-neutral-800 bg-neutral-950 p-3';
+      box.innerHTML = `
+        <div class="text-sm font-semibold">${rarityEmoji(r)} ${r}</div>
+        <div class="text-xs text-neutral-400 mt-1">Craft: <span class="text-neutral-200">${CONFIG.CRAFT[r] ?? '-'}</span></div>
+        <div class="text-xs text-neutral-400">Sell: <span class="text-neutral-200">${CONFIG.SELL[r] ?? '-'}</span></div>
+      `;
+      root.appendChild(box);
+    }
+  }
+
+  function populateClubFilter(){
+    const sel = qs('#club');
+    const clubs = uniqSorted(state.all.map(x=>x.club));
+    for (const c of clubs){
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c; sel.appendChild(opt);
+    }
+  }
+
   // ==== WIRE-UP =============================================================
-  ['#q','#rarity','#type','#batch'].forEach(sel => qs(sel).addEventListener('input', applyFilters));
+  ['#q','#rarity','#type','#batch','#club'].forEach(sel => qs(sel).addEventListener('input', applyFilters));
   qs('#resetBtn').addEventListener('click', () => {
-    ['#q','#rarity','#type','#batch'].forEach(sel => qs(sel).value = '');
+    ['#q','#rarity','#type','#batch','#club'].forEach(sel => qs(sel).value = '');
+    qs('#sort').value = 'rarity-desc';
+    state.sort = 'rarity-desc';
     applyFilters();
   });
+  qs('#sort').addEventListener('change', (e)=>{ state.sort = e.target.value; sortItems(); renderChunk(true); });
 
   (async function init(){
     try {
       const all = await fetchDex();
-      // Sort best-first (SSR→N), then name
-      all.sort((a,b)=>{
-        const ord = ['SSR','SR','AR','R','N'];
-        const dr = ord.indexOf(a.rarity) - ord.indexOf(b.rarity);
-        if (dr !== 0) return dr; // SSR first
-        return toStr(a.name).localeCompare(toStr(b.name));
-      });
       state.all = all;
       buildQueryIndex(state.all);
+      populateClubFilter();
+      state.sort = qs('#sort').value;
       applyFilters();
       io.observe(qs('#sentinel'));
+      renderLegend();
     } catch (err) {
       console.error(err);
       qs('#grid').innerHTML = `
