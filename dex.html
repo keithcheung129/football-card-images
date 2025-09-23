@@ -375,8 +375,10 @@ function render(){
   const hasUser = getVal("userId", "").trim().length > 0;
   const missingOnly = getChecked("missingOnly") && hasUser;
 
+  // 1) filter, then 2) sort, then 3) optional "missing only"
   const cards = sortCards(applyClientFilters(ALL_CARDS.slice()))
-    .filter(c => !(missingOnly && (OWN_COUNTS[c.card_id] || 0) > 0)); // only hide owned if user entered
+    .filter(c => !(getChecked("missingOnly") && getVal("userId","").trim() && OWN_COUNTS[String(c.card_id)]));
+
 
   for (const c of cards){
     const ownedCount = hasUser ? (OWN_COUNTS[c.card_id] || 0) : 0;
@@ -475,7 +477,23 @@ async function run(){
 
 /* ===== Wire up ===== */
 document.addEventListener("DOMContentLoaded", () => {
-  $("#btnApply")?.addEventListener("click", run);
+  $("#btnApply")?.addEventListener("click", async () => {
+    const btn = $("#btnApply");
+    if (btn) btn.disabled = true;
+    setStatus("Applying filters…");
+    try {
+      await loadCatalogue();                              // always refetch
+      if (getVal("userId","").trim()) await loadOwned();  // overlay if ID present
+      render();                                           // client-side filters run inside render()
+      setStatus("");                                      // hide status
+    } catch (e) {
+      console.error(e);
+      setStatus("⚠️ " + (e?.message || e));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
 
   $("#btnClear")?.addEventListener("click", () => {
     setVal("userId", "");
@@ -491,15 +509,21 @@ document.addEventListener("DOMContentLoaded", () => {
     run();
   });
 
-  // Live “owned overlay” update when typing Discord ID
+  // Debounced overlay update when typing Discord ID
   let ownedTimer;
-  $("#userId")?.addEventListener("input", () => {
+  document.getElementById("userId")?.addEventListener("input", () => {
     clearTimeout(ownedTimer);
     ownedTimer = setTimeout(async () => {
-      await loadOwned();   // no-op if empty; fetch counts if provided
-      render();            // stays dimmed by default; lights owned when ID present
+      setLoading(true, "Checking your collection…");
+      try {
+        await loadOwned();   // builds OWN_COUNTS
+        render();            // lights owned + counts
+      } finally {
+        setLoading(false);
+      }
     }, 300);
   });
+
 
   run(); // initial load: shows all cards dimmed
 });
@@ -508,13 +532,4 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
