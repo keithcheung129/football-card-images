@@ -150,15 +150,14 @@ function populateFilters(list) {
   fill('p_type','Player Type', distinct('p_type'));
 
   // p_type is only meaningful for players
-  $('#pType').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
+  $('#p_type').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
 }
 
 // ---- filtering (client-side only) ----
 function applyFilters() {
   const q = ($('#q').value || '').trim().toLowerCase();
   const category = $('#category').value || 'ALL';
-  const pType = $('#pType').value || 'ALL';
-  const gko = $('#gko').value || 'ALL';
+  const p_type = $('#p_type').value || 'ALL';
   const rarity = $('#rarity').value || 'ALL';
   const position = $('#position').value || 'ALL';
   const batch = $('#batch').value || 'ALL';
@@ -168,8 +167,7 @@ function applyFilters() {
   let items = ALL.filter(it => {
     if (q && !(it.name + ' ' + it.club + ' ' + it.card_id).toLowerCase().includes(q)) return false;
     if (category !== 'ALL' && it.category !== category) return false;
-    if (category === 'player' && pType !== 'ALL' && it.p_type !== pType) return false;
-    if (gko !== 'ALL' && it.gko !== gko) return false;
+    if (category === 'player' && p_type !== 'ALL' && it.p_type !== p_type) return false;
     if (rarity !== 'ALL' && it.rarity !== rarity) return false;
     if (position !== 'ALL' && it.position !== position) return false;
     if (batch !== 'ALL' && it.batch !== batch) return false;
