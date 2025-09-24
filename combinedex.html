@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Last Kick — Inventory + Dex</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --card-w: 220px; --card-h: 308px; }
+    html, body { height: 100%; }
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    .grid-auto { grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); }
+    .card-img { width: 100%; height: var(--card-h); object-fit: cover; border-radius: 1rem; }
+    .chip { border: 1px solid rgba(255,255,255,0.12); }
+    .shadow-soft { box-shadow: 0 10px 25px rgba(0,0,0,.25); }
+    .tab { @apply px-3 py-1.5 rounded-xl border text-sm; }
+    .copy-toast { position: fixed; inset-inline: 0; bottom: 16px; margin: auto; max-width: 320px; }
+  </style>
+</head>
+<body class="bg-neutral-950 text-neutral-100">
+  <header class="sticky top-0 z-40 border-b border-neutral-800 bg-neutral-950/70 backdrop-blur">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400/20 to-cyan-400/20 grid place-items-center ring-1 ring-emerald-300/30">
+        <span class="font-extrabold text-emerald-300">TLK</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-lg sm:text-xl font-bold tracking-tight truncate">The Last Kick — Inventory + Dex</h1>
+        <p class="text-xs text-neutral-400 truncate">Your collection and the full card dex in one place.</p>
+      </div>
+      <nav class="hidden sm:flex items-center gap-4 text-sm">
+        <a class="text-emerald-300 underline underline-offset-4" href="./inventory.html">Legacy Inventory</a>
+        <a class="text-emerald-300 underline underline-offset-4" href="./dex.html">Standalone Dex</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Mode Toggle -->
+    <div class="mb-4 flex items-center gap-2">
+      <button id="tabCollection" class="tab border-neutral-700 bg-neutral-800 text-neutral-100">Collection</button>
+      <button id="tabDex" class="tab border-neutral-800 bg-neutral-900 text-neutral-300">Dex</button>
+      <span class="text-xs text-neutral-400 ml-2">Tip: append <code>?mode=dex</code> to open Dex by default.</span>
+      <div id="balances" class="ml-auto text-xs text-neutral-300 hidden"></div>
+    </div>
+
+    <!-- Controls Row -->
+    <section class="mb-4 grid grid-cols-1 md:grid-cols-12 gap-3">
+      <div class="md:col-span-4">
+        <input id="q" type="search" placeholder="Search name, club, effect…"
+               class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-400 shadow-soft" />
+      </div>
+      <div class="md:col-span-2">
+        <select id="club" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
+          <option value="">All Clubs</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <select id="rarity" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
+          <option value="">All Rarities</option>
+          <option value="N">N</option>
+          <option value="R">R</option>
+          <option value="AR">AR</option>
+          <option value="SR">SR</option>
+          <option value="SSR">SSR</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <select id="type" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
+          <option value="">All Types</option>
+          <option value="Speed">Speed</option>
+          <option value="Technical">Technical</option>
+          <option value="Physical">Physical</option>
+          <option value="GK">GK</option>
+          <option value="OT">Outfield</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <select id="batch" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
+          <option value="">All Batches</option>
+          <option value="Base">Base</option>
+          <option value="Base SSR">Base SSR</option>
+          <option value="Base U">Base U</option>
+        </select>
+      </div>
+      <div class="md:col-span-12 flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <label for="sort" class="text-xs text-neutral-400">Sort</label>
+          <select id="sort" class="rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400">
+            <option value="rarity-desc">Rarity (SSR→N)</option>
+            <option value="name-asc">Name (A→Z)</option>
+            <option value="club-asc">Club (A→Z)</option>
+            <option value="batch-asc">Batch (A→Z)</option>
+            <option value="id-asc">ID (A→Z)</option>
+          </select>
+        </div>
+        <label id="uniqueWrap" class="hidden items-center gap-2 text-sm text-neutral-300">
+          <input id="uniqueOnly" type="checkbox" class="accent-emerald-500">
+          Unique only
+        </label>
+        <div class="ml-auto flex items-center gap-2">
+          <button id="resetBtn" class="rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-3 py-2 text-sm">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid -->
+    <section id="grid" class="grid grid-auto gap-4"></section>
+
+    <!-- Pager (collection) -->
+    <div id="pager" class="mt-4 hidden flex items-center gap-2 text-sm">
+      <button id="prevPage" class="px-3 py-1.5 rounded-lg bg-neutral-800 border border-neutral-700 disabled:opacity-40">Prev</button>
+      <span id="pageInfo" class="text-neutral-300"></span>
+      <button id="nextPage" class="px-3 py-1.5 rounded-lg bg-neutral-800 border border-neutral-700 disabled:opacity-40">Next</button>
+    </div>
+
+    <!-- Economy Legend (dex only) -->
+    <section id="legendWrap" class="mt-8 hidden">
+      <div class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
+        <h2 class="font-semibold mb-3">Crafting & Selling — Legend</h2>
+        <div id="legend" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm"></div>
+        <p class="text-xs text-neutral-400 mt-2">Values from API meta (fallback to CONFIG if not present).</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Card template -->
+  <template id="cardTpl">
+    <article class="bg-neutral-900 border border-neutral-800 rounded-2xl p-2 shadow-soft">
+      <div class="relative">
+        <img class="card-img bg-neutral-800/60" alt="card" />
+        <div class="absolute left-2 top-2 flex gap-1 flex-wrap"></div>
+      </div>
+      <div class="pt-2 px-1">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="truncate font-semibold"></h3>
+          <span class="badge text-xs text-neutral-300"></span>
+        </div>
+        <p class="text-xs text-neutral-400 truncate"></p>
+      </div>
+      <div class="mt-2">
+        <button class="copy-id w-full text-[11px] text-neutral-300/90 bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700 rounded-xl px-2 py-1">Copy ID</button>
+      </div>
+    </article>
+  </template>
+
+  <div id="toast" class="copy-toast hidden">
+    <div class="rounded-xl bg-emerald-600 text-white px-3 py-2 text-sm shadow-soft border border-emerald-300/40">Copied!</div>
+  </div>
+
+  <script>
+  const CONFIG = {
+    API_BASE: 'https://the-last-kick.keithcheung129.workers.dev/api',
+    FIELDS: {
+      id: ['id','card_id','printcode','code'],
+      name: ['name','player','title'],
+      rarity: ['rarity'],
+      batch: ['batch','set'],
+      club: ['club','team'],
+      position: ['pos','position'],
+      type: ['type'],
+      image: ['image','image_url','img_ref','url'],
+      thumb: ['thumb','thumb_url','thumbnail']
+    },
+    PAGE_SIZE: 48,
+    COLLECTION_PAGE_SIZE: 60,
+    CRAFT: { N: 10, R: 25, AR: 60, SR: 200, SSR: 800 },
+    SELL:  { N: 2,  R: 6,  AR: 18, SR: 75,  SSR: 300 }
+  };
+
+  // --- helpers
+  const qs = s => document.querySelector(s);
+  const qsa = s => Array.from(document.querySelectorAll(s));
+  const toStr = x => x==null ? '' : String(x);
+  const rarityEmoji = r => ({N:'⚪',R:'🟦',AR:'🟪',SR:'🟧',SSR:'🟨'})[r] || '⬜';
+  const pick = (o, keys, d='') => { for (const k of keys){ if (o && o[k]!=null && String(o[k]).length) return o[k]; } return d; };
+  const normType = t => { t = toStr(t).toUpperCase(); if (t==='GK') return 'GK'; if (t==='OT'||t==='OUTFIELD') return 'OT'; if(['SPEED','TECHNICAL','PHYSICAL'].includes(t)) return t[0]+t.slice(1).toLowerCase(); return t; };
+  const placeholder = (it)=>{ const col = ({SSR:'#f5d90a',SR:'#f59f0b',AR:'#a78bfa',R:'#60a5fa',N:'#e5e7eb'})[it.rarity] || '#94a3b8'; const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='840'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='${col}' stop-opacity='.25'/><stop offset='1' stop-color='#111827' stop-opacity='.9'/></linearGradient></defs><rect width='100%' height='100%' fill='url(#g)'/><text x='50%' y='50%' text-anchor='middle' fill='white' font-size='28' font-family='Inter, Arial' opacity='.8'>${(it.name||'Unknown').replace(/</g,'&lt;')}</text></svg>`); return `data:image/svg+xml;charset=utf-8,${svg}`; };
+
+  // --- state
+  const state = {
+    mode: 'collection',
+    all: [], // dex items
+    filt: [],
+    page: 0,
+    sort: 'rarity-desc',
+    // collection
+    colItems: [],
+    colTotal: 0,
+    colPage: 1,
+    colPageSize: CONFIG.COLLECTION_PAGE_SIZE,
+    balances: null,
+    uniqueOnly: false,
+    // meta
+    sellYield: null,
+    craftSheet: null
+  };
+
+  // --- API
+  async function callAPI(body){
+    const res = await fetch(CONFIG.API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const text = await res.text();
+    if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,200)}`);
+    let data; try { data = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
+    return (data && typeof data==='object' && 'ok' in data && 'data' in data) ? data.data : data;
+  }
+
+  async function loadDex(){
+    const payload = await callAPI({ action:'cards', type:'ALL', batch:'ALL', rarity:'ALL', position:'ALL', club:'ALL' });
+    const items = Array.isArray(payload.items) ? payload.items : (Array.isArray(payload) ? payload : []);
+    state.all = items.map(normalizeItem);
+    buildQueryIndex(state.all);
+    if (payload.meta){
+      state.sellYield = payload.meta.SELL_YIELD || null;
+      state.craftSheet = payload.meta.CraftingCosts || payload.meta.CraftingCost || null;
+      if (state.sellYield) CONFIG.SELL = state.sellYield;
+      const craft = parseCraftSheet(state.craftSheet);
+      if (craft) CONFIG.CRAFT = craft;
+    }
+  }
+
+  async function loadCollection(){
+    const body = {
+      action: 'collection',
+      page: state.colPage,
+      page_size: state.colPageSize,
+      rarity: qs('#rarity').value || 'ALL',
+      position: qs('#type').value || 'ALL',
+      batch: qs('#batch').value || 'ALL',
+      club: qs('#club').value || 'ALL',
+      unique_only: state.uniqueOnly ? 1 : 0
+    };
+    const payload = await callAPI(body);
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    state.colItems = items.map(normalizeItem);
+    state.colTotal = payload.total || state.colItems.length;
+    state.balances = payload.balances || null;
+  }
+
+  function parseCraftSheet(sheet){
+    if (!Array.isArray(sheet) || sheet.length < 2) return null;
+    const head = sheet[0].map(h=>String(h).trim());
+    const idx = Object.fromEntries(head.map((h,i)=>[h,i]));
+    const out = {};
+    for (const r of sheet.slice(1)){
+      const rarity = r[idx.rarity];
+      const allowed = r[idx.allowed];
+      const price   = r[idx.price_amount];
+      const mode    = (r[idx.mode]||'').toString().toLowerCase();
+      if (String(allowed)==='1' && rarity && price!=null && (mode==='specific' || mode==='random')){
+        out[rarity] = (mode==='specific') ? price : (out[rarity] ?? price);
+      }
+    }
+    return Object.keys(out).length ? out : null;
+  }
+
+  function normalizeItem(raw){
+    const F = CONFIG.FIELDS;
+    const id = pick(raw, F.id);
+    const name = pick(raw, F.name);
+    const rarity = toStr(pick(raw, F.rarity)).toUpperCase();
+    const batch = pick(raw, F.batch);
+    const club = pick(raw, F.club);
+    const position = pick(raw, F.position);
+    const type = normType(pick(raw, F.type));
+    const image = pick(raw, F.image);
+    const thumb = pick(raw, F.thumb, image);
+    const qty = raw.qty || raw.quantity || raw.count || null;
+    return { id, name, rarity, batch, club, position, type, image, thumb, qty, _raw: raw };
+  }
+
+  // --- filters + rendering
+  function buildQueryIndex(items){ for (const it of items){ it.__hay = [it.name,it.club,it.batch,it.position,it.type,it.id].filter(Boolean).join(' ').toLowerCase(); } }
+  function uniqSorted(values){ return Array.from(new Set(values.filter(Boolean))).sort((a,b)=>toStr(a).localeCompare(toStr(b))); }
+
+  function applyFiltersDex(){
+    const q = qs('#q').value.trim().toLowerCase();
+    const rarity = qs('#rarity').value;
+    const type = qs('#type').value;
+    const batch = qs('#batch').value;
+    const club = qs('#club').value;
+    state.filt = state.all.filter(it=>{
+      if (q && !it.__hay.includes(q)) return false;
+      if (rarity && it.rarity !== rarity) return false;
+      if (type){
+        if (['GK','OT'].includes(type)) { if (!(it.type==='GK'||it.type==='OT')) return false; if (it.type!==type) return false; }
+        else if (['Speed','Technical','Physical'].includes(type)) { if (it.type!==type) return false; }
+      }
+      if (batch && it.batch !== batch) return false;
+      if (club && it.club !== club) return false;
+      return true;
+    });
+    sortItems(state.filt);
+    renderGrid(state.filt);
+    qs('#pager').classList.add('hidden');
+    renderLegend();
+  }
+
+  function applyFiltersCollection(){
+    // server-side filtered already; just sort client-side and render
+    const arr = [...state.colItems];
+    sortItems(arr);
+    renderGrid(arr, true);
+    renderPager();
+    renderBalances();
+    qs('#legendWrap').classList.add('hidden');
+  }
+
+  function sortItems(arr){
+    const s = state.sort;
+    const ord = ['SSR','SR','AR','R','N'];
+    const cmp = {
+      'rarity-desc': (a,b)=> ord.indexOf(a.rarity) - ord.indexOf(b.rarity) || toStr(a.name).localeCompare(toStr(b.name)),
+      'name-asc':   (a,b)=> toStr(a.name).localeCompare(toStr(b.name)) || ord.indexOf(a.rarity) - ord.indexOf(b.rarity),
+      'club-asc':   (a,b)=> toStr(a.club).localeCompare(toStr(b.club)) || toStr(a.name).localeCompare(toStr(b.name)),
+      'batch-asc':  (a,b)=> toStr(a.batch).localeCompare(toStr(b.batch)) || toStr(a.name).localeCompare(toStr(b.name)),
+      'id-asc':     (a,b)=> toStr(a.id).localeCompare(toStr(b.id))
+    }[s] || ((a,b)=>0);
+    arr.sort(cmp);
+  }
+
+  function renderGrid(items, isCollection=false){
+    const grid = qs('#grid');
+    grid.innerHTML = '';
+    for (const it of items){ grid.appendChild(renderCard(it, isCollection)); }
+  }
+
+  function renderCard(it, isCollection){
+    const tpl = qs('#cardTpl').content.cloneNode(true);
+    const root = tpl.querySelector('article');
+    const img = tpl.querySelector('img');
+    const chips = tpl.querySelector('div.absolute');
+    const title = tpl.querySelector('h3');
+    const sub = tpl.querySelector('p');
+    const badge = tpl.querySelector('.badge');
+    const copyBtn = tpl.querySelector('.copy-id');
+
+    img.loading = 'lazy'; img.decoding = 'async'; img.src = it.thumb || it.image || ''; img.alt = `${it.name} — ${it.rarity}`; img.onerror = () => { img.src = placeholder(it); };
+    title.textContent = it.name || it.id || 'Unknown';
+    sub.textContent = [it.club, it.position || it.type, it.batch].filter(Boolean).join(' • ');
+    badge.textContent = it.id || '';
+
+    chips.appendChild(chip(`${rarityEmoji(it.rarity)} ${it.rarity}`));
+    if (it.type) chips.appendChild(chip(it.type));
+    if (it.batch) chips.appendChild(chip(it.batch));
+    if (isCollection && it.qty!=null) chips.appendChild(chip(`x${it.qty}`));
+
+    copyBtn.addEventListener('click', async (e)=>{ e.stopPropagation(); try{ await navigator.clipboard.writeText(it.id||''); showToast(); }catch{} });
+    copyBtn.textContent = (it.id ? `Copy ID: ${it.id}` : 'Copy ID');
+
+    return root;
+  }
+
+  function chip(txt){ const s=document.createElement('span'); s.className='chip text-[11px] px-2 py-0.5 rounded-lg text-neutral-200/90'; s.textContent=txt; return s; }
+  function showToast(){ const t=qs('#toast'); t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 900); }
+
+  // --- legend / balances / pager
+  function renderLegend(){
+    if (state.mode!=='dex') return;
+    qs('#legendWrap').classList.remove('hidden');
+    const root = qs('#legend');
+    root.innerHTML='';
+    for (const r of ['SSR','SR','AR','R','N']){
+      const box = document.createElement('div');
+      box.className = 'rounded-xl border border-neutral-800 bg-neutral-950 p-3';
+      box.innerHTML = `<div class="text-sm font-semibold">${rarityEmoji(r)} ${r}</div>
+        <div class="text-xs text-neutral-400 mt-1">Craft: <span class="text-neutral-200">${CONFIG.CRAFT[r] ?? '-'}</span></div>
+        <div class="text-xs text-neutral-400">Sell: <span class="text-neutral-200">${CONFIG.SELL[r] ?? '-'}</span></div>`;
+      root.appendChild(box);
+    }
+  }
+
+  function renderBalances(){
+    const b = state.balances; const el = qs('#balances');
+    if (!b){ el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    const tickets = (b.tickets!=null? b.tickets : b.ticket_balance);
+    const tokens  = (b.tokens!=null?  b.tokens  : b.token_balance);
+    el.innerHTML = `<span class="mr-3">🎟️ Tickets: <span class="text-emerald-300">${tickets ?? '-'}</span></span>`+
+                   `<span>🪙 Tokens: <span class="text-emerald-300">${tokens ?? '-'}</span></span>`;
+  }
+
+  function renderPager(){
+    const p = qs('#pager');
+    p.classList.remove('hidden');
+    const maxPage = Math.max(1, Math.ceil(state.colTotal / state.colPageSize));
+    qs('#pageInfo').textContent = `Page ${state.colPage} / ${maxPage} (${state.colTotal} items)`;
+    qs('#prevPage').disabled = state.colPage<=1;
+    qs('#nextPage').disabled = state.colPage>=maxPage;
+  }
+
+  // --- mode + controls
+  function setMode(m){
+    state.mode = m;
+    const c = (m==='collection');
+    qs('#tabCollection').className = c? 'tab border-neutral-700 bg-neutral-800 text-neutral-100':'tab border-neutral-800 bg-neutral-900 text-neutral-300';
+    qs('#tabDex').className        = !c? 'tab border-neutral-700 bg-neutral-800 text-neutral-100':'tab border-neutral-800 bg-neutral-900 text-neutral-300';
+    qs('#uniqueWrap').classList.toggle('hidden', !c);
+    qs('#pager').classList.toggle('hidden', !c);
+    qs('#legendWrap').classList.toggle('hidden', c);
+  }
+
+  function onFiltersChange(){
+    if (state.mode==='dex') applyFiltersDex();
+    else refreshCollection();
+  }
+
+  async function refreshCollection(){
+    await loadCollection();
+    applyFiltersCollection();
+  }
+
+  function populateClubFilter(){
+    // from both lists to get full set
+    const clubs = uniqSorted([ ...(state.all||[]).map(x=>x.club), ...(state.colItems||[]).map(x=>x.club) ]);
+    const sel = qs('#club');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All Clubs</option>' + clubs.map(c=>`<option value="${c}">${c}</option>`).join('');
+    sel.value = cur;
+  }
+
+  // --- wire up
+  ['#q','#rarity','#type','#batch','#club','#sort'].forEach(sel=>qs(sel).addEventListener('input', ()=>{ state.sort = qs('#sort').value; onFiltersChange(); }));
+  qs('#uniqueOnly').addEventListener('change', (e)=>{ state.uniqueOnly = !!e.target.checked; refreshCollection(); });
+  qs('#resetBtn').addEventListener('click', ()=>{ ['#q','#rarity','#type','#batch','#club'].forEach(s=>qs(s).value=''); qs('#sort').value='rarity-desc'; state.sort='rarity-desc'; state.uniqueOnly=false; qs('#uniqueOnly').checked=false; onFiltersChange(); });
+  qs('#prevPage').addEventListener('click', async ()=>{ if (state.colPage>1){ state.colPage--; await refreshCollection(); } });
+  qs('#nextPage').addEventListener('click', async ()=>{ state.colPage++; await refreshCollection(); });
+  qs('#tabCollection').addEventListener('click', async ()=>{ setMode('collection'); await refreshCollection(); populateClubFilter(); history.replaceState(null,'',location.pathname+'?mode=collection'); });
+  qs('#tabDex').addEventListener('click', async ()=>{ setMode('dex'); applyFiltersDex(); populateClubFilter(); history.replaceState(null,'',location.pathname+'?mode=dex'); });
+
+  // --- init
+  (async function init(){
+    try {
+      const params = new URLSearchParams(location.search);
+      const mode = (params.get('mode')||'collection').toLowerCase();
+      setMode(mode==='dex'?'dex':'collection');
+      await Promise.all([ loadDex(), loadCollection() ]);
+      populateClubFilter();
+      if (state.mode==='dex') applyFiltersDex(); else applyFiltersCollection();
+    } catch (err) {
+      console.error(err);
+      qs('#grid').innerHTML = `<div class="rounded-2xl bg-red-500/10 text-red-300 border border-red-800 p-4"><div class="font-semibold">Load failed</div><div class="text-sm opacity-90 mt-1">${err.message}</div><div class="text-xs opacity-70 mt-2">This page posts to <code>/api</code>. Ensure your Worker accepts <code>action:\"cards\"</code> and <code>action:\"collection\"</code> from the browser.</div></div>`;
+    }
+  })();
+  </script>
+</body>
+</html>
