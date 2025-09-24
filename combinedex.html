@@ -176,8 +176,15 @@ function applyFilters() {
   let items = (Array.isArray(ALL) ? ALL : []).filter(it => {
     if (q && !( (it.name || '').toLowerCase() + ' ' + (it.club || '').toLowerCase() + ' ' + (it.card_id || '').toLowerCase() ).includes(q)) return false;
 
-    if (category !== 'ALL' && (it.category || '') !== category) return false;
-    if (category === 'player' && p_type !== 'ALL' && (it.p_type || '') !== p_type) return false;
+  // new
+  if (category !== 'ALL' && (it.category || '') !== category) return false;
+
+  // If a Player Type is chosen, we implicitly restrict to players of that type
+  if (p_type !== 'ALL') {
+    if ((it.category || '') !== 'player') return false;
+    if ((it.p_type   || '') !== p_type)   return false;
+  }
+
 
     if (rarity   !== 'ALL' && (it.rarity   || '') !== rarity) return false;
     if (position !== 'ALL' && (it.position || '') !== position) return false;
