@@ -46,12 +46,11 @@
       <div class="row">
         <input id="q" class="input" placeholder="Search name / club / ID..." />
         <select id="category" class="input"><option value="ALL">Category: ALL</option></select>
-        <select id="pType"   class="input" disabled><option value="ALL">Player Style: ALL</option></select>
-        <select id="gko"     class="input"><option value="ALL">GK/Outfield: ALL</option></select>
         <select id="rarity"  class="input"><option value="ALL">Rarity: ALL</option></select>
         <select id="position" class="input"><option value="ALL">Position: ALL</option></select>
         <select id="batch"   class="input"><option value="ALL">Batch: ALL</option></select>
         <select id="club"    class="input"><option value="ALL">Club: ALL</option></select>
+        <select id="p_type"    class="input"><option value="ALL">Player Type: ALL</option></select>
         <select id="sortBy"  class="input">
           <option value="rarity_club" selected>Sort: Rarity</option>
           <option value="name">Name (A→Z)</option>
@@ -144,12 +143,11 @@ function populateFilters(list) {
   }
 
   fill('category','Category', distinct('category'));
-  fill('pType',  'Player Style', distinct('p_type'));
-  fill('gko',    'GK/Outfield', distinct('gko'));
   fill('rarity', 'Rarity', distinct('rarity'));
   fill('position','Position', distinct('position'));
   fill('batch',  'Batch', distinct('batch'));
   fill('club',   'Club', distinct('club'));
+  fill('p_type','Player Type', distinct('p_type'));
 
   // p_type is only meaningful for players
   $('#pType').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
@@ -257,8 +255,8 @@ function render(items) {
 // ---- legend (hard-code figures here) ----
 function renderLegend() {
   const L = {
-    CRAFT: { N: 10, R: 25, AR: 60, SR: 200, SSR: 800 },
-    SELL:  { N: 2,  R: 6,  AR: 18, SR: 75,  SSR: 300 }
+    CRAFT: { N: 6, R: 10, AR: 20, SR: 60, SSR: 200 },
+    SELL:  { N: 1,  R: 1,  AR: 3, SR: 8,  SSR: 30 }
   };
   const root = document.getElementById('legend');
   root.innerHTML = '';
@@ -279,10 +277,10 @@ popup.addEventListener('click', () => { popup.style.display='none'; popupImg.src
 
 // ---- wire up ----
 function bindFilters() {
-  const ids = ['q','category','pType','gko','rarity','position','batch','club','sortBy'];
+  const ids = ['q','category','p_type','rarity','position','batch','club','sortBy'];
   ids.forEach(id => $(id).addEventListener('input', () => {
     // enable/disable p_type dropdown depending on category
-    $('#pType').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
+    $('#p_type').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
     applyFilters();
   }));
 }
