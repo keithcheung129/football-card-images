@@ -1,495 +1,431 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Last Kick — Card Dex</title>
-  <!-- TailwindCSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root { --card-w: 220px; --card-h: 308px; }
-    html, body { height: 100%; }
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
-    .glass { backdrop-filter: blur(8px); background: rgba(17,17,17,0.65); }
-    .chip { border: 1px solid rgba(255,255,255,0.12); }
-    .grid-auto { grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); }
-    .shadow-soft { box-shadow: 0 10px 25px rgba(0,0,0,.25); }
-    .card-img { width: 100%; height: var(--card-h); object-fit: cover; border-radius: 1rem; }
-    .fade-in { animation: fade .35s ease-in both; }
-    @keyframes fade { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
-    .badge { font-variant-numeric: tabular-nums; }
-    .copy-toast { position: fixed; inset-inline: 0; bottom: 16px; margin: auto; max-width: 320px; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TLK – Card Dex</title>
+<style>
+  :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--line:#1f2937}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1200px;margin:0 auto;padding:20px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+  .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .hdr h1{font-size:18px;margin:0}
+  .muted{color:var(--muted);font-size:12px}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px 12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .pill{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.12);border-radius:9999px;background:#0b1220;white-space:nowrap}
+  .pill input,.pill select{appearance:none;background:#0f172a;color:#fff;border:0;outline:0;height:32px;line-height:32px;padding:0 10px;border-radius:8px}
+  .pill input[type="checkbox"]{width:16px;height:16px}
+
+  .btn{height:34px;line-height:34px;padding:0 12px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
+  .btn.alt{background:#334155}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:16px}
+  .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+  .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover;transition:opacity .2s, transform .08s}
+  .card.unowned .thumb{opacity:.35}
+  .thumb:active{transform:scale(.99)}
+  .meta{padding:10px}
+  .name{font-size:13px;font-weight:700}
+  .sub{font-size:12px;color:var(--muted)}
+  .cid{display:flex;align-items:center;gap:6px;margin-top:6px}
+  .cid code{font-size:11px;background:#0f172a;border:1px solid #1f2937;border-radius:6px;padding:2px 6px;color:#cbd5e1}
+  .copy{font-size:11px;background:#0f172a;border:1px solid #1f2937;border-radius:6px;padding:2px 6px;color:#38bdf8;cursor:pointer}
+  .copy:active{transform:scale(.98)}
+
+  .badge{position:absolute;top:8px;right:8px;background:#111827;border:1px solid #374151;border-radius:10px;padding:3px 6px;font-size:12px}
+  .footer{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+  .tiny{font-size:12px;color:var(--muted)}
+
+  /* popup */
+  #imgPopup{position:fixed;display:none;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);justify-content:center;align-items:center;z-index:9999}
+  #imgPopup img{max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  #imgPopup.closeable{cursor:pointer}
+</style>
 </head>
-<body class="bg-neutral-950 text-neutral-100">
-  <header class="sticky top-0 z-40 glass border-b border-neutral-800">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
-      <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400/20 to-cyan-400/20 grid place-items-center ring-1 ring-emerald-300/30">
-        <span class="font-extrabold text-emerald-300">TLK</span>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="hdr">
+        <h1>TLK Card Dex <span class="muted">browse all cards & plan crafts</span></h1>
+        <div class="tiny">🎟 <span id="tickets">–</span> • 🪙 <span id="tokens">–</span></div>
       </div>
-      <div class="flex-1 min-w-0">
-        <h1 class="text-lg sm:text-xl font-bold tracking-tight truncate">The Last Kick — Card Dex</h1>
-        <p class="text-xs text-neutral-400 truncate">Browse every card across batches, clubs, rarities & more.</p>
-      </div>
-      <!-- Right: links & soft stats -->
-      <nav class="hidden sm:flex items-center gap-3">
-        <a href="./inventory.html" class="text-sm text-emerald-300 hover:text-emerald-200 underline underline-offset-4">Open Inventory →</a>
-      </nav>
-      <div id="stats" class="text-xs text-neutral-400 hidden sm:block"></div>
-    </div>
-  </header>
 
-  <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Controls -->
-    <section class="mb-4 grid grid-cols-1 md:grid-cols-12 gap-3">
-      <div class="md:col-span-4">
-        <label class="sr-only" for="q">Search</label>
-        <input id="q" type="search" placeholder="Search name, club, effect…"
-               class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-400 shadow-soft" />
-      </div>
-      <div class="md:col-span-2">
-        <select id="club" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
-          <option value="">All Clubs</option>
-        </select>
-      </div>
-      <div class="md:col-span-2">
-        <select id="rarity" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
-          <option value="">All Rarities</option>
-          <option value="N">N</option>
-          <option value="R">R</option>
-          <option value="AR">AR</option>
-          <option value="SR">SR</option>
-          <option value="SSR">SSR</option>
-        </select>
-      </div>
-      <div class="md:col-span-2">
-        <select id="type" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
-          <option value="">All Types</option>
-          <option value="Speed">Speed</option>
-          <option value="Technical">Technical</option>
-          <option value="Physical">Physical</option>
-          <option value="GK">GK</option>
-          <option value="OT">Outfield</option>
-        </select>
-      </div>
-      <div class="md:col-span-2">
-        <select id="batch" class="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
-          <option value="">All Batches</option>
-          <option value="Base">Base</option>
-          <option value="Base SSR">Base SSR</option>
-          <option value="Base U">Base U</option>
-        </select>
-      </div>
-      <div class="md:col-span-12 flex items-center gap-3">
-        <div class="flex items-center gap-2">
-          <label for="sort" class="text-xs text-neutral-400">Sort</label>
-          <select id="sort" class="rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400">
-            <option value="rarity-desc">Rarity (SSR→N)</option>
-            <option value="name-asc">Name (A→Z)</option>
-            <option value="club-asc">Club (A→Z)</option>
-            <option value="batch-asc">Batch (A→Z)</option>
-            <option value="id-asc">ID (A→Z)</option>
+      <div class="toolbar">
+        <label class="pill">Discord ID:
+          <input id="userId" placeholder="Optional — highlight owned">
+        </label>
+        <label class="pill">Type:
+          <select id="type">
+            <option>player</option><option>manager</option><option>stadium</option><option>event</option><option>ALL</option>
           </select>
-        </div>
-        <button id="resetBtn" class="rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-3 py-2 text-sm">Reset</button>
-        <a href="./inventory.html" class="ml-auto text-sm text-emerald-300 hover:text-emerald-200 underline underline-offset-4">Open Inventory →</a>
+        </label>
+        <label class="pill">Rarity:
+          <select id="rarity">
+            <option>ALL</option><option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
+          </select>
+        </label>
+        <label class="pill">Position:
+          <select id="position">
+            <option>ALL</option><option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
+          </select>
+        </label>
+        <label class="pill">Batch:
+          <select id="batch">
+            <option>ALL</option><option>Base</option><option>Base U</option>
+          </select>
+        </label>
+        <label class="pill">Club:
+          <select id="club">
+            <option>ALL</option>
+          </select>
+        </label>
+        <label class="pill">Search:
+          <input id="search" placeholder="name / club / card_id">
+        </label>
+        <label class="pill"><input type="checkbox" id="missingOnly"> Missing only</label>
+        <label class="pill">Sort:
+          <select id="sortBy">
+            <option value="rarity">Rarity</option>
+            <option value="club">Club</option>
+            <option value="position">Position</option>
+            <option value="name">Name</option>
+            <option value="owned">Owned first</option>
+          </select>
+        </label>
+        <button class="btn" id="btnApply">Apply</button>
+        <button class="btn alt" id="btnClear">Clear</button>
       </div>
-    </section>
+      <div id="status" class="muted" style="padding:8px 16px;display:none"></div>
 
-    <!-- Grid -->
-    <section id="grid" class="grid grid-auto gap-4"></section>
+      <div id="dex" class="grid" aria-live="polite"></div>
 
-    <!-- Economy Legend -->
-    <section class="mt-8">
-      <div class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-        <h2 class="font-semibold mb-3">Crafting & Selling — Legend</h2>
-        <div id="legend" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm"></div>
-        <p class="text-xs text-neutral-400 mt-2">Values pulled from page config. Adjust in <code>CONFIG.CRAFT</code> and <code>CONFIG.SELL</code>.</p>
-      </div>
-    </section>
-
-    <!-- Sentinel for lazy rendering -->
-    <div id="sentinel" class="h-16"></div>
-  </main>
-
-  <!-- Modal -->
-  <dialog id="modal" class="backdrop:bg-black/70 rounded-2xl p-0 w-full max-w-3xl">
-    <div class="bg-neutral-950 rounded-2xl border border-neutral-800 overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-        <h3 id="modalTitle" class="font-semibold"></h3>
-        <button id="closeModal" class="text-sm text-neutral-400 hover:text-neutral-200">Close</button>
-      </div>
-      <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <img id="modalImg" class="w-full h-auto rounded-xl shadow-soft" alt="card image" />
-        <div class="space-y-3 text-sm">
-          <div class="flex gap-2 flex-wrap" id="modalChips"></div>
-          <pre id="modalJson" class="bg-neutral-900/60 rounded-xl p-3 overflow-auto border border-neutral-800 text-xs"></pre>
-        </div>
+      <div class="footer">
+        <div class="tiny" id="countInfo">0 items</div>
+        <div class="tiny">Tip: enter your Discord ID to light up owned cards and see copy counts.</div>
       </div>
     </div>
-  </dialog>
-
-  <template id="cardTpl">
-    <article class="bg-neutral-900 border border-neutral-800 rounded-2xl p-2 shadow-soft fade-in">
-      <div class="relative">
-        <img class="card-img bg-neutral-800/60" alt="card" />
-        <div class="absolute left-2 top-2 flex gap-1 flex-wrap"></div>
-        <button class="absolute inset-0" aria-label="Open"></button>
-      </div>
-      <div class="pt-2 px-1">
-        <div class="flex items-center justify-between gap-2">
-          <h3 class="truncate font-semibold"></h3>
-          <span class="badge text-xs text-neutral-300"></span>
-        </div>
-        <p class="text-xs text-neutral-400 truncate"></p>
-      </div>
-      <!-- Card footer: copyable ID -->
-      <div class="mt-2">
-        <button class="copy-id w-full text-[11px] text-neutral-300/90 bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700 rounded-xl px-2 py-1">Copy ID</button>
-      </div>
-    </article>
-  </template>
-
-  <div id="toast" class="copy-toast hidden">
-    <div class="rounded-xl bg-emerald-600 text-white px-3 py-2 text-sm shadow-soft border border-emerald-300/40">Copied!</div>
   </div>
 
-  <script>
-  // ==== CONFIG ==============================================================
-  // This page is designed to work with your Cloudflare Worker proxying Google Apps Script.
-  // It will try a few conventional endpoints so you don't need to edit code if you kept naming similar to inventory.html.
-  const CONFIG = {
-    API_BASE: 'https://the-last-kick.keithcheung129.workers.dev/api', // same origin by default. e.g. '' or 'https://yourdomain.tld'
-    
-    // Field mapping: adapt to your GAS/Worker payload without changing the rest of code
-    FIELDS: {
-      id: ['id','card_id','printcode','code'],
-      name: ['name','player','title'],
-      rarity: ['rarity'],
-      batch: ['batch','set'],
-      club: ['club','team'],
-      position: ['pos','position'],
-      type: ['type'], // accepts GK/OT or Speed/Technical/Physical
-      image: ['image','image_url','image_ref','url'], // full-size image URL
-      thumb: ['thumb','thumb_url','thumbnail'] // optional small image URL
-    },
-    PAGE_SIZE: 48,
-    // Economy config (edit to your real values)
-    CRAFT: { N: 6, R: 10, AR: 20, SR: 60, SSR: 200 },
-    SELL:  { N: 1,  R: 1,  AR: 3, SR: 8,  SSR: 30 }
-  };
+  <!-- image popup -->
+  <div id="imgPopup" class="closeable" aria-hidden="true"><img src="" alt="preview"></div>
 
-  // ==== UTILITIES ===========================================================
-  const qs = sel => document.querySelector(sel);
-  const qsa = sel => Array.from(document.querySelectorAll(sel));
+<script>
+/* ===== Config ===== */
+const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
+// Safe DOM helpers
+const $ = (id) => document.getElementById(id);
+const getVal = (id, def = "") => ($(`${id}`)?.value ?? def);
+const setVal = (id, v) => { const el = $(`${id}`); if (el) el.value = v; };
+const getChecked = (id) => !!$(`${id}`)?.checked;
+const setChecked = (id, v) => { const el = $(`${id}`); if (el && "checked" in el) el.checked = !!v; };
+const U = (s)=>String(s??'').toUpperCase();
+// Return the first non-empty image field for a card
+const pickImg = (c) => c.image_url || c.image_ref || c.image || c.img || "";
 
-  function pick(o, keys, fallback='') {
-    for (const k of keys) { if (o && o[k] != null && String(o[k]).length) return o[k]; }
-    return fallback;
-  }
 
-  function rarityEmoji(r) {
-    return { N:'⚪', R:'🟦', AR:'🟪', SR:'🟧', SSR:'🟨' }[r] || '⬜';
-  }
+  
+/* ===== State ===== */
+let ALL_CARDS = [];           // full catalogue from /cards
+let OWN_COUNTS = {};          // { card_id: copies }
+let BAL = { tickets:'–', tokens:'–' };
 
-  function toStr(x){ return (x==null?'' : String(x)); }
+// --- Image popup (null-safe) ---
+function openImg(src){
+  const el  = document.getElementById("imgPopup");
+  const img = el ? el.querySelector("img") : null;
+  if (!el || !img) return;
+  img.src = src;
+  el.style.display = "flex";
+  el.setAttribute("aria-hidden", "false");
+}
+function closeImg(){
+  const el  = document.getElementById("imgPopup");
+  const img = el ? el.querySelector("img") : null;
+  if (!el || !img) return;
+  el.style.display = "none";
+  img.src = "";
+  el.setAttribute("aria-hidden", "true");
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("imgPopup");
+  if (el) el.addEventListener("click", closeImg);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeImg(); });
+});
 
-  function normType(t){
-    t = toStr(t).toUpperCase();
-    if (t === 'GK') return 'GK';
-    if (t === 'OT' || t === 'OUTFIELD') return 'OT';
-    // Accept speed/technical/physical variants
-    if (["SPEED","TECHNICAL","PHYSICAL"].includes(t)) return t[0] + t.slice(1).toLowerCase();
-    return t;
-  }
 
-  function makeChip(txt){
-    const s = document.createElement('span');
-    s.className = 'chip text-[11px] px-2 py-0.5 rounded-lg text-neutral-200/90';
-    s.textContent = txt;
-    return s;
-  }
-
-  function buildQueryIndex(items){
-    for (const it of items){
-      const hay = [it.name, it.club, it.batch, it.position, it.type, it.id].filter(Boolean).join(' ').toLowerCase();
-      it.__hay = hay;
-    }
-  }
-
-  function uniqSorted(values){
-    return Array.from(new Set(values.filter(Boolean))).sort((a,b)=>toStr(a).localeCompare(toStr(b)));
-  }
-
-  function showToast(){
-    const t = qs('#toast');
-    if (!t) return; t.classList.remove('hidden');
-    setTimeout(()=>t.classList.add('hidden'), 900);
-  }
-
-  // ==== DATA LAYER ==========================================================
-  async function fetchDex() {
-    // The Worker accepts POST /api with action:"cards" for read-only browsing.
-    const res = await fetch(CONFIG.API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'cards', type: 'ALL', batch: 'ALL', rarity: 'ALL', position: 'ALL', club: 'ALL' })
-    });
-    const text = await res.text();
-    if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,200)}`);
-    let data; try { data = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
-    // Worker envelope: { ok, data, status }
-    const payload = (data && typeof data === 'object' && 'ok' in data && 'data' in data) ? data.data : data;
-    const arr = Array.isArray(payload) ? payload : (Array.isArray(payload.items) ? payload.items : null);
-    if (!arr) throw new Error('Missing items array in API response');
-    // pick up economy meta if provided
-    if (payload && payload.meta) {
-      try {
-        const y = payload.meta.SELL_YIELD || {};
-        const craftSheet = payload.meta.CraftingCosts || payload.meta.CraftingCost; // script may use either name
-        if (y && Object.keys(y).length) CONFIG.SELL = y;
-        // parse CraftingCosts sheet (2D array with headers)
-        if (Array.isArray(craftSheet) && craftSheet.length > 1) {
-          const head = craftSheet[0];
-          const idx = Object.fromEntries(head.map((h,i)=>[String(h).trim(), i]));
-          const priceByR = {};
-          for (const r of craftSheet.slice(1)) {
-            const rarity = r[idx.rarity]; const allowed = r[idx.allowed]; const price = r[idx.price_amount];
-            const mode = (r[idx.mode]||'').toString().toLowerCase();
-            if (String(allowed) === '1' && rarity && price != null && (mode === 'random' || mode === 'specific')) {
-              // prefer specific over random for legend if both exist
-              priceByR[rarity] = (mode === 'specific') ? price : (priceByR[rarity] ?? price);
-            }
-          }
-          if (Object.keys(priceByR).length) CONFIG.CRAFT = priceByR;
-        }
-      } catch(_) { /* ignore meta parsing errors */ }
-    }
-    const normalized = arr.map(raw => normalizeItem(raw));
-    return normalized;
-  }
-        
-
-  function normalizeItem(raw){
-    const F = CONFIG.FIELDS;
-    const id = pick(raw, F.id);
-    const name = pick(raw, F.name);
-    const rarity = pick(raw, F.rarity).toUpperCase();
-    const batch = pick(raw, F.batch);
-    const club = pick(raw, F.club);
-    const position = pick(raw, F.position);
-    const type = normType(pick(raw, F.type));
-    const image = pick(raw, F.image);
-    const thumb = pick(raw, F.thumb, image);
-    return { id, name, rarity, batch, club, position, type, image, thumb, _raw: raw };
-  }
-
-  // ==== RENDERING ===========================================================
-  const state = { all: [], filt: [], page: 0, sort: 'rarity-desc' };
-
-  function applyFilters(){
-    const q = qs('#q').value.trim().toLowerCase();
-    const rarity = qs('#rarity').value;
-    const type = qs('#type').value;
-    const batch = qs('#batch').value;
-    const club = qs('#club').value;
-
-    state.page = 0;
-    state.filt = state.all.filter(it => {
-      if (q && !it.__hay.includes(q)) return false;
-      if (rarity && it.rarity !== rarity) return false;
-      if (type) {
-        if (['GK','OT'].includes(type)) {
-          if (!(it.type === 'GK' || it.type === 'OT')) return false;
-          if (it.type !== type) return false;
-        } else if (['Speed','Technical','Physical'].includes(type)) {
-          if (it.type !== type) return false;
-        }
-      }
-      if (batch && it.batch !== batch) return false;
-      if (club && it.club !== club) return false;
-      return true;
-    });
-
-    sortItems();
-    renderChunk(true);
-    updateStats();
-  }
-
-  function sortItems(){
-    const s = state.sort;
-    const ord = ['SSR','SR','AR','R','N'];
-    const cmp = {
-      'rarity-desc': (a,b)=> ord.indexOf(a.rarity) - ord.indexOf(b.rarity) || toStr(a.name).localeCompare(toStr(b.name)),
-      'name-asc':   (a,b)=> toStr(a.name).localeCompare(toStr(b.name)) || ord.indexOf(a.rarity) - ord.indexOf(b.rarity),
-      'club-asc':   (a,b)=> toStr(a.club).localeCompare(toStr(b.club)) || toStr(a.name).localeCompare(toStr(b.name)),
-      'batch-asc':  (a,b)=> toStr(a.batch).localeCompare(toStr(b.batch)) || toStr(a.name).localeCompare(toStr(b.name)),
-      'id-asc':     (a,b)=> toStr(a.id).localeCompare(toStr(b.id))
-    }[s] || ((a,b)=>0);
-    state.filt.sort(cmp);
-  }
-
-  function updateStats(){
-    const s = qs('#stats');
-    if (!s) return;
-    const total = state.all.length;
-    const shown = state.filt.length;
-    const byRar = groupCount(state.filt, 'rarity');
-    const chips = Object.entries(byRar).sort((a,b)=>rarOrder(b[0])-rarOrder(a[0]))
-      .map(([r,c])=>`<span class=\"ml-2\">${rarityEmoji(r)} <span class=\"text-neutral-200\">${r}</span> ${c}</span>`).join('');
-    s.innerHTML = `<span class="text-neutral-300">${shown}</span>/<span>${total}</span> cards ${chips}`;
-  }
-
-  function rarOrder(r){ return ['SSR','SR','AR','R','N'].indexOf(r); }
-
-  function groupCount(arr, key){
-    const m = {};
-    for (const it of arr){ const k = it[key] || ''; m[k] = (m[k]||0)+1; }
-    return m;
-  }
-
-  function renderChunk(reset=false){
-    const grid = qs('#grid');
-    if (reset) grid.innerHTML = '';
-
-    const start = state.page * CONFIG.PAGE_SIZE;
-    const slice = state.filt.slice(start, start + CONFIG.PAGE_SIZE);
-
-    for (const it of slice){ grid.appendChild(renderCard(it)); }
-
-    state.page++;
-  }
-
-  function renderCard(it){
-    const tpl = qs('#cardTpl').content.cloneNode(true);
-    const root = tpl.querySelector('article');
-    const img = tpl.querySelector('img');
-    const chips = tpl.querySelector('div.absolute');
-    const title = tpl.querySelector('h3');
-    const sub = tpl.querySelector('p');
-    const badge = tpl.querySelector('.badge');
-    const openBtn = tpl.querySelector('button');
-    const copyBtn = tpl.querySelector('.copy-id');
-
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.src = it.thumb || it.image || '';
-    img.alt = `${it.name} — ${it.rarity}`;
-    img.onerror = () => { img.src = placeholder(it); };
-
-    title.textContent = it.name || it.id || 'Unknown';
-    sub.textContent = [it.club, it.position || it.type, it.batch].filter(Boolean).join(' • ');
-    badge.textContent = it.id || '';
-
-    // chips: rarity + type + batch (compact)
-    chips.appendChild(makeChip(`${rarityEmoji(it.rarity)} ${it.rarity}`));
-    if (it.type) chips.appendChild(makeChip(it.type));
-    if (it.batch) chips.appendChild(makeChip(it.batch));
-
-    openBtn.addEventListener('click', () => openModal(it));
-
-    // copy ID footer
-    copyBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      try { await navigator.clipboard.writeText(it.id || ''); showToast(); } catch(_) {}
-    });
-    copyBtn.textContent = (it.id ? `Copy ID: ${it.id}` : 'Copy ID');
-
-    return root;
-  }
-
-  function placeholder(it){
-    const col = ({SSR:'#f5d90a', SR:'#f59f0b', AR:'#a78bfa', R:'#60a5fa', N:'#e5e7eb'})[it.rarity] || '#94a3b8';
-    const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='840'>\n<defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='${col}' stop-opacity='.25'/><stop offset='1' stop-color='#111827' stop-opacity='.9'/></linearGradient></defs>\n<rect width='100%' height='100%' fill='url(#g)'/>\n<text x='50%' y='50%' text-anchor='middle' fill='white' font-size='28' font-family='Inter, Arial' opacity='.8'>${(it.name||'Unknown').replace(/</g,'&lt;')}</text>\n</svg>`);
-    return `data:image/svg+xml;charset=utf-8,${svg}`;
-  }
-
-  // ==== MODAL ===============================================================
-  function openModal(it){
-    const m = qs('#modal');
-    qs('#modalTitle').textContent = `${it.name || it.id} — ${it.rarity}`;
-    qs('#modalImg').src = it.image || it.thumb || placeholder(it);
-    const chips = qs('#modalChips');
-    chips.innerHTML = '';
-    for (const [k,v] of Object.entries({ID:it.id, Rarity:it.rarity, Batch:it.batch, Club:it.club, Position:it.position, Type:it.type})){
-      if (!v) continue; chips.appendChild(makeChip(`${k}: ${v}`));
-    }
-    qs('#modalJson').textContent = JSON.stringify(it._raw ?? it, null, 2);
-    m.showModal();
-  }
-  qs('#closeModal').addEventListener('click', ()=>qs('#modal').close());
-
-  // ==== PAGINATION VIA INTERSECTION OBSERVER ================================
-  const io = new IntersectionObserver((entries)=>{
-    for (const e of entries){
-      if (e.isIntersecting) {
-        const maxPages = Math.ceil(state.filt.length / CONFIG.PAGE_SIZE);
-        if (state.page < maxPages) renderChunk(false);
-      }
-    }
-  }, { rootMargin: '800px 0px' });
-
-  function renderLegend(){
-    const root = qs('#legend');
-    const rarOrder = ['SSR','SR','AR','R','N'];
-    root.innerHTML = '';
-    for (const r of rarOrder){
-      const box = document.createElement('div');
-      box.className = 'rounded-xl border border-neutral-800 bg-neutral-950 p-3';
-      box.innerHTML = `
-        <div class="text-sm font-semibold">${rarityEmoji(r)} ${r}</div>
-        <div class="text-xs text-neutral-400 mt-1">Craft: <span class="text-neutral-200">${CONFIG.CRAFT[r] ?? '-'}</span></div>
-        <div class="text-xs text-neutral-400">Sell: <span class="text-neutral-200">${CONFIG.SELL[r] ?? '-'}</span></div>
-      `;
-      root.appendChild(box);
-    }
-  }
-
-  function populateClubFilter(){
-    const sel = qs('#club');
-    const clubs = uniqSorted(state.all.map(x=>x.club));
-    for (const c of clubs){
-      const opt = document.createElement('option');
-      opt.value = c; opt.textContent = c; sel.appendChild(opt);
-    }
-  }
-
-  // ==== WIRE-UP =============================================================
-  ['#q','#rarity','#type','#batch','#club'].forEach(sel => qs(sel).addEventListener('input', applyFilters));
-  qs('#resetBtn').addEventListener('click', () => {
-    ['#q','#rarity','#type','#batch','#club'].forEach(sel => qs(sel).value = '');
-    qs('#sort').value = 'rarity-desc';
-    state.sort = 'rarity-desc';
-    applyFilters();
+/* ===== API helper (unwrap Worker envelope) ===== */
+async function api(action, payload){
+  const res = await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ...payload })
   });
-  qs('#sort').addEventListener('change', (e)=>{ state.sort = e.target.value; sortItems(); renderChunk(true); });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0,200)}`);
 
-  (async function init(){
-    try {
-      const all = await fetchDex();
-      state.all = all;
-      buildQueryIndex(state.all);
-      populateClubFilter();
-      state.sort = qs('#sort').value;
-      applyFilters();
-      io.observe(qs('#sentinel'));
-      renderLegend();
-    } catch (err) {
-      console.error(err);
-      qs('#grid').innerHTML = `
-        <div class="rounded-2xl bg-red-500/10 text-red-300 border border-red-800 p-4">
-          <div class="font-semibold">Failed to load dex</div>
-          <div class="text-sm opacity-90 mt-1">${err.message}</div>
-          <div class="text-xs opacity-70 mt-2">Ensure your Cloudflare Worker exposes one of: <code>/api/dex</code>, <code>/api/cards</code>, <code>/api?op=dex</code>, or <code>/api?op=cards</code>. This page calls same-origin by default.</div>
-        </div>`;
+  let json; try { json = JSON.parse(text); } catch { throw new Error("Bad JSON from API"); }
+
+  // Worker envelope: { ok, data, status }
+  if ("ok" in json && json.ok === false) {
+    const err = (json.data && json.data.error) || json.error || "Request failed";
+    throw new Error(err);
+  }
+  const payloadOut = ("data" in json) ? json.data : json;
+
+  // Script-level error (e.g., unknown_action) bubbles up
+  if (payloadOut && payloadOut.error) throw new Error(payloadOut.error);
+
+  return payloadOut;
+}
+
+function setStatus(msg) {
+  const el = document.getElementById("status");
+  if (!el) return;
+  if (!msg) { el.style.display = "none"; el.textContent = ""; return; }
+  el.style.display = "block";
+  el.textContent = msg;
+}
+function fail(msg) {
+  console.error(msg);
+  setStatus("⚠️ " + String(msg));
+}
+
+
+
+/* ===== Loaders ===== */
+async function loadCatalogue(){
+  const data = await api("cards", {
+    type:     getVal("type", "player"),
+    batch:    getVal("batch", "ALL"),
+    rarity:   getVal("rarity", "ALL"),
+    position: getVal("position", "ALL"),
+    club:     getVal("club", "ALL"),
+    search:   getVal("search", "").trim()
+  });
+
+  ALL_CARDS = data.items || [];
+  console.log("Loaded cards:", ALL_CARDS.length);
+  console.log("Sample card:", ALL_CARDS[0]);
+
+
+  // Rebuild the Club dropdown only if it exists
+  const sel = document.getElementById("club");
+  if (sel) {
+    const cur = sel.value || "ALL";
+    const clubs = Array.from(new Set(
+      ALL_CARDS.map(x => (x.club || "").trim()).filter(Boolean)
+    )).sort((a,b)=>a.localeCompare(b));
+
+    sel.innerHTML = '<option>ALL</option>' + clubs.map(c => `<option>${c}</option>`).join('');
+
+    if (Array.from(sel.options).some(o => o.value === cur)) {
+      sel.value = cur;
     }
-  })();
-  </script>
+  }
+
+  const countEl = document.getElementById("countInfo");
+  if (countEl) countEl.textContent = `${ALL_CARDS.length} item${ALL_CARDS.length===1?'':'s'}`;
+}
+
+
+async function loadOwned(){
+  const uid = getVal("userId", "").trim();
+  OWN_COUNTS = {};
+  // Don't fetch owned info unless a user ID is present
+  if (!uid) { 
+    // also clear balances display when no user
+    document.getElementById("tickets").textContent = "–";
+    document.getElementById("tokens").textContent  = "–";
+    return;
+  }
+  const data = await api("collection", { user_id: uid, aggregate_only: true });
+  OWN_COUNTS = data.counts_by_card || {};
+  const bal = data.balances || {};
+  document.getElementById("tickets").textContent = bal.tickets ?? "–";
+  document.getElementById("tokens").textContent  = bal.tokens ?? "–";
+}
+
+// Debounced overlay update when typing Discord ID
+let ownedTimer;
+document.addEventListener("DOMContentLoaded", ()=>{
+  const uid = document.getElementById("userId");
+  if (uid){
+    uid.addEventListener("input", ()=>{
+      clearTimeout(ownedTimer);
+      ownedTimer = setTimeout(async ()=>{
+        await loadOwned();   // only fetches if ID present
+        render();            // apply dim/highlight/counts
+      }, 350);
+    });
+  }
+});
+
+
+
+/* ===== Sort & Render ===== */
+const RARITY_ORDER = ["SSR","SR","AR","R","N","U","ALL"];
+const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE","ALL"];
+const rank = (v, arr)=>{ const i = arr.indexOf(U(v)); return i<0 ? 999 : i; };
+
+function sortCards(arr){
+  const mode = getVal("sortBy", "rarity");
+  arr.sort((a,b)=>{
+    const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
+    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
+    const ca = U(a.club), cb = U(b.club);
+    const na = String(a.name||""), nb = String(b.name||"");
+    const oa = OWN_COUNTS[a.card_id] ? 0 : 1;
+    const ob = OWN_COUNTS[b.card_id] ? 0 : 1;
+
+    switch(mode){
+      case "club":     return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
+      case "position": return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "name":     return na.localeCompare(nb);
+      case "owned":    return oa - ob || ra - rb || na.localeCompare(nb);  // owned first
+      case "rarity":
+      default:         return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+    }
+  });
+  return arr;
+}
+
+function render(){
+  const root = document.getElementById("dex");
+  root.innerHTML = "";
+
+  const hasUser = getVal("userId", "").trim().length > 0;
+  const missingOnly = getChecked("missingOnly") && hasUser;
+
+  const cards = sortCards(ALL_CARDS.slice())
+    .filter(c => !(missingOnly && (OWN_COUNTS[c.card_id] || 0) > 0)); // only hide owned if user entered
+
+  for (const c of cards){
+    const ownedCount = hasUser ? (OWN_COUNTS[c.card_id] || 0) : 0;
+    const owned = hasUser && ownedCount > 0;
+
+    const card = document.createElement("div");
+    card.className = "card" + (owned ? "" : " unowned");  // dims everything unless owned
+
+    const img = document.createElement("img");
+    img.className = "thumb";
+    img.loading = "lazy";
+    img.src = pickImg(c);
+    img.alt = c.name || c.card_id || "";
+    img.addEventListener("click", ()=>openImg(img.src));
+    card.appendChild(img);
+
+    // Show count badge only if user entered an ID AND owns it
+    if (hasUser && owned){
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = `×${ownedCount}`;
+      card.appendChild(badge);
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "name";
+    nameEl.textContent = c.name || "—";
+
+    const subEl = document.createElement("div");
+    subEl.className  = "sub";
+    subEl.textContent = [c.rarity, c.club, c.position, c.batch].filter(Boolean).join(" • ");
+
+    const cidRow = document.createElement("div");
+    cidRow.className = "cid";
+    const codeEl = document.createElement("code");
+    codeEl.textContent = c.card_id;
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy";
+    copyBtn.type = "button";
+    copyBtn.textContent = "Copy ID";
+    copyBtn.addEventListener("click", async ()=>{
+      try { await navigator.clipboard.writeText(c.card_id); copyBtn.textContent = "Copied!"; setTimeout(()=>copyBtn.textContent="Copy ID", 900); }
+      catch { copyBtn.textContent = "Failed"; setTimeout(()=>copyBtn.textContent="Copy ID", 900); }
+    });
+    cidRow.appendChild(codeEl);
+    cidRow.appendChild(copyBtn);
+
+    meta.appendChild(nameEl);
+    meta.appendChild(subEl);
+    meta.appendChild(cidRow);
+
+    card.appendChild(meta);
+    root.appendChild(card);
+  }
+
+  if (!root.children.length){
+    root.innerHTML = '<div style="padding:12px;opacity:.7">No cards match your filters.</div>';
+  }
+}
+
+
+/* ===== Orchestration ===== */
+async function run(){
+  try {
+    setStatus("Loading cards…");
+    await loadCatalogue();      // fetches full catalogue
+    setStatus("");              // clear status after catalogue ok
+
+    await loadOwned();          // no-op if no ID typed
+    render();                   // renders (dimmed by default)
+  } catch (e) {
+    fail(e?.message || e);
+  }
+}
+
+
+/* ===== QS support (shareable links e.g. ?u=123&r=SR&club=Arsenal) ===== */
+(function applyQS(){
+  const qs = new URLSearchParams(location.search);
+  const set = (id,key)=>{ if(qs.get(key)) $(id).value = qs.get(key); };
+  set("userId","u"); set("rarity","r"); set("position","p"); set("batch","b");
+  set("type","t");   set("club","club"); set("search","q"); set("sortBy","s");
+  if (qs.get("missing")==="1") $("#missingOnly").checked = true;
+})();
+
+/* ===== Wire up ===== */
+document.addEventListener("DOMContentLoaded", () => {
+  $("#btnApply")?.addEventListener("click", run);
+
+  $("#btnClear")?.addEventListener("click", () => {
+    setVal("userId", "");
+    setVal("search", "");
+    setVal("club", "ALL");
+    setVal("rarity", "ALL");
+    setVal("position", "ALL");
+    setVal("batch", "ALL");
+    setVal("type", "player");
+    setChecked("missingOnly", false);
+    setVal("sortBy", "rarity");
+
+    run();
+  });
+
+  // Live “owned overlay” update when typing Discord ID
+  let ownedTimer;
+  $("#userId")?.addEventListener("input", () => {
+    clearTimeout(ownedTimer);
+    ownedTimer = setTimeout(async () => {
+      await loadOwned();   // no-op if empty; fetch counts if provided
+      render();            // stays dimmed by default; lights owned when ID present
+    }, 300);
+  });
+
+  run(); // initial load: shows all cards dimmed
+});
+
+
+</script>
 </body>
 </html>
+
+
 
 
 
