@@ -57,6 +57,18 @@
         <label class="pill">Discord ID:
           <input id="userId" placeholder="Optional — highlight owned">
         </label>
+        <label class="pill">Category:
+          <select id="category">
+            <option value="ALL">ALL</option>
+          </select>
+        </label>
+
+        <label class="pill">Player Type:
+          <select id="p_type">
+            <option value="ALL">ALL</option>
+          </select>
+        </label>
+
         <label class="pill">Type:
           <select id="type">
             <option>player</option><option>manager</option><option>stadium</option><option>event</option><option>ALL</option>
@@ -132,6 +144,27 @@ let ALL_CARDS = [];           // full catalogue from /cards
 let OWN_COUNTS = {};          // { card_id: copies }
 let BAL = { tickets:'–', tokens:'–' };
 
+
+let ALL = [];
+
+function normalize(it) {
+  return {
+    card_id: it.card_id ?? it.printcode ?? it.code ?? '',
+    name: it.name ?? it.player ?? '',
+    rarity: it.rarity ?? '',
+    category: it.type ?? '',         // <- category from 'type'
+    p_type: it.p_type ?? '',         // <- Phy / Spd / Tec
+    position: it.position ?? '',
+    club: it.club ?? '',
+    batch: it.batch ?? it.set ?? '',
+    image: it.image_url ?? '',       // <- use image_url directly
+    serial: it.serial ?? '',
+    ts: Number(it.acquired_ts || it.acquiredAt || it.ts || 0)
+  };
+}
+
+
+
 // --- Image popup (null-safe) ---
 function openImg(src){
   const el  = document.getElementById("imgPopup");
@@ -198,12 +231,13 @@ function fail(msg) {
 /* ===== Loaders ===== */
 async function loadCatalogue(){
   const data = await api("cards", {
-    type:     getVal("type", "player"),
+    type:     getVal("type", "ALL"),
     batch:    getVal("batch", "ALL"),
     rarity:   getVal("rarity", "ALL"),
     position: getVal("position", "ALL"),
     club:     getVal("club", "ALL"),
-    search:   getVal("search", "").trim()
+    search:   getVal("search", "").trim(),
+    p_type:   getVal("p_type", "ALL"),
   });
 
   ALL_CARDS = data.items || [];
