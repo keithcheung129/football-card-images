@@ -155,30 +155,45 @@ function populateFilters(list) {
 
 // ---- filtering (client-side only) ----
 function applyFilters() {
-  const q = ($('#q').value || '').trim().toLowerCase();
-  const category = $('#category').value || 'ALL';
-  const p_type = $('#p_type').value || 'ALL';
-  const rarity = $('#rarity').value || 'ALL';
-  const position = $('#position').value || 'ALL';
-  const batch = $('#batch').value || 'ALL';
-  const club = $('#club').value || 'ALL';
-  const sortBy = $('#sortBy').value || 'rarity_club';
+  // --- read inputs safely (default to 'ALL')
+  const q        = ( ($('#q')?.value || '').trim().toLowerCase() );
+  const category = ($('#category')?.value || 'ALL');
+  const p_type   = ($('#p_type')?.value || 'ALL');
+  const rarity   = ($('#rarity')?.value || 'ALL');
+  const position = ($('#position')?.value || 'ALL');
+  const batch    = ($('#batch')?.value || 'ALL');
+  const club     = ($('#club')?.value || 'ALL');
+  const sortBy   = ($('#sortBy')?.value || 'rarity_club');
 
-  let items = ALL.filter(it => {
-    if (q && !(it.name + ' ' + it.club + ' ' + it.card_id).toLowerCase().includes(q)) return false;
-    if (category !== 'ALL' && it.category !== category) return false;
-    if (category === 'player' && p_type !== 'ALL' && it.p_type !== p_type) return false;
-    if (rarity !== 'ALL' && it.rarity !== rarity) return false;
-    if (position !== 'ALL' && it.position !== position) return false;
-    if (batch !== 'ALL' && it.batch !== batch) return false;
-    if (club !== 'ALL' && it.club !== club) return false;
+  // toggle Player Type control based on Category
+  const catEl   = $('#category');
+  const pTypeEl = $('#p_type');
+  if (catEl && pTypeEl) {
+    pTypeEl.disabled = (catEl.value !== 'player' && catEl.value !== 'ALL');
+  }
+
+  // --- filter client-side from ALL (normalized list)
+  let items = (Array.isArray(ALL) ? ALL : []).filter(it => {
+    if (q && !( (it.name || '').toLowerCase() + ' ' + (it.club || '').toLowerCase() + ' ' + (it.card_id || '').toLowerCase() ).includes(q)) return false;
+
+    if (category !== 'ALL' && (it.category || '') !== category) return false;
+    if (category === 'player' && p_type !== 'ALL' && (it.p_type || '') !== p_type) return false;
+
+    if (rarity   !== 'ALL' && (it.rarity   || '') !== rarity) return false;
+    if (position !== 'ALL' && (it.position || '') !== position) return false;
+    if (batch    !== 'ALL' && (it.batch    || '') !== batch) return false;
+    if (club     !== 'ALL' && (it.club     || '') !== club) return false;
+
     return true;
   });
 
+  // --- sort, render, counts
   items = sortItems(items, sortBy);
   render(items);
-  $('#countInfo').textContent = `${items.length} shown • ${ALL.length} total`;
+  const info = $('#countInfo');
+  if (info) info.textContent = `${items.length} shown • ${Array.isArray(ALL) ? ALL.length : 0} total`;
 }
+
 
 // ---- sorting (same spirit as inventory) ----
 function sortItems(items, mode) {
