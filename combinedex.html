@@ -16,6 +16,10 @@
     .row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:12px 16px}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
     .input,select{width:100%;background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:10px;padding:10px;font-size:14px}
+    #search {
+      width: 160px;          /* make it shorter */
+      display: inline-block; /* prevents it from stretching */
+    }
     .btn{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
     .btn.alt{background:#334155}
     .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -62,6 +66,9 @@
         </select>
       </div>
 
+      <!-- Legend (hard-code your figures below) -->
+      <div class="legend" id="legend"></div>
+      
       <!-- Grid -->
       <div id="dex" class="grid" aria-live="polite"></div>
 
@@ -72,8 +79,7 @@
       </div>
     </div>
 
-    <!-- Legend (hard-code your figures below) -->
-    <div class="legend" id="legend"></div>
+
 
     <p class="muted" style="margin:12px 4px">Share a link like <code>?r=SSR&c=Arsenal</code> to prefill filters.</p>
   </div>
