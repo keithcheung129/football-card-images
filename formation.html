@@ -58,7 +58,6 @@
 
   /* bench strip */
   .bench{display:flex; gap:8px; flex-wrap:wrap; padding:12px 16px}
-  .bench .slot{ position:relative; static:relative }
   .bench .slot .lbl{ bottom:auto; top:-16px }
 
   /* inventory (side) */
@@ -173,93 +172,101 @@ const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
 
 /* ===== helpers ===== */
 const $ = (id) => document.getElementById(id);
-const safeOn = (id,evt,fn) => { const el=$(id); if(el) el.addEventListener(evt,fn); else console.warn('Missing #'+id); };
+// safe get value from an input; never crashes if missing
+const v = (id, def='') => {
+  const el = $(id);
+  return (el && typeof el.value === 'string') ? el.value : def;
+};
+// safe event binding (won't crash if the element isn't there)
+const on = (id, evt, fn) => { const el = $(id); if (el) el.addEventListener(evt, fn); };
 
 /* ===== state ===== */
-let INVENTORY = [];             // entire inventory (filtered by API params)
-let selectedCard = null;        // for tap-to-place on mobile
-const placedSet = new Set();    // keys: "card_id::serial?" — prevents duplicates
+let INVENTORY = [];          // user inventory
+let selectedCard = null;     // for tap-to-place on mobile
+const placedSet = new Set(); // "card_id::serial?" to block duplicates
 
-function keyOf(it){ return `${it.card_id}::${it.serial ?? ''}`; }
+const keyOf = (it) => `${it.card_id}::${it.serial ?? ''}`;
 
 /* ===== API ===== */
 async function callApi(action, payload){
   const res = await fetch(API_BASE, {
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ action, ...payload })
   });
   const text = await res.text();
   if (!res.ok) throw new Error(text);
-  let body; try{ body = JSON.parse(text);}catch{ throw new Error('Bad JSON');}
+  let body; try { body = JSON.parse(text); } catch { throw new Error('Bad JSON'); }
   return (body && typeof body==='object' && 'ok' in body && 'data' in body) ? body.data : body;
 }
 
 /* ===== inventory ===== */
 async function loadInventory(){
-  const user_id = $('#user_id').value.trim();
+  const user_id = v('user_id').trim();
   if (!user_id){ alert('Enter user ID first'); return; }
   const q = {
     user_id,
     page:1, page_size:240, unique_only:false,
-    rarity: $('#rarity').value || 'ALL',
-    position: $('#position').value || 'ALL',
+    rarity: v('rarity','ALL') || 'ALL',
+    position: v('position','ALL') || 'ALL',
     batch: 'ALL',
-    club: $('#club').value || 'ALL'
+    club: v('club','ALL') || 'ALL'
   };
   const data = await callApi('collection', q);
-  INVENTORY = (data.items || []).map(x=>({
-    card_id:x.card_id, name:x.name, rarity:x.rarity, position:x.position,
-    club:x.club, image:x.image_url, serial:x.serial, type:x.type
+  INVENTORY = (data.items || []).map(x => ({
+    card_id: x.card_id, name: x.name, rarity: x.rarity, position: x.position,
+    club: x.club, image: x.image_url, serial: x.serial, type: x.type
   }));
 
-  // populate clubs
-  const clubs = Array.from(new Set(INVENTORY.map(i=>i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  $('#club').innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
+  // club filter options
+  const clubs = Array.from(new Set(INVENTORY.map(i => i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  const clubSel = $('club');
+  if (clubSel) clubSel.innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
 
-  $('#tickets').textContent = data?.balances?.tickets ?? '0';
-  $('#tokens').textContent  = data?.balances?.tokens ?? '0';
+  const tk = $('tickets'), to = $('tokens');
+  if (tk) tk.textContent = data?.balances?.tickets ?? '0';
+  if (to) to.textContent = data?.balances?.tokens  ?? '0';
 
   renderInventory();
 }
+
 function renderInventory(){
-  const root = $('#inv'); root.innerHTML = '';
-  INVENTORY.forEach((it, idx)=>{
+  const root = $('inv'); if (!root) return;
+  root.innerHTML = '';
+  INVENTORY.forEach(it => {
     const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
 
-    // drag support
+    // drag
     card.addEventListener('dragstart', (ev)=>{
       ev.dataTransfer.setData('text/plain', JSON.stringify(it));
       ev.dataTransfer.effectAllowed = 'copyMove';
-      selectedCard = it; // also set click selection for convenience
+      selectedCard = it;
     });
 
-    // click-to-place (mobile)
+    // click-to-place
     card.addEventListener('click', ()=>{
       selectedCard = it;
-      // visual pick
-      Array.from(document.querySelectorAll('.card')).forEach(n=>n.style.outline='');
+      document.querySelectorAll('#inv .card').forEach(n=>n.style.outline='');
       card.style.outline='2px solid #38bdf8';
     });
 
     if (placedSet.has(keyOf(it))) card.classList.add('dim');
 
-    const img = document.createElement('img'); img.className='thumb'; img.src = it.image || ''; img.alt = it.name || it.card_id;
-    const meta = document.createElement('div'); meta.className='meta';
-    const nm = document.createElement('div'); nm.className='name'; nm.textContent = it.name || it.card_id;
-    const sb = document.createElement('div'); sb.className='muted'; sb.textContent = [it.rarity, it.position || it.type, it.club].filter(Boolean).join(' • ');
-
-    meta.appendChild(nm); meta.appendChild(sb);
-    card.appendChild(img); card.appendChild(meta);
+    card.innerHTML = `
+      <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
+      <div class="meta">
+        <div class="name">${it.name || it.card_id}</div>
+        <div class="muted">${[it.rarity, it.position || it.type, it.club].filter(Boolean).join(' • ')}</div>
+      </div>`;
     root.appendChild(card);
   });
 }
 
 /* ===== slots ===== */
-function allSlots(){ return Array.from(document.querySelectorAll('.slot')); }
+const allSlots = () => Array.from(document.querySelectorAll('.slot'));
 
 function attachDnD(){
   for (const slot of allSlots()){
-    // drag over/drop
     slot.addEventListener('dragover', (e)=>{ e.preventDefault(); slot.classList.add('hover'); });
     slot.addEventListener('dragleave', ()=> slot.classList.remove('hover'));
     slot.addEventListener('drop', (e)=>{
@@ -268,28 +275,22 @@ function attachDnD(){
       if (!it || !it.card_id) return;
       placeInSlot(slot, it);
     });
-
-    // click-to-place (if a card is selected)
     slot.addEventListener('click', ()=>{
       if (!selectedCard) return;
       placeInSlot(slot, selectedCard);
     });
-
-    // right-click to clear
     slot.addEventListener('contextmenu', (e)=>{ e.preventDefault(); clearSlot(slot); markInventoryDim(); updatePlacedCount(); });
   }
 }
 
 function placeInSlot(slot, it){
   const k = keyOf(it);
-  // duplicates not allowed across all slots
   const prevKey = slot.dataset.kEq || '';
+  // block duplicates (unless re-placing the same card back into same slot)
   if (placedSet.has(k) && k !== prevKey){ shake(slot); return; }
 
-  // free previous (if any)
   if (prevKey) placedSet.delete(prevKey);
 
-  // set
   const img = slot.querySelector('.thumb');
   if (img) img.src = it.image || '';
   slot.classList.add('filled');
@@ -317,7 +318,7 @@ function markInventoryDim(){
     if (placedSet.has(keyOf(it))) node.classList.add('dim'); else node.classList.remove('dim');
   });
 }
-function updatePlacedCount(){ $('#placedCount').textContent = placedSet.size; }
+function updatePlacedCount(){ const pc=$('placedCount'); if (pc) pc.textContent = placedSet.size; }
 function shake(el){
   el.style.transition='transform .08s';
   el.style.transform='translateX(4px)';
@@ -325,62 +326,67 @@ function shake(el){
   setTimeout(()=>el.style.transform='translateX(0)', 160);
 }
 
-/* ===== formation shapes: relabel only (keep positions compact) ===== */
+/* ===== shapes: relabel only (keep same compact layout) ===== */
+// align 4-3-3 to your initial slot labels so loading saved data works
 const SHAPES = {
-  "4-3-3": ["GK","LB","CB","CB","RB","CM","DM","CM","LW","ST","RW"],
-  "4-2-3-1": ["GK","LB","CB","CB","RB","CM","CM","LW","AM","RW","ST"],
-  "3-5-2": ["GK","CB","CB","CB","LB","CM","CM","CM","RB","ST","ST"],
-  "4-4-2": ["GK","LB","CB","CB","RB","LW","CM","CM","RW","ST","ST"]
+  "4-3-3": ["GK","LB","LCB","RCB","RB","LCM","CM","RCM","LW","ST","RW"],
+  "4-2-3-1": ["GK","LB","LCB","RCB","RB","DM1","DM2","LAM","CAM","RAM","ST"],
+  "3-5-2": ["GK","LCB","CB","RCB","LM","LCM","CM","RCM","RM","ST1","ST2"],
+  "4-4-2": ["GK","LB","LCB","RCB","RB","LM","LCM","RCM","RM","ST1","ST2"]
 };
 function relabelForShape(){
-  const labels = SHAPES[$('#shape').value] || SHAPES["4-3-3"];
+  const shapeSel = $('shape');
+  const labels = SHAPES[shapeSel ? shapeSel.value : '4-3-3'] || SHAPES["4-3-3"];
   const pitchSlots = allSlots().filter(s => !s.closest('#bench'));
-  // clear pitch when switching shape
   pitchSlots.forEach((s,i)=>{
     clearSlot(s);
-    const lbl = s.querySelector('.lbl'); if (lbl) lbl.textContent = labels[i] || ('S'+(i+1));
-    s.dataset.slot = lbl ? lbl.textContent : s.dataset.slot;
+    const lbl = s.querySelector('.lbl');
+    if (lbl) lbl.textContent = labels[i] || ('S'+(i+1));
+    s.dataset.slot = lbl ? lbl.textContent : (s.dataset.slot || ('S'+(i+1)));
   });
   placedSet.clear(); updatePlacedCount(); markInventoryDim();
 }
 
 /* ===== save / load ===== */
 function collectSlots(){
-  return allSlots().map(s=>{
+  return allSlots().map(s => {
     const cid = s.dataset.cardId || null;
     const ser = s.dataset.serial || '';
-    return { slot_id: (s.dataset.slot || s.querySelector('.lbl')?.textContent || '').trim(),
-             card_id: cid, serial: ser===''? null : Number(ser) };
+    return {
+      slot_id: (s.dataset.slot || s.querySelector('.lbl')?.textContent || '').trim(),
+      card_id: cid,
+      serial: ser==='' ? null : Number(ser)
+    };
   });
 }
 
 async function saveFormation(){
-  const user_id = $('#user_id').value.trim();
-  const name    = $('#fname').value.trim();
+  const user_id = v('user_id').trim();
+  const name    = v('fname').trim();
   if (!user_id || !name){ alert('user id + formation name required'); return; }
-  const shape = $('#shape').value || '4-3-3';
+  const shape = v('shape','4-3-3') || '4-3-3';
   const slots = collectSlots();
   await callApi('formation_save', { user_id, name, shape, slots });
   alert('Saved ✔');
 }
 
 async function loadFormation(){
-  const user_id = $('#user_id').value.trim();
-  const name    = $('#fname').value.trim();
+  const user_id = v('user_id').trim();
+  const name    = v('fname').trim();
   if (!user_id || !name){ alert('enter user id & formation name to load'); return; }
   const data = await callApi('formation_get', { user_id, name });
   if (data?.error){ alert('Not found'); return; }
 
-  $('#shape').value = data.shape || '4-3-3'; relabelForShape();
-  // clear all first
+  const shapeSel = $('shape');
+  if (shapeSel) shapeSel.value = data.shape || '4-3-3';
+  relabelForShape();
+
   placedSet.clear();
   allSlots().forEach(clearSlot);
 
-  // place cards if present
   (data.slots || []).forEach(s=>{
     const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
     if (!slotEl || !s.card_id) return;
-    // find image from inventory (if not loaded yet, image stays blank—OK)
     const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
     const img = slotEl.querySelector('.thumb');
     if (img && meta && meta.image) img.src = meta.image;
@@ -395,7 +401,7 @@ async function loadFormation(){
 }
 
 async function listFormations(){
-  const user_id = $('#user_id').value.trim();
+  const user_id = v('user_id').trim();
   if (!user_id){ alert('enter user id first'); return; }
   const data = await callApi('formation_list', { user_id });
   if (!data.items?.length){ alert('No saved formations'); return; }
@@ -409,18 +415,19 @@ function clearAll(){
 
 /* ===== boot ===== */
 document.addEventListener('DOMContentLoaded', ()=>{
-  // quick prefill via ?u=
-  const u = new URLSearchParams(location.search).get('u'); if (u) $('#user_id').value = u;
+  const u = new URLSearchParams(location.search).get('u');
+  if (u && $('user_id')) $('user_id').value = u;
 
   attachDnD();
-  safeOn('btnSearch','click', loadInventory);
-  safeOn('btnRefresh','click', renderInventory);
-  safeOn('btnSave','click',    saveFormation);
-  safeOn('btnLoad','click',    loadFormation);
-  safeOn('btnList','click',    listFormations);
-  safeOn('btnClear','click',   clearAll);
-  safeOn('shape','change',     relabelForShape);
+  on('btnSearch','click', loadInventory);
+  on('btnRefresh','click', renderInventory);
+  on('btnSave','click',    saveFormation);
+  on('btnLoad','click',    loadFormation);
+  on('btnList','click',    listFormations);
+  on('btnClear','click',   clearAll);
+  on('shape','change',     relabelForShape);
 });
 </script>
+
 </body>
 </html>
