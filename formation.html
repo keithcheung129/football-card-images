@@ -89,7 +89,10 @@
 
     <!-- Controls -->
     <div class="row">
-      <input id="userId" class="input" placeholder="Discord ID (preferred) or @username" />
+
+      <!-- after -->
+      <input id="user_id" class="input" placeholder="Discord ID (preferred) or @username" />
+
       <select id="shape" class="input">
         <option value="4-3-3" selected>4-3-3</option>
         <option value="4-2-3-1">4-2-3-1</option>
@@ -193,7 +196,7 @@ async function callApi(action, payload){
 
 /* ===== inventory ===== */
 async function loadInventory(){
-  const user_id = $('#userId').value.trim();
+  const user_id = $('#user_id').value.trim();
   if (!user_id){ alert('Enter user ID first'); return; }
   const q = {
     user_id,
@@ -324,10 +327,10 @@ function shake(el){
 
 /* ===== formation shapes: relabel only (keep positions compact) ===== */
 const SHAPES = {
-  "4-3-3": ["GK","LB","LCB","RCB","RB","LCM","CM","RCM","LW","ST","RW"],
-  "4-2-3-1": ["GK","LB","LCB","RCB","RB","DM1","DM2","LAM","CAM","RAM","ST"],
-  "3-5-2": ["GK","LCB","CB","RCB","LM","LCM","CM","RCM","RM","ST1","ST2"],
-  "4-4-2": ["GK","LB","LCB","RCB","RB","LM","LCM","RCM","RM","ST1","ST2"]
+  "4-3-3": ["GK","LB","CB","CB","RB","CM","DM","CM","LW","ST","RW"],
+  "4-2-3-1": ["GK","LB","CB","CB","RB","CM","CM","LW","AM","RW","ST"],
+  "3-5-2": ["GK","CB","CB","CB","LB","CM","CM","CM","RB","ST","ST"],
+  "4-4-2": ["GK","LB","CB","CB","RB","LW","CM","CM","RW","ST","ST"]
 };
 function relabelForShape(){
   const labels = SHAPES[$('#shape').value] || SHAPES["4-3-3"];
@@ -352,7 +355,7 @@ function collectSlots(){
 }
 
 async function saveFormation(){
-  const user_id = $('#userId').value.trim();
+  const user_id = $('#user_id').value.trim();
   const name    = $('#fname').value.trim();
   if (!user_id || !name){ alert('user id + formation name required'); return; }
   const shape = $('#shape').value || '4-3-3';
@@ -362,7 +365,7 @@ async function saveFormation(){
 }
 
 async function loadFormation(){
-  const user_id = $('#userId').value.trim();
+  const user_id = $('#user_id').value.trim();
   const name    = $('#fname').value.trim();
   if (!user_id || !name){ alert('enter user id & formation name to load'); return; }
   const data = await callApi('formation_get', { user_id, name });
@@ -392,7 +395,7 @@ async function loadFormation(){
 }
 
 async function listFormations(){
-  const user_id = $('#userId').value.trim();
+  const user_id = $('#user_id').value.trim();
   if (!user_id){ alert('enter user id first'); return; }
   const data = await callApi('formation_list', { user_id });
   if (!data.items?.length){ alert('No saved formations'); return; }
@@ -407,7 +410,7 @@ function clearAll(){
 /* ===== boot ===== */
 document.addEventListener('DOMContentLoaded', ()=>{
   // quick prefill via ?u=
-  const u = new URLSearchParams(location.search).get('u'); if (u) $('#userId').value = u;
+  const u = new URLSearchParams(location.search).get('u'); if (u) $('#user_id').value = u;
 
   attachDnD();
   safeOn('btnSearch','click', loadInventory);
