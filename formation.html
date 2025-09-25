@@ -5,110 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>TLK – Formation Builder</title>
 <style>
-  :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--line:#1f2937}
+  :root{
+    --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --accent:#22c55e; --accent2:#38bdf8; --line:#1f2937;
+    --cardW:74px; --cardH:104px;  /* adjust once and the pitch scales */
+    --gap:12px;
+  }
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1200px;margin:0 auto;padding:20px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:hidden}
   .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
   h1{font-size:18px;margin:0}
   .muted{color:var(--muted);font-size:12px}
+
+  /* top controls */
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
   .input,select{background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:10px;padding:8px 10px;font-size:14px}
   .btn{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer}
   .btn.alt{background:#334155}
   .btn.danger{background:#b91c1c}
 
-  /* pitch */
-  .pitch-wrap{padding:16px}
+  /* main 2-column content: pitch left, inventory right */
+  .content{
+    display:grid; grid-template-columns: 1fr 360px; gap:14px; padding:12px 16px 16px 16px;
+  }
+  .side .inventory{ position:sticky; top:16px; max-height: calc(100vh - 150px); overflow:auto; border-left:1px solid var(--line); padding-left:14px }
+
+  /* compact, dimmer pitch */
+  .pitch-wrap{ display:flex; justify-content:center; }
   .pitch{
-    position:relative; width:100%; aspect-ratio: 2/3; /* responsive */
-    background: #0e2c12; border:1px solid var(--line); border-radius:14px; overflow:hidden;
+    /* one-card margins for wings, and a compact 3-column lane for slots */
+    width: calc(var(--cardW) * 5 + 56px);    /* = 1W margin + 3 cols + 1W margin + small padding */
+    height: calc(var(--cardH) * 4 + 56px);   /* = top box (2H) + midfield (2H), small padding */
+    background:#09170b;                      /* dimmer green */
+    border:1px solid var(--line); border-radius:14px; overflow:hidden; position:relative;
   }
-  /* field lines (subtle) */
-  .pitch::before, .pitch::after { content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#e5e7eb22 }
-  .pitch::after { top:calc(50% - 0.5px); }
-  .zone-box{
-    position:absolute; left:8%; right:8%; height:18%;
-    border:1px solid #e5e7eb33; border-radius:6px;
-  }
-  .box-top{top:6%;}
-  .box-bot{bottom:6%;}
-  .wing-line{position:absolute; top:0; bottom:0; width:1px; background:#e5e7eb22}
-  .wing-left{left:20%} .wing-right{right:20%}
-  .centre-circle{
-    position:absolute; left:50%; top:50%; width:14%; aspect-ratio:1/1;
-    transform:translate(-50%,-50%); border:2px solid #e5e7eb66; border-radius:50%;
-  }
+  /* subtle field lines */
+  .pitch::before, .pitch::after{content:""; position:absolute; left:0; right:0; height:1px; background:#e5e7eb1a}
+  .pitch::before{ top:28%; }  /* not exact to real pitch, purely decorative */
+  .pitch::after{  top:72%; }
 
-  /* slots (no position rules; labelled for guidance) */
+  /* slots */
   .slot{
-    position:absolute; width:68px; height:96px; border:1px dashed #94a3b844;
-    border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    font-size:11px; color:#cbd5e1; gap:4px; text-align:center; padding:4px;
+    position:absolute; width:var(--cardW); height:var(--cardH);
+    border:1px dashed #94a3b844; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:4px; box-sizing:border-box;
   }
-  .slot.hover{ border-color: var(--accent2); box-shadow:0 0 0 2px #38bdf855 inset; }
-  .slot .thumb{ width:100%; height:100%; object-fit:cover; border-radius:8px; display:none; }
-  .slot.filled .thumb{ display:block; }
+  .slot.hover{ border-color:var(--accent2); box-shadow:0 0 0 2px #38bdf855 inset; }
+  .slot .thumb{ width:100%; height:100%; object-fit:cover; border-radius:8px; display:none }
+  .slot.filled .thumb{ display:block }
   .slot .lbl{ position:absolute; bottom:-16px; font-size:10px; color:#94a3b8 }
-
-  /* inventory (mini) */
-  .inventory{border-top:1px solid var(--line); padding:12px 16px}
-  .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
-  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:10px}
-  .card{background:#0b1220;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .card .thumb{aspect-ratio:3/4; width:100%; object-fit:cover; display:block}
-  .card .meta{padding:6px 8px}
-  .card .meta .name{font-size:12px;font-weight:700}
-  .card.dim{opacity:.35}
-  .row-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 
   /* bench strip */
   .bench{display:flex; gap:8px; flex-wrap:wrap; padding:12px 16px}
-  .bench .slot{position:relative; static:relative}
-  .bench .slot .lbl{bottom:auto; top:-16px}
+  .bench .slot{ position:relative; static:relative }
+  .bench .slot .lbl{ bottom:auto; top:-16px }
 
-  /* 2-column layout: pitch left, inventory right */
-.content{
-  display:grid;
-  grid-template-columns: 1fr 340px;   /* inventory ~340px */
-  gap:14px;
-  padding:0 16px 16px 16px;
-}
-.side{ position:relative; }
-.side .inventory{
-  position:sticky; top:16px; max-height: calc(100vh - 120px); overflow:auto;
-}
+  /* inventory (side) */
+  .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:10px}
+  .card{background:#0b1220;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .card[draggable="true"]{ cursor:grab }
+  .card .thumb{aspect-ratio:3/4; width:100%; object-fit:cover; display:block}
+  .card .meta{padding:6px 8px}
+  .card .name{font-size:12px;font-weight:700}
+  .card.dim{opacity:.35}
+  .row-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 
-/* Smaller pitch size & dimmer green */
-:root{ --cardW:72px; --cardH:100px; }
-.pitch-wrap{ display:flex; justify-content:center; }
-.pitch{
-  /* about 1 card width per wing margin, 3 columns of slots across → compact pitch */
-  width: calc(var(--cardW) * 4 + 48px);   /* wings margins + 3 slot columns */
-  height: calc(var(--cardH) * 4 + 56px);  /* 2 rows for box + 2 rows for midfield */
-  background: #09170b;                    /* dimmer green */
-  border:1px solid var(--line);
-  border-radius:14px; overflow:hidden; position:relative;
-}
-
-/* field lines: a touch softer */
-.pitch::before, .pitch::after{ content:""; position:absolute; left:0; right:0; height:1px; background:#e5e7eb1a }
-.pitch::before{ top:25%; }      /* box split */
-.pitch::after{  top:75%; }      /* box split */
-
-/* optional inner boxes (subtle) */
-.zone-box{ display:none; }      /* hide big boxes to keep it clean */
-
-/* slot size follows our card vars */
-.slot{ width: var(--cardW); height: var(--cardH); }
-
-/* inventory grid can be a bit tighter on the side */
-.grid{ grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); }
-
-
-  @media (max-width: 820px){
-    .slot{ width:56px; height:80px }
+  @media (max-width: 980px){
+    .content{ grid-template-columns: 1fr; }
+    .side .inventory{ position:relative; top:auto; max-height:none; border-left:0; padding-left:0; }
+    .pitch{ width: calc(var(--cardW) * 5 + 40px); height: calc(var(--cardH) * 4 + 40px); }
   }
 </style>
 </head>
@@ -117,25 +84,12 @@
   <div class="panel">
     <div class="hdr">
       <h1>TLK Formation Builder</h1>
-      <div class="muted">Drag your cards onto the pitch. Duplicates are not allowed.</div>
+      <div class="muted">Drag cards onto the pitch. No duplicates allowed. Right-click a slot to clear.</div>
     </div>
-    <!-- back line -->
-    <div class="slot" data-slot="GK"  style="left:50%; top:88%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb"/></div>
-    <div class="slot" data-slot="LB"  style="left:22%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb"/></div>
-    <div class="slot" data-slot="LCB" style="left:38%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb"/></div>
-    <div class="slot" data-slot="RCB" style="left:62%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb"/></div>
-    <div class="slot" data-slot="RB"  style="left:78%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb"/></div>
-    <!-- midfield -->
-    <div class="slot" data-slot="LCM" style="left:38%; top:53%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb"/></div>
-    <div class="slot" data-slot="CM"  style="left:50%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb"/></div>
-    <div class="slot" data-slot="RCM" style="left:62%; top:53%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb"/></div>
-    <!-- forwards -->
-    <div class="slot" data-slot="LW"  style="left:22%; top:28%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb"/></div>
-    <div class="slot" data-slot="ST"  style="left:50%; top:22%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb"/></div>
-    <div class="slot" data-slot="RW"  style="left:78%; top:28%; transform:translate(-50%,-50%)"><span class="lbl">RW</span><img class="thumb"/></div>
 
+    <!-- Controls -->
     <div class="row">
-      <input id="userId" class="input" placeholder="Discord ID (preferred) or @username"/>
+      <input id="userId" class="input" placeholder="Discord ID (preferred) or @username" />
       <select id="shape" class="input">
         <option value="4-3-3" selected>4-3-3</option>
         <option value="4-2-3-1">4-2-3-1</option>
@@ -149,96 +103,141 @@
       <button class="btn alt" id="btnClear">Clear</button>
     </div>
 
+    <!-- Main 2-column area -->
     <div class="content">
       <main>
-        <!-- Pitch panel stays exactly as you have it -->
+        <!-- Pitch -->
         <div class="pitch-wrap">
-          <div id="pitch" class="pitch"> ... slots ... </div>
+          <div id="pitch" class="pitch" aria-live="polite">
+            <!-- Compact 4-3-3 layout (absolute in %) -->
+            <!-- back line -->
+            <div class="slot" data-slot="GK"  style="left:50%; top:88%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="LB"  style="left:22%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="LCB" style="left:38%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RCB" style="left:62%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RB"  style="left:78%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb" alt=""/></div>
+            <!-- midfield -->
+            <div class="slot" data-slot="LCM" style="left:38%; top:53%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM"  style="left:50%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RCM" style="left:62%; top:53%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
+            <!-- forwards -->
+            <div class="slot" data-slot="LW"  style="left:22%; top:28%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="ST"  style="left:50%; top:22%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RW"  style="left:78%; top:28%; transform:translate(-50%,-50%)"><span class="lbl">RW</span><img class="thumb" alt=""/></div>
+          </div>
         </div>
 
         <!-- Manager + Bench -->
-        <div class="row"><div class="muted">Manager & Bench</div></div>
-        <div class="bench" id="bench"> ... bench slots ... </div>
+        <div class="bench" id="bench">
+          <div class="slot" data-slot="MGR"><span class="lbl">Manager</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B1"><span class="lbl">B1</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B2"><span class="lbl">B2</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B3"><span class="lbl">B3</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B4"><span class="lbl">B4</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B5"><span class="lbl">B5</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B6"><span class="lbl">B6</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B7"><span class="lbl">B7</span><img class="thumb" alt=""/></div>
+        </div>
       </main>
 
+      <!-- Inventory side -->
       <aside class="side">
-        <!-- Inventory panel (unchanged markup you already have) -->
         <div class="inventory">
           <div class="filters">
-            <!-- rarity / position / club + buttons -->
+            <select id="rarity"><option value="ALL">Rarity: ALL</option><option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option></select>
+            <select id="position"><option value="ALL">Position: ALL</option><option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option></select>
+            <select id="club"><option value="ALL">Club: ALL</option></select>
+          </div>
+          <div style="display:flex; gap:8px; margin-bottom:8px">
+            <button class="btn" id="btnSearch">Load Inventory</button>
+            <button class="btn alt" id="btnRefresh">Refresh</button>
           </div>
           <div id="inv" class="grid" aria-live="polite"></div>
           <div class="row-footer">
             <div class="muted">Placed: <span id="placedCount">0</span> / 20</div>
-            <div class="muted">Tickets: <span id="tickets">–</span> • Tokens: <span id="tokens">–</span></div>
+            <div class="muted">🎟 <span id="tickets">–</span> • 🪙 <span id="tokens">–</span></div>
           </div>
         </div>
       </aside>
     </div>
+
   </div>
 </div>
 
 <script>
-const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api'; // same as other pages
+/* ===== CONFIG ===== */
+const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
+
+/* ===== helpers ===== */
 const $ = (id) => document.getElementById(id);
+const safeOn = (id,evt,fn) => { const el=$(id); if(el) el.addEventListener(evt,fn); else console.warn('Missing #'+id); };
 
-/* ------------ state ------------- */
-let INVENTORY = [];    // full list returned by API
-const placedSet = new Set(); // key: card_id::serial (serial can be null)
+/* ===== state ===== */
+let INVENTORY = [];             // entire inventory (filtered by API params)
+let selectedCard = null;        // for tap-to-place on mobile
+const placedSet = new Set();    // keys: "card_id::serial?" — prevents duplicates
 
-/* ------------ API (reuse your collection action) ------------- */
+function keyOf(it){ return `${it.card_id}::${it.serial ?? ''}`; }
+
+/* ===== API ===== */
 async function callApi(action, payload){
   const res = await fetch(API_BASE, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
+    method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ action, ...payload })
   });
   const text = await res.text();
   if (!res.ok) throw new Error(text);
-  let body; try { body = JSON.parse(text);} catch{ throw new Error('Bad JSON');}
-  // Worker wraps {ok,data,status}; unwrap if present
+  let body; try{ body = JSON.parse(text);}catch{ throw new Error('Bad JSON');}
   return (body && typeof body==='object' && 'ok' in body && 'data' in body) ? body.data : body;
 }
 
+/* ===== inventory ===== */
 async function loadInventory(){
   const user_id = $('#userId').value.trim();
   if (!user_id){ alert('Enter user ID first'); return; }
   const q = {
     user_id,
-    page: 1,
-    page_size: 200, // big page for mini list
+    page:1, page_size:240, unique_only:false,
     rarity: $('#rarity').value || 'ALL',
     position: $('#position').value || 'ALL',
     batch: 'ALL',
-    club: $('#club').value || 'ALL',
-    unique_only: false
+    club: $('#club').value || 'ALL'
   };
-  const data = await callApi('collection', q); // same as inventory.html
+  const data = await callApi('collection', q);
   INVENTORY = (data.items || []).map(x=>({
-    card_id: x.card_id, name: x.name, rarity: x.rarity, position: x.position,
-    club: x.club, image: x.image_url, serial: x.serial, type: x.type
+    card_id:x.card_id, name:x.name, rarity:x.rarity, position:x.position,
+    club:x.club, image:x.image_url, serial:x.serial, type:x.type
   }));
+
   // populate clubs
   const clubs = Array.from(new Set(INVENTORY.map(i=>i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
   $('#club').innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
-  renderInventory();
+
   $('#tickets').textContent = data?.balances?.tickets ?? '0';
   $('#tokens').textContent  = data?.balances?.tokens ?? '0';
+
+  renderInventory();
 }
-
-/* ------------ render inventory ------------- */
-function keyOf(it){ return `${it.card_id}::${it.serial ?? ''}`; }
-
 function renderInventory(){
   const root = $('#inv'); root.innerHTML = '';
-  for (const it of INVENTORY){
-    const card = document.createElement('div'); card.className='card';
-    // draggable source
-    card.setAttribute('draggable','true');
+  INVENTORY.forEach((it, idx)=>{
+    const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
+
+    // drag support
     card.addEventListener('dragstart', (ev)=>{
       ev.dataTransfer.setData('text/plain', JSON.stringify(it));
       ev.dataTransfer.effectAllowed = 'copyMove';
+      selectedCard = it; // also set click selection for convenience
     });
+
+    // click-to-place (mobile)
+    card.addEventListener('click', ()=>{
+      selectedCard = it;
+      // visual pick
+      Array.from(document.querySelectorAll('.card')).forEach(n=>n.style.outline='');
+      card.style.outline='2px solid #38bdf8';
+    });
+
     if (placedSet.has(keyOf(it))) card.classList.add('dim');
 
     const img = document.createElement('img'); img.className='thumb'; img.src = it.image || ''; img.alt = it.name || it.card_id;
@@ -249,177 +248,176 @@ function renderInventory(){
     meta.appendChild(nm); meta.appendChild(sb);
     card.appendChild(img); card.appendChild(meta);
     root.appendChild(card);
-  }
+  });
 }
 
-/* ------------ slots (drop targets) ------------- */
-function allSlots(){
-  return Array.from(document.querySelectorAll('.slot'));
-}
+/* ===== slots ===== */
+function allSlots(){ return Array.from(document.querySelectorAll('.slot')); }
+
 function attachDnD(){
   for (const slot of allSlots()){
+    // drag over/drop
     slot.addEventListener('dragover', (e)=>{ e.preventDefault(); slot.classList.add('hover'); });
     slot.addEventListener('dragleave', ()=> slot.classList.remove('hover'));
     slot.addEventListener('drop', (e)=>{
-      e.preventDefault();
-      slot.classList.remove('hover');
-      let it; try{ it = JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); }catch{ it = null; }
+      e.preventDefault(); slot.classList.remove('hover');
+      let it; try{ it = JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); }catch{ it=null; }
       if (!it || !it.card_id) return;
-      const k = keyOf(it);
-      // duplicates not allowed
-      if (placedSet.has(k) && !slot.dataset.kEq){ shake(slot); return; }
-
-      // if target filled, release previous
-      clearSlot(slot);
-
-      // set card image
-      const img = slot.querySelector('.thumb');
-      img.src = it.image || '';
-      slot.classList.add('filled');
-      slot.dataset.cardId = it.card_id;
-      slot.dataset.serial = (it.serial ?? '');
-      slot.dataset.kEq = k; // remember key on slot
-      placedSet.add(k);
-      updatePlacedCount();
-      markInventoryDim();
+      placeInSlot(slot, it);
     });
-    // support removing by right-click
-    slot.addEventListener('contextmenu', (e)=>{ e.preventDefault(); clearSlot(slot); updatePlacedCount(); markInventoryDim(); });
+
+    // click-to-place (if a card is selected)
+    slot.addEventListener('click', ()=>{
+      if (!selectedCard) return;
+      placeInSlot(slot, selectedCard);
+    });
+
+    // right-click to clear
+    slot.addEventListener('contextmenu', (e)=>{ e.preventDefault(); clearSlot(slot); markInventoryDim(); updatePlacedCount(); });
   }
+}
+
+function placeInSlot(slot, it){
+  const k = keyOf(it);
+  // duplicates not allowed across all slots
+  const prevKey = slot.dataset.kEq || '';
+  if (placedSet.has(k) && k !== prevKey){ shake(slot); return; }
+
+  // free previous (if any)
+  if (prevKey) placedSet.delete(prevKey);
+
+  // set
+  const img = slot.querySelector('.thumb');
+  if (img) img.src = it.image || '';
+  slot.classList.add('filled');
+  slot.dataset.cardId = it.card_id;
+  slot.dataset.serial = (it.serial ?? '');
+  slot.dataset.kEq = k;
+
+  placedSet.add(k);
+  markInventoryDim();
+  updatePlacedCount();
 }
 
 function clearSlot(slot){
   const kPrev = slot.dataset.kEq;
-  if (kPrev){ placedSet.delete(kPrev); }
-  slot.dataset.cardId = '';
-  slot.dataset.serial = '';
-  slot.dataset.kEq = '';
-  const img = slot.querySelector('.thumb');
-  if (img){ img.src=''; }
+  if (kPrev) placedSet.delete(kPrev);
+  slot.dataset.cardId=''; slot.dataset.serial=''; slot.dataset.kEq='';
+  const img = slot.querySelector('.thumb'); if (img) img.src='';
   slot.classList.remove('filled');
 }
 
+function markInventoryDim(){
+  const cards = Array.from(document.querySelectorAll('#inv .card'));
+  cards.forEach((node, i)=>{
+    const it = INVENTORY[i]; if (!it) return;
+    if (placedSet.has(keyOf(it))) node.classList.add('dim'); else node.classList.remove('dim');
+  });
+}
+function updatePlacedCount(){ $('#placedCount').textContent = placedSet.size; }
 function shake(el){
   el.style.transition='transform .08s';
-  el.style.transform='translateX(4px)'; setTimeout(()=>{ el.style.transform='translateX(-4px)'; }, 80);
-  setTimeout(()=>{ el.style.transform='translateX(0)'; }, 160);
+  el.style.transform='translateX(4px)';
+  setTimeout(()=>el.style.transform='translateX(-4px)', 80);
+  setTimeout(()=>el.style.transform='translateX(0)', 160);
 }
 
-function markInventoryDim(){
-  const cards = Array.from(document.querySelectorAll('.card'));
-  for (let i=0;i<cards.length;i++){
-    const it = INVENTORY[i]; if (!it) continue;
-    if (placedSet.has(keyOf(it))) cards[i].classList.add('dim'); else cards[i].classList.remove('dim');
-  }
-}
-function updatePlacedCount(){
-  $('#placedCount').textContent = placedSet.size;
-}
-
-/* ------------ formation shape switching (positions only; no rules) ------------- */
+/* ===== formation shapes: relabel only (keep positions compact) ===== */
 const SHAPES = {
   "4-3-3": ["GK","LB","LCB","RCB","RB","LCM","CM","RCM","LW","ST","RW"],
   "4-2-3-1": ["GK","LB","LCB","RCB","RB","DM1","DM2","LAM","CAM","RAM","ST"],
   "3-5-2": ["GK","LCB","CB","RCB","LM","LCM","CM","RCM","RM","ST1","ST2"],
   "4-4-2": ["GK","LB","LCB","RCB","RB","LM","LCM","RCM","RM","ST1","ST2"]
 };
-// For demo simplicity we keep DOM slots static for 4-3-3; extending to reposition is easy later.
-
-$('#shape').addEventListener('change', ()=>{
-  // simple UX for now: just relabel slot captions to roughly match shape
-  const chosen = SHAPES[$('#shape').value] || SHAPES["4-3-3"];
-  const domSlots = allSlots().filter(s => !s.closest('#bench')); // pitch only
-  // clear & relabel
-  domSlots.forEach((s,i)=>{
+function relabelForShape(){
+  const labels = SHAPES[$('#shape').value] || SHAPES["4-3-3"];
+  const pitchSlots = allSlots().filter(s => !s.closest('#bench'));
+  // clear pitch when switching shape
+  pitchSlots.forEach((s,i)=>{
     clearSlot(s);
-    const lbl = s.querySelector('.lbl');
-    if (lbl) lbl.textContent = chosen[i] || ('S'+(i+1));
-    s.dataset.slot = lbl.textContent;
+    const lbl = s.querySelector('.lbl'); if (lbl) lbl.textContent = labels[i] || ('S'+(i+1));
+    s.dataset.slot = lbl ? lbl.textContent : s.dataset.slot;
   });
-  placedSet.clear();
-  updatePlacedCount(); markInventoryDim();
-});
-
-/* ------------ Save / Load ------------- */
-function collectSlots(){
-  const out = [];
-  for (const s of allSlots()){
-    const cid = s.dataset.cardId; const ser = s.dataset.serial;
-    out.push({ slot_id: s.dataset.slot, card_id: cid || null, serial: ser===''? null : Number(ser) });
-  }
-  return out;
+  placedSet.clear(); updatePlacedCount(); markInventoryDim();
 }
+
+/* ===== save / load ===== */
+function collectSlots(){
+  return allSlots().map(s=>{
+    const cid = s.dataset.cardId || null;
+    const ser = s.dataset.serial || '';
+    return { slot_id: (s.dataset.slot || s.querySelector('.lbl')?.textContent || '').trim(),
+             card_id: cid, serial: ser===''? null : Number(ser) };
+  });
+}
+
 async function saveFormation(){
   const user_id = $('#userId').value.trim();
   const name    = $('#fname').value.trim();
   if (!user_id || !name){ alert('user id + formation name required'); return; }
   const shape = $('#shape').value || '4-3-3';
   const slots = collectSlots();
-  const res = await callApi('formation_save', { user_id, name, shape, slots });
+  await callApi('formation_save', { user_id, name, shape, slots });
   alert('Saved ✔');
 }
+
 async function loadFormation(){
   const user_id = $('#userId').value.trim();
   const name    = $('#fname').value.trim();
   if (!user_id || !name){ alert('enter user id & formation name to load'); return; }
   const data = await callApi('formation_get', { user_id, name });
   if (data?.error){ alert('Not found'); return; }
-  $('#shape').value = data.shape || '4-3-3';
-  // push to UI
+
+  $('#shape').value = data.shape || '4-3-3'; relabelForShape();
+  // clear all first
   placedSet.clear();
-  for (const s of allSlots()) clearSlot(s);
-  for (const s of allSlots()){
-    const slotId = s.dataset.slot;
-    const match = (data.slots || []).find(x => String(x.slot_id)===String(slotId));
-    if (!match || !match.card_id) continue;
-    // find meta to get image (optional)
-    const meta = INVENTORY.find(it => it.card_id===match.card_id && String(it.serial ?? '')===String(match.serial ?? ''));
-    const img = s.querySelector('.thumb');
-    s.classList.add('filled');
-    s.dataset.cardId = match.card_id;
-    s.dataset.serial = (match.serial ?? '');
-    s.dataset.kEq = `${match.card_id}::${match.serial ?? ''}`;
-    if (img) img.src = meta?.image || '';
-    placedSet.add(s.dataset.kEq);
-  }
+  allSlots().forEach(clearSlot);
+
+  // place cards if present
+  (data.slots || []).forEach(s=>{
+    const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
+    if (!slotEl || !s.card_id) return;
+    // find image from inventory (if not loaded yet, image stays blank—OK)
+    const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
+    const img = slotEl.querySelector('.thumb');
+    if (img && meta && meta.image) img.src = meta.image;
+    slotEl.classList.add('filled');
+    slotEl.dataset.cardId = s.card_id;
+    slotEl.dataset.serial = (s.serial ?? '');
+    slotEl.dataset.kEq = `${s.card_id}::${s.serial ?? ''}`;
+    placedSet.add(slotEl.dataset.kEq);
+  });
+
   updatePlacedCount(); markInventoryDim();
 }
+
 async function listFormations(){
   const user_id = $('#userId').value.trim();
   if (!user_id){ alert('enter user id first'); return; }
   const data = await callApi('formation_list', { user_id });
   if (!data.items?.length){ alert('No saved formations'); return; }
-  const names = data.items.map(x=>`${x.name} — ${new Date(x.ts).toLocaleString()}`);
-  alert('Saved:\n' + names.join('\n'));
+  alert('Saved formations:\n' + data.items.map(x=>`${x.name} — ${new Date(x.ts).toLocaleString()}`).join('\n'));
 }
+
 function clearAll(){
-  for (const s of allSlots()) clearSlot(s);
-  placedSet.clear();
-  updatePlacedCount();
-  markInventoryDim();
+  allSlots().forEach(clearSlot);
+  placedSet.clear(); updatePlacedCount(); markInventoryDim();
 }
 
-// ... keep everything above ...
+/* ===== boot ===== */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // quick prefill via ?u=
+  const u = new URLSearchParams(location.search).get('u'); if (u) $('#userId').value = u;
 
-function safeOn(id, evt, fn){
-  const el = document.getElementById(id);
-  if (!el) { console.warn('Missing #' + id); return; }
-  el.addEventListener(evt, fn);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  attachDnD();                       // ok if slots exist; it no-ops otherwise
+  attachDnD();
   safeOn('btnSearch','click', loadInventory);
   safeOn('btnRefresh','click', renderInventory);
   safeOn('btnSave','click',    saveFormation);
   safeOn('btnLoad','click',    loadFormation);
   safeOn('btnList','click',    listFormations);
   safeOn('btnClear','click',   clearAll);
-
-  const u = new URLSearchParams(location.search).get('u');
-  if (u) { const f = document.getElementById('userId'); if (f) f.value = u; }
+  safeOn('shape','change',     relabelForShape);
 });
-
 </script>
 </body>
 </html>
