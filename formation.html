@@ -108,7 +108,7 @@
   }
   .slot.hover{ border-color:#B39DDB; box-shadow:0 0 0 3px #B39DDB55 inset; }
   .slot.thumb{ width:100%; height:100%; object-fit:cover; border-radius:8px; display:none }
-  .slot.filled .thumb{ display:block }
+  .slot.filled .thumb{ opacity:1; }
   .slot .lbl{ position:absolute; bottom:-16px; font-size:10px; color:#94a3b8 }
   /* hide slot labels but keep them in DOM for saving/loading */
   .slot .lbl{ display:none; }
@@ -120,7 +120,8 @@
     width:100% !important;
     height:100% !important;
     object-fit:cover;
-    display:none;                 /* hidden until a card is placed */
+    opacity:0;             /* hidden by default */
+    pointer-events:none;
   }
 
   /* bench strip */
@@ -159,7 +160,7 @@
 
       <!-- after -->
       <input id="user_id" class="input" placeholder="Discord ID (preferred) or @username" />
-      
+      <button class="btn" id="btnSearch">Load Inventory</button>
       <input id="fname" class="input" placeholder="Formation name (e.g., 433 – Pressing)"/>
       <button class="btn" id="btnLoad">Load</button>
       <button class="btn alt" id="btnList">My Formations</button>
@@ -226,7 +227,7 @@
             <select id="club"><option value="ALL">Club: ALL</option></select>
           </div>
           <div style="display:flex; gap:8px; margin-bottom:8px">
-            <button class="btn" id="btnSearch">Load Inventory</button>
+            
             <button class="btn alt" id="btnRefresh">Refresh</button>
           </div>
           <div id="inv" class="grid" aria-live="polite"></div>
