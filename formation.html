@@ -74,7 +74,7 @@
   }
   .pitch .half{
     position:absolute; left:0; right:0; top:50%;
-    height:3px; background:var(--lineHalf);
+    height:2px; background:var(--lineHalf);
   }
   .pitch .centre{
     position:absolute; left:50%; top:50%;
@@ -87,10 +87,10 @@
   /* slots */
   .slot{
     position:absolute; width:var(--cardW); height:var(--cardH);
-    border:2px dashed #8A7FA6CC; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    border:3px dashed #8A7FA6CC; border-radius:10px; display:flex; align-items:center; justify-content:center;
     text-align:center; padding:4px; box-sizing:border-box;
   }
-  .slot.hover{ border-color:#38bdf8; box-shadow:0 0 0 3px #38bdf888 inset; }
+  .slot.hover{ border-color:#B39DDB; box-shadow:0 0 0 3px #B39DDB55 inset; }
   .slot.thumb{ width:100%; height:100%; object-fit:cover; border-radius:8px; display:none }
   .slot.filled .thumb{ display:block }
   .slot .lbl{ position:absolute; bottom:-16px; font-size:10px; color:#94a3b8 }
@@ -162,18 +162,18 @@
             <div class="centre"></div>
             <!-- Compact 4-3-3 layout (absolute in %) -->
             <!-- back line -->
-            <div class="slot" data-slot="GK"  style="left:50%; top:92%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="GK"  style="left:50%; top:91%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="LB"  style="left:10%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="CB" style="left:35%; top:78%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="CB" style="left:65%; top:78%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RB"  style="left:90%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb" alt=""/></div>
             <!-- midfield -->
-            <div class="slot" data-slot="CM" style="left:30%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="DM"  style="left:50%; top:58%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CM" style="left:70%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM" style="left:30%; top:42%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="DM"  style="left:50%; top:60%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM" style="left:70%; top:42%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
             <!-- forwards -->
             <div class="slot" data-slot="LW"  style="left:10%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="ST"  style="left:50%; top:18%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="ST"  style="left:50%; top:16%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RW"  style="left:90%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">RW</span><img class="thumb" alt=""/></div>
           </div>
         </div>
