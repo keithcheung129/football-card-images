@@ -179,6 +179,18 @@ const v = (id, def='') => {
   return (el && typeof el.value === 'string') ? el.value : def;
 };
 
+// event binder (guarded) – defines `on()` and `safeOn()`
+// so either name will work across your code
+const on = (id, evt, fn) => {
+  const el = $(id);
+  if (el) el.addEventListener(evt, fn);
+  else console.warn('Missing #' + id);
+};
+const safeOn = on; // alias
+
+
+
+  
 /* ===== state ===== */
 let INVENTORY = [];          // user inventory
 let selectedCard = null;     // for tap-to-place on mobile
