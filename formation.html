@@ -10,7 +10,17 @@
     --cardW:74px; --cardH:104px;  /* adjust once and the pitch scales */
     --gap:12px;
     --pitchW: 800px; /* exact pitch width; adjust to taste */
-    --pitchH: 650px;
+    --pitchH: 870px;
+    --sideInset: 20%;   /* ← move this to match your sketch */
+    --topBoxTop: 0%;     /* distance from top edge to top box */
+    --topBoxH: 24%;      /* height of top box */
+    --botBoxBottom: 0%;  /* distance from bottom edge to bottom box */
+    --botBoxH: 24%;      /* height of bottom box – make this bigger for GK */
+    --centreDia: 14%;    /* centre circle diameter */
+    /* line strength (tweak colors/alpha to taste) */
+    --lineSoft:  #e5e7eb66;   /* boxes */
+    --lineWings: #e5e7eb33;   /* wing lines */
+    --lineHalf:  #e5e7eb66;   /* half way */
   }
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -39,18 +49,38 @@
     width: var(--pitchW);               /* was calc(...) */
     height: var(--pitchH);              /* was calc(...) */
     background:#1a6b3c;                 /* dimmer green */
-    border:1px solid var(--line);
+    border:2px solid var(--line);
     border-radius:14px;
     overflow:hidden;
     position:relative;
   }
-  .pitch .half       {position:absolute; left:0; right:0; top:50%; height:1px; background:#e5e7eb66}
-  .pitch .box-top    {position:absolute; left:6%; right:6%;  top:6%;  height:22%; border:1px solid #e5e7eb66; border-radius:6px}
-  .pitch .box-bot    {position:absolute; left:6%; right:6%;  bottom:6%;height:22%; border:1px solid #e5e7eb66; border-radius:6px}
-  .pitch .wing-left  {position:absolute; top:0; bottom:0; left:20%;  width:1px; background:#e5e7eb66}
-  .pitch .wing-right {position:absolute; top:0; bottom:0; right:20%; width:1px; background:#e5e7eb66}
-  .pitch .centre     {position:absolute; left:50%; top:50%; width:14%; aspect-ratio:1/1; transform:translate(-50%,-50%);
-                    border:2px solid #e5e7eb66; border-radius:50%}
+  .pitch .box-top{
+    position:absolute; left:var(--sideInset); right:var(--sideInset);
+    top:var(--topBoxTop); height:var(--topBoxH);
+    border:1px solid var(--lineSoft); border-radius:6px;
+  }
+  .pitch .box-bot{
+    position:absolute; left:var(--sideInset); right:var(--sideInset);
+    bottom:var(--botBoxBottom); height:var(--botBoxH);
+    border:1px solid var(--lineSoft); border-radius:6px;
+  }
+  .pitch .wing-left{
+    position:absolute; top:0; bottom:0; left:var(--wingX);
+    width:1px; background:var(--lineWings);
+  }
+  .pitch .wing-right{
+    position:absolute; top:0; bottom:0; right:var(--wingX);
+    width:1px; background:var(--lineWings);
+  }
+  .pitch .half{
+    position:absolute; left:0; right:0; top:50%;
+    height:1px; background:var(--lineHalf);
+  }
+  .pitch .centre{
+    position:absolute; left:50%; top:50%;
+    width:var(--centreDia); aspect-ratio:1/1; transform:translate(-50%,-50%);
+    border:2px solid var(--lineHalf); border-radius:50%;
+  }
 
   /* subtle field lines */
   .pitch::before, .pitch::after{content:""; position:absolute; left:0; right:0; height:1px; background:#e5e7eb1a}
@@ -67,6 +97,8 @@
   .slot.thumb{ width:100%; height:100%; object-fit:cover; border-radius:8px; display:none }
   .slot.filled .thumb{ display:block }
   .slot .lbl{ position:absolute; bottom:-16px; font-size:10px; color:#94a3b8 }
+  /* hide slot labels but keep them in DOM for saving/loading */
+  .slot .lbl{ display:none; }
   .slot.moveable{ cursor: move; }  /* when editing layout */
   #trash.hover{ outline:2px solid #ef4444; }  /* trash hover feedback */
 
@@ -110,12 +142,6 @@
       <!-- after -->
       <input id="user_id" class="input" placeholder="Discord ID (preferred) or @username" />
 
-      <select id="shape" class="input">
-        <option value="4-3-3" selected>4-3-3</option>
-        <option value="4-2-3-1">4-2-3-1</option>
-        <option value="3-5-2">3-5-2</option>
-        <option value="4-4-2">4-4-2</option>
-      </select>
       <input id="fname" class="input" placeholder="Formation name (e.g., 433 – Pressing)"/>
       <button class="btn" id="btnLoad">Load</button>
       <button class="btn alt" id="btnList">My Formations</button>
@@ -141,17 +167,17 @@
             <!-- back line -->
             <div class="slot" data-slot="GK"  style="left:50%; top:88%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="LB"  style="left:22%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="LCB" style="left:38%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="RCB" style="left:62%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CB" style="left:38%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CB" style="left:62%; top:76%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RB"  style="left:78%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb" alt=""/></div>
             <!-- midfield -->
-            <div class="slot" data-slot="LCM" style="left:38%; top:53%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CM"  style="left:50%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="RCM" style="left:62%; top:53%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM" style="left:38%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="DM"  style="left:50%; top:58%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM" style="left:62%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
             <!-- forwards -->
-            <div class="slot" data-slot="LW"  style="left:22%; top:28%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="ST"  style="left:50%; top:22%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="RW"  style="left:78%; top:28%; transform:translate(-50%,-50%)"><span class="lbl">RW</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="LW"  style="left:22%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="ST"  style="left:50%; top:20%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RW"  style="left:78%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">RW</span><img class="thumb" alt=""/></div>
           </div>
         </div>
 
@@ -432,24 +458,26 @@ function shake(el){
 
 /* ===== shapes: relabel only (keep same compact layout) ===== */
 // align 4-3-3 to your initial slot labels so loading saved data works
-const SHAPES = {
-  "4-3-3": ["GK","LB","LCB","RCB","RB","LCM","CM","RCM","LW","ST","RW"],
-  "4-2-3-1": ["GK","LB","LCB","RCB","RB","DM1","DM2","LAM","CAM","RAM","ST"],
-  "3-5-2": ["GK","LCB","CB","RCB","LM","LCM","CM","RCM","RM","ST1","ST2"],
-  "4-4-2": ["GK","LB","LCB","RCB","RB","LM","LCM","RCM","RM","ST1","ST2"]
-};
-function relabelForShape(){
-  const shapeSel = $('shape');
-  const labels = SHAPES[shapeSel ? shapeSel.value : '4-3-3'] || SHAPES["4-3-3"];
-  const pitchSlots = allSlots().filter(s => !s.closest('#bench'));
-  pitchSlots.forEach((s,i)=>{
-    clearSlot(s);
-    const lbl = s.querySelector('.lbl');
-    if (lbl) lbl.textContent = labels[i] || ('S'+(i+1));
-    s.dataset.slot = lbl ? lbl.textContent : (s.dataset.slot || ('S'+(i+1)));
-  });
-  placedSet.clear(); updatePlacedCount(); markInventoryDim();
-}
+//REMOVED NOW
+  //const SHAPES = {
+  //"4-3-3": ["GK","LB","LCB","RCB","RB","LCM","CM","RCM","LW","ST","RW"],
+  //"4-2-3-1": ["GK","LB","LCB","RCB","RB","DM1","DM2","LAM","CAM","RAM","ST"],
+  //"3-5-2": ["GK","LCB","CB","RCB","LM","LCM","CM","RCM","RM","ST1","ST2"],
+  //"4-4-2": ["GK","LB","LCB","RCB","RB","LM","LCM","RCM","RM","ST1","ST2"]
+//};
+  
+//function relabelForShape(){
+  //const shapeSel = $('shape');
+  //const labels = SHAPES[shapeSel ? shapeSel.value : '4-3-3'] || SHAPES["4-3-3"];
+  //const pitchSlots = allSlots().filter(s => !s.closest('#bench'));
+  //pitchSlots.forEach((s,i)=>{
+    //clearSlot(s);
+    //const lbl = s.querySelector('.lbl');
+    //if (lbl) lbl.textContent = labels[i] || ('S'+(i+1));
+   // s.dataset.slot = lbl ? lbl.textContent : (s.dataset.slot || ('S'+(i+1)));
+  //});
+ // placedSet.clear(); updatePlacedCount(); markInventoryDim();
+//}
 
 function toggleLayoutEdit(){
   editingLayout = !editingLayout;
@@ -551,7 +579,7 @@ async function saveFormation(){
   const user_id = v('user_id').trim();
   const name    = v('fname').trim();
   if (!user_id || !name){ alert('user id + formation name required'); return; }
-  const shape = v('shape','4-3-3') || '4-3-3';
+  //const shape = v('shape','4-3-3') || '4-3-3';
   const slots = collectSlots();
   await callApi('formation_save', { user_id, name, shape, slots });
   alert('Saved ✔');
@@ -564,8 +592,8 @@ async function loadFormation(){
   const data = await callApi('formation_get', { user_id, name });
   if (data?.error){ alert('Not found'); return; }
 
-  if ($('#shape')) $('#shape').value = data.shape || '4-3-3';
-  relabelForShape();
+  //if ($('#shape')) $('#shape').value = data.shape || '4-3-3';
+  // relabelForShape();
   placedSet.clear();
   allSlots().forEach(clearSlot);
 
@@ -617,7 +645,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   on('btnLoad','click',    loadFormation);
   on('btnList','click',    listFormations);
   on('btnClear','click',   clearAll);
-  on('shape','change',     relabelForShape);
+  //on('shape','change',     relabelForShape);
   on('btnEdit','click', toggleLayoutEdit);
   on('btnGrid','click', toggleSnap);
 
