@@ -16,7 +16,11 @@
     --topBoxH: 30%;      /* height of top box */
     --botBoxBottom: 0%;  /* distance from bottom edge to bottom box */
     --botBoxH: 30%;      /* height of bottom box – make this bigger for GK */
-    --centreDia: 18%;    /* centre circle diameter */
+    --centreDia: 20%;    /* centre circle diameter */
+    --gaWidthPct: 18%;   /* ≈ real: 20.15m / 68m ≈ 29.6% → 30% looks right */
+    --gaDepthPct: 5.5%;  /* ≈ real: 5.5m / 105m ≈ 5.24% → 5.5% feels good */
+    --gaTopTop:   0%;  /* distance from TOP goal line to top 6-yd box */
+    --gaBotBottom: 0%;  /* distance from BOTTOM goal line to bottom 6-yd box */
     /* line strength (tweak colors/alpha to taste) */
     --lineSoft:  #e5e7eb66;   /* boxes */
     --lineWings: #e5e7eb66;   /* wing lines */
@@ -74,13 +78,25 @@
   }
   .pitch .half{
     position:absolute; left:0; right:0; top:50%;
-    height:2px; background:var(--lineHalf);
+    height:1px; background:var(--lineHalf);
   }
   .pitch .centre{
     position:absolute; left:50%; top:50%;
     width:var(--centreDia); aspect-ratio:1/1; transform:translate(-50%,-50%);
     border:1px solid var(--lineHalf); border-radius:50%;
   }
+
+  /* 6-yard boxes (centered horizontally, independent of sideInset) */
+  .pitch .ga-top,
+  .pitch .ga-bot{
+    position:absolute;
+    left:50%; width:var(--gaWidthPct); height:var(--gaDepthPct);
+    transform:translateX(-50%);
+    border:1px solid var(--lineSoft); border-radius:2px;
+  }
+
+  .pitch .ga-top{ top:    var(--gaTopTop); }
+  .pitch .ga-bot{ bottom: var(--gaBotBottom); }
 
   /* subtle field lines */
 
@@ -98,8 +114,6 @@
   .slot .lbl{ display:none; }
   .slot.moveable{ cursor: move; }  /* when editing layout */
   #trash.hover{ outline:2px solid #ef4444; }  /* trash hover feedback */
-
-
 
 
   /* bench strip */
@@ -160,6 +174,8 @@
             <div class="wing-left"></div>
             <div class="wing-right"></div>
             <div class="centre"></div>
+            <div class="ga-top"></div>
+            <div class="ga-bot"></div>
             <!-- Compact 4-3-3 layout (absolute in %) -->
             <!-- back line -->
             <div class="slot" data-slot="GK"  style="left:50%; top:91%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
