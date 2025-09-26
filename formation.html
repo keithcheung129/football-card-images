@@ -172,13 +172,12 @@ const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
 
 /* ===== helpers ===== */
 const $ = (id) => document.getElementById(id);
-// safe get value from an input; never crashes if missing
+const safeOn = (id,evt,fn) => { const el=$(id); if(el) el.addEventListener(evt,fn); else console.warn('Missing #'+id); };
+// safe value getter (never throws if the element is missing)
 const v = (id, def='') => {
   const el = $(id);
   return (el && typeof el.value === 'string') ? el.value : def;
 };
-// safe event binding (won't crash if the element isn't there)
-const on = (id, evt, fn) => { const el = $(id); if (el) el.addEventListener(evt, fn); };
 
 /* ===== state ===== */
 let INVENTORY = [];          // user inventory
@@ -206,11 +205,13 @@ async function loadInventory(){
   if (!user_id){ alert('Enter user ID first'); return; }
   const q = {
     user_id,
-    page:1, page_size:240, unique_only:false,
-    rarity: v('rarity','ALL') || 'ALL',
+    page: 1,
+    page_size: 240,
+    unique_only: false,
+    rarity:   v('rarity','ALL')   || 'ALL',
     position: v('position','ALL') || 'ALL',
     batch: 'ALL',
-    club: v('club','ALL') || 'ALL'
+    club:     v('club','ALL')     || 'ALL'
   };
   const data = await callApi('collection', q);
   INVENTORY = (data.items || []).map(x => ({
@@ -218,18 +219,18 @@ async function loadInventory(){
     club: x.club, image: x.image_url, serial: x.serial, type: x.type
   }));
 
-  // club filter options
+  // populate clubs (guarded)
   const clubs = Array.from(new Set(INVENTORY.map(i => i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  const clubSel = $('club');
-  if (clubSel) clubSel.innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
+  if ($('#club')) $('#club').innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
 
-  const tk = $('tickets'), to = $('tokens');
-  if (tk) tk.textContent = data?.balances?.tickets ?? '0';
-  if (to) to.textContent = data?.balances?.tokens  ?? '0';
+  if ($('#tickets')) $('#tickets').textContent = data?.balances?.tickets ?? '0';
+  if ($('#tokens'))  $('#tokens').textContent  = data?.balances?.tokens  ?? '0';
 
   renderInventory();
 }
 
+
+  
 function renderInventory(){
   const root = $('inv'); if (!root) return;
   root.innerHTML = '';
@@ -377,10 +378,8 @@ async function loadFormation(){
   const data = await callApi('formation_get', { user_id, name });
   if (data?.error){ alert('Not found'); return; }
 
-  const shapeSel = $('shape');
-  if (shapeSel) shapeSel.value = data.shape || '4-3-3';
+  if ($('#shape')) $('#shape').value = data.shape || '4-3-3';
   relabelForShape();
-
   placedSet.clear();
   allSlots().forEach(clearSlot);
 
