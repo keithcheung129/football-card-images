@@ -16,7 +16,7 @@
     --topBoxH: 30%;      /* height of top box */
     --botBoxBottom: 0%;  /* distance from bottom edge to bottom box */
     --botBoxH: 30%;      /* height of bottom box – make this bigger for GK */
-    --centreDia: 14%;    /* centre circle diameter */
+    --centreDia: 18%;    /* centre circle diameter */
     /* line strength (tweak colors/alpha to taste) */
     --lineSoft:  #e5e7eb66;   /* boxes */
     --lineWings: #e5e7eb66;   /* wing lines */
@@ -57,20 +57,20 @@
   .pitch .box-top{
     position:absolute; left:var(--sideInset); right:var(--sideInset);
     top:var(--topBoxTop); height:var(--topBoxH);
-    border:3px solid var(--lineSoft); border-radius:6px;
+    border:2px solid var(--lineSoft); border-radius:6px;
   }
   .pitch .box-bot{
     position:absolute; left:var(--sideInset); right:var(--sideInset);
     bottom:var(--botBoxBottom); height:var(--botBoxH);
-    border:3px solid var(--lineSoft); border-radius:6px;
+    border:2px solid var(--lineSoft); border-radius:6px;
   }
   .pitch .wing-left{
     position:absolute; top:0; bottom:0; left:var(--wingX);
-    width:3px; background:var(--lineWings);
+    width:2px; background:var(--lineWings);
   }
   .pitch .wing-right{
     position:absolute; top:0; bottom:0; right:var(--wingX);
-    width:3px; background:var(--lineWings);
+    width:2px; background:var(--lineWings);
   }
   .pitch .half{
     position:absolute; left:0; right:0; top:50%;
@@ -79,7 +79,7 @@
   .pitch .centre{
     position:absolute; left:50%; top:50%;
     width:var(--centreDia); aspect-ratio:1/1; transform:translate(-50%,-50%);
-    border:2px solid var(--lineHalf); border-radius:50%;
+    border:1px solid var(--lineHalf); border-radius:50%;
   }
 
   /* subtle field lines */
@@ -87,7 +87,7 @@
   /* slots */
   .slot{
     position:absolute; width:var(--cardW); height:var(--cardH);
-    border:2px dashed #cbd5e1aa; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    border:2px dashed #8A7FA6CC; border-radius:10px; display:flex; align-items:center; justify-content:center;
     text-align:center; padding:4px; box-sizing:border-box;
   }
   .slot.hover{ border-color:#38bdf8; box-shadow:0 0 0 3px #38bdf888 inset; }
@@ -162,18 +162,18 @@
             <div class="centre"></div>
             <!-- Compact 4-3-3 layout (absolute in %) -->
             <!-- back line -->
-            <div class="slot" data-slot="GK"  style="left:50%; top:95%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="GK"  style="left:50%; top:92%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="LB"  style="left:10%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CB" style="left:30%; top:75%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CB" style="left:70%; top:75%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CB" style="left:35%; top:78%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CB" style="left:65%; top:78%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RB"  style="left:90%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb" alt=""/></div>
             <!-- midfield -->
-            <div class="slot" data-slot="CM" style="left:30%; top:45%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="DM"  style="left:50%; top:54%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CM" style="left:70%; top:45%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM" style="left:30%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="DM"  style="left:50%; top:58%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="CM" style="left:70%; top:48%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
             <!-- forwards -->
             <div class="slot" data-slot="LW"  style="left:10%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="ST"  style="left:50%; top:15%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="ST"  style="left:50%; top:18%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RW"  style="left:90%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">RW</span><img class="thumb" alt=""/></div>
           </div>
         </div>
@@ -243,7 +243,7 @@ const on = (id, evt, fn) => {
 /* ===== Layout edit & grid snap config ===== */
 let editingLayout = false;       // toggled by "Edit Layout"
 let SNAP_GRID = true;            // toggled by "Snap: On/Off"
-const GRID = { xStepPct: 6.25, yStepPct: 6.25 }; // snap step (% of pitch); tweak for finer/coarser grid
+const GRID = { xStepPct: 2, yStepPct: 2 }; // snap step (% of pitch); tweak for finer/coarser grid
 
 const snapPct = (pct, step) => Math.round(pct / step) * step;
 
