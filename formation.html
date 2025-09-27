@@ -313,6 +313,9 @@
 /* ===== CONFIG ===== */
 const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
 
+const API_KEY = localStorage.getItem('TLK_API_KEY') || ''; // or hardcode during dev
+
+
 /* ===== helpers ===== */
 const $ = (id) => document.getElementById(id);
 const safeOn = (id,evt,fn) => { const el=$(id); if(el) el.addEventListener(evt,fn); else console.warn('Missing #'+id); };
@@ -394,17 +397,27 @@ const keyOf = (it) => `${it.card_id}::${it.serial ?? ''}`;
 
 /* ===== API ===== */
 async function callApi(action, payload){
-  const res = await fetch(API_BASE, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ action, ...payload })
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(text);
-  let body; try { body = JSON.parse(text); } catch { throw new Error('Bad JSON'); }
-  return (body && typeof body==='object' && 'ok' in body && 'data' in body) ? body.data : body;
+  const ctl = new AbortController();
+  const t = setTimeout(()=>ctl.abort(), 24000);
+  try{
+    const res = await fetch(API_BASE, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Access-Key': API_KEY,     // <— add a header the Worker expects
+      },
+      body: JSON.stringify({ action, ...payload }),
+      signal: ctl.signal
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || ('HTTP '+res.status));
+    const body = JSON.parse(text);
+    if (body.ok === false) throw new Error(body.error || 'Request failed');
+    return body.data ?? body;
+  } finally { clearTimeout(t); }
 }
 
+  
 /* ===== inventory ===== */
 async function loadInventory(){
   const user_id = v('user_id').trim();
