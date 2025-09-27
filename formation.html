@@ -179,7 +179,18 @@
   .modal__content img{ width:100%; height:auto; display:block; border-radius:8px; }
   .modal .meta{ margin-top:8px; color:#94a3b8; font-size:12px }
 
-  
+  /* Loader overlay */
+  .busy{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.35); z-index:60; }
+  .busy.open{ display:grid; }
+  .busy__box{ background:#0f172a; border:1px solid #1f2937; padding:16px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4); display:flex; align-items:center; gap:12px; }
+  .spinner{ width:26px; height:26px; border:3px solid #94a3b888; border-top-color:#38bdf8; border-radius:50%; animation:spin 1s linear infinite; }
+  .busy__msg{ color:#e5e7eb; font-size:14px; }
+  @keyframes spin{ to { transform: rotate(360deg);} }
+
+  /* Tiny toast (top-right) */
+  .toast{ position:fixed; right:12px; top:12px; background:#111827; color:#e5e7eb; border:1px solid #1f2937; padding:10px 12px; border-radius:10px; opacity:0; transform:translateY(-8px); transition:.2s; z-index:61; }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast.err{ background:#7f1d1d; border-color:#991b1b; }
 
   @media (max-width: 980px){
     .content{ grid-template-columns: 1fr; }
@@ -227,10 +238,10 @@
             <div class="ga-bot"></div>
             <!-- Compact 4-3-3 layout (absolute in %) -->
             <!-- back line -->
-            <div class="slot" data-slot="GK"  style="left:50%; top:91%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="GK"  style="left:50%; top:90%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="LB"  style="left:10%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="LCB" style="left:35%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="RCB" style="left:65%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="LCB" style="left:32%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RCB" style="left:68%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RB"  style="left:90%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb" alt=""/></div>
             <!-- midfield -->
             <div class="slot" data-slot="LCM" style="left:30%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
@@ -290,6 +301,13 @@
     <div id="modalMeta" class="meta"></div>
   </div>
 </div>
+<div id="busy" class="busy" aria-hidden="true">
+  <div class="busy__box">
+    <div class="spinner"></div>
+    <div id="busyMsg" class="busy__msg">Working…</div>
+  </div>
+</div>
+
 
 <script>
 /* ===== CONFIG ===== */
@@ -311,6 +329,21 @@ const on = (id, evt, fn) => {
   if (el) el.addEventListener(evt, fn);
   else console.warn('Missing #' + id);
 };
+
+function startBusy(msg='Working…'){ const b=$('busy'); if(!b) return; b.classList.add('open'); const m=$('busyMsg'); if(m) m.textContent=msg; }
+function stopBusy(){ const b=$('busy'); if(b) b.classList.remove('open'); }
+function toast(msg, isErr=false){
+  const t=document.createElement('div');
+  t.className='toast'+(isErr?' err':'');
+  t.textContent=msg; document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),200); }, 1800);
+}
+function setUiDisabled(dis){
+  ['btnSearch','btnRefresh','btnSave','btnLoad','btnList','btnClear','btnEdit','btnGrid']
+    .forEach(id=>{ const el=$(id); if(el) el.disabled=dis; });
+}
+
 
 
 function openCardModal(it){
@@ -376,33 +409,33 @@ async function callApi(action, payload){
 async function loadInventory(){
   const user_id = v('user_id').trim();
   if (!user_id){ alert('Enter user ID first'); return; }
-  const q = {
-    user_id,
-    page: 1,
-    page_size: 240,
-    unique_only: false,
-    rarity:   v('rarity','ALL')   || 'ALL',
-    position: v('position','ALL') || 'ALL',
-    batch: 'ALL',
-    club:     v('club','ALL')     || 'ALL'
-  };
-  const data = await callApi('collection', q);
-  INVENTORY = (data.items || []).map(x => ({
-    card_id: x.card_id, name: x.name, rarity: x.rarity, position: x.position,
-    club: x.club, image: x.image_url, serial: x.serial, type: x.type
-  }));
 
-  // populate clubs (guarded)
-  const clubs = Array.from(new Set(INVENTORY.map(i => i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  if ($('#club')) $('#club').innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
-
-  if ($('#tickets')) $('#tickets').textContent = data?.balances?.tickets ?? '0';
-  if ($('#tokens'))  $('#tokens').textContent  = data?.balances?.tokens  ?? '0';
-
-  renderInventory();
+  startBusy('Loading inventory…'); setUiDisabled(true);
+  try{
+    const q = {
+      user_id, page:1, page_size:240, unique_only:false,
+      rarity: v('rarity','ALL') || 'ALL',
+      position: v('position','ALL') || 'ALL',
+      batch:'ALL',
+      club: v('club','ALL') || 'ALL'
+    };
+    const data = await callApi('collection', q);
+    INVENTORY = (data.items || []).map(x=>({
+      card_id:x.card_id, name:x.name, rarity:x.rarity, position:x.position,
+      club:x.club, image:x.image_url, serial:x.serial, type:x.type
+    }));
+    const clubs = Array.from(new Set(INVENTORY.map(i=>i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    if ($('#club')) $('#club').innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
+    if ($('#tickets')) $('#tickets').textContent = data?.balances?.tickets ?? '0';
+    if ($('#tokens'))  $('#tokens').textContent  = data?.balances?.tokens  ?? '0';
+    renderInventory(); toast('Inventory loaded ✔');
+  } catch(err){
+    console.error(err);
+    toast('Inventory load failed: ' + (err?.message || err), true);
+  } finally{
+    stopBusy(); setUiDisabled(false);
+  }
 }
-
-
   
 function renderInventory(){
   const root = $('inv'); if (!root) return;
@@ -698,52 +731,84 @@ async function saveFormation(){
   const user_id = v('user_id').trim();
   const name    = v('fname').trim();
   if (!user_id || !name){ alert('user id + formation name required'); return; }
-  const shape = 'free';                   // <— force a value
+
+  const shape = 'free';                 // we removed picker
   const slots = collectSlots();
-  await callApi('formation_save', { user_id, name, shape, slots });
-  alert('Saved ✔');
+
+  startBusy('Saving formation…'); setUiDisabled(true);
+  try{
+    await callApi('formation_save', { user_id, name, shape, slots });
+
+    // Verify by reading back (optional but confirms persistence)
+    const verify = await callApi('formation_get', { user_id, name });
+    if (!verify || !Array.isArray(verify.slots)) throw new Error('Save verification failed');
+
+    toast('Saved ✔');
+  } catch(err){
+    console.error(err);
+    toast('Save failed: ' + (err?.message || err), true);
+  } finally {
+    stopBusy(); setUiDisabled(false);
+  }
 }
+
 
 async function loadFormation(){
   const user_id = v('user_id').trim();
   const name    = v('fname').trim();
   if (!user_id || !name){ alert('enter user id & formation name to load'); return; }
-  const data = await callApi('formation_get', { user_id, name });
-  if (data?.error){ alert('Not found'); return; }
 
+  startBusy('Loading formation…'); setUiDisabled(true);
+  try{
+    const data = await callApi('formation_get', { user_id, name });
+    if (data?.error){ toast('Not found', true); return; }
+    placedSet.clear(); allSlots().forEach(clearSlot);
 
-  placedSet.clear();
-  allSlots().forEach(clearSlot);
+    (data.slots || []).forEach(s=>{
+      const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
+      if (!slotEl) return;
+      if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
+        slotEl.style.left = s.x_pct + '%';
+        slotEl.style.top  = s.y_pct + '%';
+        slotEl.style.transform = 'translate(-50%,-50%)';
+      }
+      if (!s.card_id) return;
+      const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
+      const img = slotEl.querySelector('.thumb');
+      if (img && meta && meta.image) { img.src = meta.image; img.setAttribute('draggable','false'); }
+      slotEl.classList.add('filled');
+      slotEl.dataset.cardId = s.card_id;
+      slotEl.dataset.serial = (s.serial ?? '');
+      slotEl.dataset.kEq = `${s.card_id}::${s.serial ?? ''}`;
+      placedSet.add(slotEl.dataset.kEq);
+      setSlotDraggableForCards(slotEl);
+    });
 
-  (data.slots || []).forEach(s=>{
-    const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
-    if (!slotEl) return;
-    // restore custom coordinates (if saved)
-    if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
-      slotEl.style.left = s.x_pct + '%';
-      slotEl.style.top  = s.y_pct + '%';
-      slotEl.style.transform = 'translate(-50%,-50%)';
-    }
-    if (!s.card_id) return;
-    const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
-    const img = slotEl.querySelector('.thumb');
-    if (img && meta && meta.image) img.src = meta.image;
-    slotEl.classList.add('filled');
-    slotEl.dataset.cardId = s.card_id;
-    slotEl.dataset.serial = (s.serial ?? '');
-    slotEl.dataset.kEq = `${s.card_id}::${s.serial ?? ''}`;
-    placedSet.add(slotEl.dataset.kEq); 
-    setSlotDraggableForCards(slotEl); // ensure correct drag mode after load
-  });
-  updatePlacedCount(); markInventoryDim();
+    updatePlacedCount(); markInventoryDim();
+    toast('Loaded ✔');
+  } catch(err){
+    console.error(err);
+    toast('Load failed: ' + (err?.message || err), true);
+  } finally{
+    stopBusy(); setUiDisabled(false);
+  }
 }
+
 
 async function listFormations(){
   const user_id = v('user_id').trim();
   if (!user_id){ alert('enter user id first'); return; }
-  const data = await callApi('formation_list', { user_id });
-  if (!data.items?.length){ alert('No saved formations'); return; }
-  alert('Saved formations:\n' + data.items.map(x=>`${x.name} — ${new Date(x.ts).toLocaleString()}`).join('\n'));
+  startBusy('Listing formations…'); setUiDisabled(true);
+  try{
+    const data = await callApi('formation_list', { user_id });
+    if (!data.items?.length){ alert('No saved formations'); return; }
+    alert('Saved formations:\n' + data.items.map(x=>`${x.name} — ${new Date(x.ts).toLocaleString()}`).join('\n'));
+  } catch(err){
+    console.error(err);
+    toast('List failed: ' + (err?.message || err), true);
+  } finally{
+    stopBusy(); setUiDisabled(false);
+  }
 }
 
 function clearAll(){
