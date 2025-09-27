@@ -174,7 +174,7 @@
   @media (max-width: 980px){
     .content{ grid-template-columns: 1fr; }
     .side .inventory{ position:relative; top:auto; max-height:none; border-left:0; padding-left:0; }
-    .pitch{ width: calc(var(--cardW) * 5 + 40px); height: calc(var(--cardH) * 4 + 40px); }
+    .pitch{ width: min(100%, var(--pitchW)); height: var(--pitchH); }
   }
 </style>
 </head>
@@ -219,13 +219,13 @@
             <!-- back line -->
             <div class="slot" data-slot="GK"  style="left:50%; top:91%; transform:translate(-50%,-50%)"><span class="lbl">GK</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="LB"  style="left:10%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">LB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CB" style="left:35%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CB" style="left:65%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="LCB" style="left:35%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">LCB</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RCB" style="left:65%; top:79%; transform:translate(-50%,-50%)"><span class="lbl">RCB</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="RB"  style="left:90%; top:70%; transform:translate(-50%,-50%)"><span class="lbl">RB</span><img class="thumb" alt=""/></div>
             <!-- midfield -->
-            <div class="slot" data-slot="CM" style="left:30%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="DM"  style="left:50%; top:60%; transform:translate(-50%,-50%)"><span class="lbl">CM</span><img class="thumb" alt=""/></div>
-            <div class="slot" data-slot="CM" style="left:70%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="LCM" style="left:30%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">LCM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="DM"  style="left:50%; top:60%; transform:translate(-50%,-50%)"><span class="lbl">DM</span><img class="thumb" alt=""/></div>
+            <div class="slot" data-slot="RCM" style="left:70%; top:40%; transform:translate(-50%,-50%)"><span class="lbl">RCM</span><img class="thumb" alt=""/></div>
             <!-- forwards -->
             <div class="slot" data-slot="LW"  style="left:10%; top:30%; transform:translate(-50%,-50%)"><span class="lbl">LW</span><img class="thumb" alt=""/></div>
             <div class="slot" data-slot="ST"  style="left:50%; top:16%; transform:translate(-50%,-50%)"><span class="lbl">ST</span><img class="thumb" alt=""/></div>
@@ -394,33 +394,6 @@ function renderInventory(){
   INVENTORY.forEach(it => {
     const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
 
-    // add a small zoom button
-    const zoom = document.createElement('button');
-    zoom.type='button';
-    zoom.textContent='🔍';
-    zoom.title='Preview';
-    zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
-    zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
-    card.style.position='relative';
-    card.appendChild(zoom);
-
-
-    // drag
-    card.addEventListener('dragstart', (ev)=>{
-      ev.dataTransfer.setData('text/plain', JSON.stringify(it));
-      ev.dataTransfer.effectAllowed = 'copyMove';
-      selectedCard = it;
-    });
-
-    // click-to-place
-    card.addEventListener('click', ()=>{
-      selectedCard = it;
-      document.querySelectorAll('#inv .card').forEach(n=>n.style.outline='');
-      card.style.outline='2px solid #38bdf8';
-    });
-
-    if (placedSet.has(keyOf(it))) card.classList.add('dim');
-
     card.innerHTML = `
       <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
       <div class="meta">
@@ -428,6 +401,24 @@ function renderInventory(){
         <div class="muted">${[it.rarity, it.position || it.type, it.club].filter(Boolean).join(' • ')}</div>
       </div>`;
     root.appendChild(card);
+    // make the image non-draggable (prevents native img-drag)
++   const imgEl = card.querySelector('img.thumb'); if (imgEl) imgEl.setAttribute('draggable','false');
++
++   // add a small zoom button (NOW it persists)
++   const zoom = document.createElement('button');
++   zoom.type='button';
++   zoom.textContent='🔍';
++   zoom.title='Preview';
++   zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
++   zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
++   card.style.position='relative';
++   card.appendChild(zoom);
++
++   // drag & click-to-select handlers
++   card.addEventListener('dragstart', (ev)=>{ ev.dataTransfer.setData('text/plain', JSON.stringify(it)); ev.dataTransfer.effectAllowed='copyMove'; selectedCard=it; });
++   card.addEventListener('click', ()=>{ selectedCard=it; document.querySelectorAll('#inv .card').forEach(n=>n.style.outline=''); card.style.outline='2px solid #38bdf8'; });
++   if (placedSet.has(keyOf(it))) card.classList.add('dim');
++   root.appendChild(card);
   });
 }
 
@@ -680,7 +671,7 @@ function collectSlots(){
     const leftPct = parseFloat(s.style.left) || (s.offsetLeft / pitch.clientWidth * 100);
     const topPct  = parseFloat(s.style.top)  || (s.offsetTop  / pitch.clientHeight * 100);
     return {
-      slot_id: (s.dataset.slot || s.querySelector('.lbl')?.textContent || '').trim(),
+      slot_id: (s.dataset.slot || '').trim(),
       card_id: cid,
       serial:  ser==='' ? null : Number(ser),
       x_pct:   +leftPct.toFixed(2),
@@ -707,21 +698,22 @@ async function loadFormation(){
   const data = await callApi('formation_get', { user_id, name });
   if (data?.error){ alert('Not found'); return; }
 
-  //if ($('#shape')) $('#shape').value = data.shape || '4-3-3';
-  // relabelForShape();
+
   placedSet.clear();
   allSlots().forEach(clearSlot);
 
   (data.slots || []).forEach(s=>{
     const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
-    if (!slotEl || !s.card_id) return;
+    if (!slotEl) return;
+    // restore custom coordinates (if saved)
++   if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
++     slotEl.style.left = s.x_pct + '%';
++     slotEl.style.top  = s.y_pct + '%';
++     slotEl.style.transform = 'translate(-50%,-50%)';
++   }
+    if (!s.card_id) return;
     const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
     const img = slotEl.querySelector('.thumb');
-    if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
-      slotEl.style.left = s.x_pct + '%';
-      slotEl.style.top  = s.y_pct + '%';
-      slotEl.style.transform = 'translate(-50%,-50%)';
-    }
     if (img && meta && meta.image) img.src = meta.image;
     slotEl.classList.add('filled');
     slotEl.dataset.cardId = s.card_id;
