@@ -416,7 +416,7 @@ function renderInventory(){
         <div class="name">${it.name || it.card_id}</div>
         <div class="muted">${[it.rarity, it.position || it.type, it.club].filter(Boolean).join(' • ')}</div>
       </div>`;
-    root.appendChild(card);
+    
     // make the image non-draggable (prevents native img-drag)
     const imgEl = card.querySelector('img.thumb'); if (imgEl) imgEl.setAttribute('draggable','false');
  
@@ -733,6 +733,7 @@ async function loadFormation(){
     slotEl.dataset.serial = (s.serial ?? '');
     slotEl.dataset.kEq = `${s.card_id}::${s.serial ?? ''}`;
     placedSet.add(slotEl.dataset.kEq); 
+    setSlotDraggableForCards(slotEl); // ensure correct drag mode after load
   });
   updatePlacedCount(); markInventoryDim();
 }
