@@ -402,23 +402,23 @@ function renderInventory(){
       </div>`;
     root.appendChild(card);
     // make the image non-draggable (prevents native img-drag)
-+   const imgEl = card.querySelector('img.thumb'); if (imgEl) imgEl.setAttribute('draggable','false');
-+
-+   // add a small zoom button (NOW it persists)
-+   const zoom = document.createElement('button');
-+   zoom.type='button';
-+   zoom.textContent='🔍';
-+   zoom.title='Preview';
-+   zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
-+   zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
-+   card.style.position='relative';
-+   card.appendChild(zoom);
-+
-+   // drag & click-to-select handlers
-+   card.addEventListener('dragstart', (ev)=>{ ev.dataTransfer.setData('text/plain', JSON.stringify(it)); ev.dataTransfer.effectAllowed='copyMove'; selectedCard=it; });
-+   card.addEventListener('click', ()=>{ selectedCard=it; document.querySelectorAll('#inv .card').forEach(n=>n.style.outline=''); card.style.outline='2px solid #38bdf8'; });
-+   if (placedSet.has(keyOf(it))) card.classList.add('dim');
-+   root.appendChild(card);
+    const imgEl = card.querySelector('img.thumb'); if (imgEl) imgEl.setAttribute('draggable','false');
+ 
+    // add a small zoom button (NOW it persists)
+    const zoom = document.createElement('button');
+    zoom.type='button';
+    zoom.textContent='🔍';
+    zoom.title='Preview';
+    zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
+    zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
+    card.style.position='relative';
+    card.appendChild(zoom);
+ 
+    // drag & click-to-select handlers
+    card.addEventListener('dragstart', (ev)=>{ ev.dataTransfer.setData('text/plain', JSON.stringify(it)); ev.dataTransfer.effectAllowed='copyMove'; selectedCard=it; });
+    card.addEventListener('click', ()=>{ selectedCard=it; document.querySelectorAll('#inv .card').forEach(n=>n.style.outline=''); card.style.outline='2px solid #38bdf8'; });
+    if (placedSet.has(keyOf(it))) card.classList.add('dim');
+    root.appendChild(card);
   });
 }
 
@@ -706,11 +706,11 @@ async function loadFormation(){
     const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
     if (!slotEl) return;
     // restore custom coordinates (if saved)
-+   if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
-+     slotEl.style.left = s.x_pct + '%';
-+     slotEl.style.top  = s.y_pct + '%';
-+     slotEl.style.transform = 'translate(-50%,-50%)';
-+   }
+    if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
+      slotEl.style.left = s.x_pct + '%';
+      slotEl.style.top  = s.y_pct + '%';
+      slotEl.style.transform = 'translate(-50%,-50%)';
+    }
     if (!s.card_id) return;
     const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
     const img = slotEl.querySelector('.thumb');
