@@ -662,47 +662,6 @@ function startPan(e){
     window.removeEventListener('touchend', end);
   }
 
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', end);
-  window.addEventListener('touchmove', move, {passive:false});
-  window.addEventListener('touchend', end);
-}
-
-
-  function move(ev){
-    ev.preventDefault();
-    const cur = pt(ev);
-    let nx = startLpx + (cur.x - start.x);
-    let ny = startTpx + (cur.y - start.y);
-
-    const halfW = slot.offsetWidth/2, halfH = slot.offsetHeight/2;
-    nx = Math.max(halfW, Math.min(nx, pitch.clientWidth  - halfW));
-    ny = Math.max(halfH, Math.min(ny, pitch.clientHeight - halfH));
-
-    let nxPct = (nx / pitch.clientWidth)  * 100;
-    let nyPct = (ny / pitch.clientHeight) * 100;
-
-    if (SNAP_GRID){
-      nxPct = snapPct(nxPct, GRID.xStepPct);
-      nyPct = snapPct(nyPct, GRID.yStepPct);
-    }
-
-    slot.style.left = nxPct + '%';
-    slot.style.top  = nyPct + '%';
-    slot.style.transform = 'translate(-50%,-50%)';
-  }
-  function end(){
-    window.removeEventListener('mousemove', move);
-    window.removeEventListener('mouseup', end);
-    window.removeEventListener('touchmove', move);
-    window.removeEventListener('touchend', end);
-  }
-
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', end);
-  window.addEventListener('touchmove', move, {passive:false});
-  window.addEventListener('touchend', end);
-}
 
   
 /* ===== save / load ===== */
