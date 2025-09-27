@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --accent:#22c55e; --accent2:#38bdf8; --line:#1f2937;
-    --cardW:96px; --cardH:135px;  /* adjust once and the pitch scales */
+    --cardW:112px; --cardH:158px;  /* adjust once and the pitch scales */
     --gap:12px;
     --pitchW: 720px; /* exact pitch width; adjust to taste */
     --pitchH: 850px;
@@ -104,8 +104,8 @@
   /* Base slot (empty state shows dashed border) */
   .slot{
     position:absolute;
-    width:var(--cardW, 96px);
-    height:var(--cardH, 135px);
+    width:var(--cardW, 112px);
+    height:var(--cardH, 158px);
     border:3px dashed #8A7FA6CC;
     border-radius:10px;
     box-sizing:border-box;
@@ -661,6 +661,13 @@ function startPan(e){
     window.removeEventListener('touchmove', move);
     window.removeEventListener('touchend', end);
   }
+  // ⬇️ add these, then close the function
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  window.addEventListener('touchmove', move, { passive:false });
+  window.addEventListener('touchend', end);
+} // <-- close startPan
+
 
 
   
@@ -705,26 +712,23 @@ async function loadFormation(){
   placedSet.clear();
   allSlots().forEach(clearSlot);
 
-  if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
-    slotEl.style.left = s.x_pct + '%';
-    slotEl.style.top  = s.y_pct + '%';
-    slotEl.style.transform = 'translate(-50%,-50%)';
-  }
-
-
   (data.slots || []).forEach(s=>{
     const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
     if (!slotEl || !s.card_id) return;
     const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
     const img = slotEl.querySelector('.thumb');
+    if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
+      slotEl.style.left = s.x_pct + '%';
+      slotEl.style.top  = s.y_pct + '%';
+      slotEl.style.transform = 'translate(-50%,-50%)';
+    }
     if (img && meta && meta.image) img.src = meta.image;
     slotEl.classList.add('filled');
     slotEl.dataset.cardId = s.card_id;
     slotEl.dataset.serial = (s.serial ?? '');
     slotEl.dataset.kEq = `${s.card_id}::${s.serial ?? ''}`;
-    placedSet.add(slotEl.dataset.kEq);
+    placedSet.add(slotEl.dataset.kEq); 
   });
-
   updatePlacedCount(); markInventoryDim();
 }
 
