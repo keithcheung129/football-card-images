@@ -100,21 +100,38 @@
 
   /* subtle field lines */
 
-  /* slots */
+
+  /* Base slot (empty state shows dashed border) */
   .slot{
-    position:absolute; width:var(--cardW, 96px); height:var(--cardH, 135px);
-    border:3px dashed #8A7FA6CC; border-radius:10px; display:flex; align-items:center; justify-content:center;
-    text-align:center; padding:4px; box-sizing:border-box;
+    position:absolute;
+    width:var(--cardW, 96px);
+    height:var(--cardH, 135px);
+    border:3px dashed #8A7FA6CC;
+    border-radius:10px;
+    box-sizing:border-box;
+    padding:4px;                 /* only for EMPTY state */
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;             /* clip image corners */
   }
-  .slot.hover{ border-color:#B39DDB; box-shadow:0 0 0 3px #B39DDB55 inset; }
-  /* Always sized, just faded until filled */
+  /* When a card is placed: remove frame + gap so image fills exactly */
+    .slot.filled{
+    border:0;
+    padding:0;
+  }
+  /* Only glow empty targets on hover */
+  .slot.hover:not(.filled){
+    border-color:#B39DDB;
+    box-shadow:0 0 0 3px #B39DDB55 inset;
+  }
+  /* Image sizing + rounded corners */
   .slot .thumb{
     width:100%;
     height:100%;
     object-fit:cover;
-    opacity:0;                 /* hidden by default */
+    border-radius:inherit;       /* match slot corners */
+    opacity:0;                   /* hidden until filled */
     pointer-events:none;
-    transition: opacity .12s ease;
+    transition:opacity .12s ease;
   }
   .slot.filled .thumb{ opacity:1; }
   .slot .lbl{ position:absolute; bottom:-16px; font-size:10px; color:#94a3b8 }
@@ -139,6 +156,20 @@
   .card .name{font-size:12px;font-weight:700}
   .card.dim{opacity:.35}
   .row-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+
+
+  .modal{ position:fixed; inset:0; display:none; place-items:center; z-index:50; }
+  .modal.open{ display:grid; }
+  .modal__backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.6); }
+  .modal__content{
+    position:relative; background:#0f172a; border:1px solid #1f2937; border-radius:12px;
+    padding:12px; max-width:min(92vw, 560px); box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .modal__close{ position:absolute; top:6px; right:8px; background:#334155; color:#fff; border:0; border-radius:8px; padding:4px 8px; cursor:pointer }
+  .modal__content img{ width:100%; height:auto; display:block; border-radius:8px; }
+  .modal .meta{ margin-top:8px; color:#94a3b8; font-size:12px }
+
+  
 
   @media (max-width: 980px){
     .content{ grid-template-columns: 1fr; }
@@ -241,6 +272,14 @@
 
   </div>
 </div>
+<div id="cardModal" class="modal" aria-hidden="true">
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__content">
+    <button class="modal__close" data-close>&times;</button>
+    <img id="modalImg" alt="" />
+    <div id="modalMeta" class="meta"></div>
+  </div>
+</div>
 
 <script>
 /* ===== CONFIG ===== */
@@ -263,6 +302,24 @@ const on = (id, evt, fn) => {
   else console.warn('Missing #' + id);
 };
 
+
+function openCardModal(it){
+  const m = $('#cardModal'); if (!m) return;
+  $('#modalImg').src = it.image || '';
+  $('#modalImg').alt = it.name || it.card_id || '';
+  $('#modalMeta').textContent = [it.name, it.rarity, it.position || it.type, it.club, it.serial!=null?('#'+it.serial):'']
+    .filter(Boolean).join(' • ');
+  m.classList.add('open'); m.setAttribute('aria-hidden','false');
+}
+function closeCardModal(){
+  const m = $('#cardModal'); if (!m) return;
+  m.classList.remove('open'); m.setAttribute('aria-hidden','true');
+}
+document.addEventListener('click', (e)=>{
+  if (e.target.matches('[data-close]')) closeCardModal();
+});
+
+  
 
 /* ===== Layout edit & grid snap config ===== */
 let editingLayout = false;       // toggled by "Edit Layout"
@@ -337,6 +394,17 @@ function renderInventory(){
   INVENTORY.forEach(it => {
     const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
 
+    // add a small zoom button
+    const zoom = document.createElement('button');
+    zoom.type='button';
+    zoom.textContent='🔍';
+    zoom.title='Preview';
+    zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
+    zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
+    card.style.position='relative';
+    card.appendChild(zoom);
+
+
     // drag
     card.addEventListener('dragstart', (ev)=>{
       ev.dataTransfer.setData('text/plain', JSON.stringify(it));
@@ -383,6 +451,18 @@ function attachDnD(){
       placeInSlot(slot, selectedCard);
     });
     slot.addEventListener('contextmenu', (e)=>{ e.preventDefault(); clearSlot(slot); markInventoryDim(); updatePlacedCount(); });
+
+    slot.addEventListener('dblclick', ()=>{
+      if (!slot.classList.contains('filled')) return;
+      const it = {
+        card_id: slot.dataset.cardId,
+        serial:  slot.dataset.serial===''? null : Number(slot.dataset.serial),
+        image:   slot.querySelector('.thumb')?.src || '',
+        name:    '', rarity:'', position:'', club:''
+      };
+      openCardModal(it);
+    });
+    
     // allow dragging a filled slot as a "card" source (when NOT editing layout)
     slot.addEventListener('dragstart', (e)=>{
       if (editingLayout || !slot.classList.contains('filled')) { e.preventDefault(); return; }
@@ -526,20 +606,68 @@ function toggleSnap(){
 }
 
 function startPan(e){
-  if (!editingLayout) return;
+  if (!editingLayout) return;              // never move unless editing
+  if (e.button !== 0 && !e.touches) return; // primary mouse / touch only
   e.preventDefault();
 
   const slot = e.currentTarget;
-  const pitch = document.getElementById('pitch');
+  const pitch = $('#pitch');
   const rect = pitch.getBoundingClientRect();
 
-  const pt = (ev)=>{ const p = ev.touches ? ev.touches[0] : ev; return {x:p.clientX-rect.left, y:p.clientY-rect.top}; };
-  const start = pt(e);
+  const getPt = ev => {
+    const p = ev.touches ? ev.touches[0] : ev;
+    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
+  };
 
-  const curLeftPct = parseFloat(slot.style.left) || (slot.offsetLeft / pitch.clientWidth * 100);
-  const curTopPct  = parseFloat(slot.style.top)  || (slot.offsetTop  / pitch.clientHeight * 100);
-  const startLpx = curLeftPct/100 * pitch.clientWidth;
-  const startTpx = curTopPct /100 * pitch.clientHeight;
+  const start = getPt(e);
+  const startLeftPct = parseFloat(slot.style.left) || (slot.offsetLeft / pitch.clientWidth * 100);
+  const startTopPct  = parseFloat(slot.style.top)  || (slot.offsetTop  / pitch.clientHeight * 100);
+  const startLpx = startLeftPct/100 * pitch.clientWidth;
+  const startTpx = startTopPct /100 * pitch.clientHeight;
+
+  let moved = false;
+  const DRAG_THRESHOLD = 4;  // pixels
+
+  function move(ev){
+    ev.preventDefault();
+    const cur = getPt(ev);
+    const dx = cur.x - start.x, dy = cur.y - start.y;
+    if (!moved && (dx*dx + dy*dy) < DRAG_THRESHOLD*DRAG_THRESHOLD) return; // ignore tiny wiggles
+    moved = true;
+
+    let nx = startLpx + dx;
+    let ny = startTpx + dy;
+
+    const halfW = slot.offsetWidth/2, halfH = slot.offsetHeight/2;
+    nx = Math.max(halfW, Math.min(nx, pitch.clientWidth  - halfW));
+    ny = Math.max(halfH, Math.min(ny, pitch.clientHeight - halfH));
+
+    let nxPct = (nx / pitch.clientWidth)  * 100;
+    let nyPct = (ny / pitch.clientHeight) * 100;
+
+    if (SNAP_GRID){
+      nxPct = snapPct(nxPct, GRID.xStepPct);
+      nyPct = snapPct(nyPct, GRID.yStepPct);
+    }
+
+    slot.style.left = nxPct + '%';
+    slot.style.top  = nyPct + '%';
+    slot.style.transform = 'translate(-50%,-50%)';
+  }
+
+  function end(){
+    window.removeEventListener('mousemove', move);
+    window.removeEventListener('mouseup', end);
+    window.removeEventListener('touchmove', move);
+    window.removeEventListener('touchend', end);
+  }
+
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  window.addEventListener('touchmove', move, {passive:false});
+  window.addEventListener('touchend', end);
+}
+
 
   function move(ev){
     ev.preventDefault();
@@ -600,7 +728,7 @@ async function saveFormation(){
   const user_id = v('user_id').trim();
   const name    = v('fname').trim();
   if (!user_id || !name){ alert('user id + formation name required'); return; }
-  //const shape = v('shape','4-3-3') || '4-3-3';
+  const shape = 'free';                   // <— force a value
   const slots = collectSlots();
   await callApi('formation_save', { user_id, name, shape, slots });
   alert('Saved ✔');
