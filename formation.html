@@ -98,6 +98,16 @@
   .pitch .ga-top{ top:    var(--gaTopTop); }
   .pitch .ga-bot{ bottom: var(--gaBotBottom); }
 
+
+  /* prevent text selection / scroll gestures blocking drag */
+  .pitch{ -webkit-user-select:none; user-select:none; touch-action:none; }
+  /* make sure slots sit above lines */
+  #pitch .slot{ z-index:2; }
+  #pitch .box-top, #pitch .box-bot, #pitch .wing-left, #pitch .wing-right,
+  #pitch .half, #pitch .centre, #pitch .ga-top, #pitch .ga-bot { z-index:1; }
+  
+  
+
   /* subtle field lines */
 
 
@@ -304,20 +314,26 @@ const on = (id, evt, fn) => {
 
 
 function openCardModal(it){
-  const m = $('#cardModal'); if (!m) return;
-  $('#modalImg').src = it.image || '';
-  $('#modalImg').alt = it.name || it.card_id || '';
-  $('#modalMeta').textContent = [it.name, it.rarity, it.position || it.type, it.club, it.serial!=null?('#'+it.serial):'']
+  const m = document.getElementById('cardModal'); if (!m) return;
+  const img = document.getElementById('modalImg');
+  img.src = it.image || '';
+  img.alt = it.name || it.card_id || '';
+  const meta = [it.name, it.rarity, it.position || it.type, it.club, it.serial!=null?('#'+it.serial):'']
     .filter(Boolean).join(' • ');
+  document.getElementById('modalMeta').textContent = meta;
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
 }
 function closeCardModal(){
-  const m = $('#cardModal'); if (!m) return;
+  const m = document.getElementById('cardModal'); if (!m) return;
   m.classList.remove('open'); m.setAttribute('aria-hidden','true');
 }
 document.addEventListener('click', (e)=>{
   if (e.target.matches('[data-close]')) closeCardModal();
 });
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'Escape') closeCardModal();
+});
+
 
   
 
@@ -330,10 +346,10 @@ const snapPct = (pct, step) => Math.round(pct / step) * step;
 
 // enable/disable slot-as-card dragging depending on mode
 function setSlotDraggableForCards(slot){
+  // Only allow HTML5 drag-from-slot when NOT editing layout
   if (!editingLayout && slot.classList.contains('filled')) slot.setAttribute('draggable','true');
   else slot.removeAttribute('draggable');
 }
-
 
   
 /* ===== state ===== */
@@ -573,10 +589,11 @@ function shake(el){
 
 function toggleLayoutEdit(){
   editingLayout = !editingLayout;
-
   allSlots().forEach(s=>{
     s.classList.toggle('moveable', editingLayout);
-    setSlotDraggableForCards(s); // disable card-drag while editing layout
+    setSlotDraggableForCards(s); // disable/enable card-drag based on mode
+
+    // attach/remove pan handlers
     if (editingLayout){
       s.addEventListener('mousedown', startPan);
       s.addEventListener('touchstart', startPan, {passive:false});
@@ -585,10 +602,10 @@ function toggleLayoutEdit(){
       s.removeEventListener('touchstart', startPan);
     }
   });
-
   const btn = document.getElementById('btnEdit');
   if (btn) btn.textContent = editingLayout ? 'Stop Editing' : 'Edit Layout';
 }
+
 
 function toggleSnap(){
   SNAP_GRID = !SNAP_GRID;
@@ -596,34 +613,32 @@ function toggleSnap(){
   if (b) b.textContent = SNAP_GRID ? 'Snap: On' : 'Snap: Off';
 }
 
+// drag-to-move a slot (with threshold + snap)
 function startPan(e){
-  if (!editingLayout) return;              // never move unless editing
-  if (e.button !== 0 && !e.touches) return; // primary mouse / touch only
+  if (!editingLayout) return;                  // never move unless editing
+  if (e.button !== undefined && e.button !== 0) return; // left click only
   e.preventDefault();
 
   const slot = e.currentTarget;
-  const pitch = $('#pitch');
+  const pitch = document.getElementById('pitch');
   const rect = pitch.getBoundingClientRect();
 
-  const getPt = ev => {
-    const p = ev.touches ? ev.touches[0] : ev;
-    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
-  };
+  const pt = (ev)=>{ const p = ev.touches ? ev.touches[0] : ev; return {x:p.clientX-rect.left, y:p.clientY-rect.top}; };
+  const start = pt(e);
 
-  const start = getPt(e);
-  const startLeftPct = parseFloat(slot.style.left) || (slot.offsetLeft / pitch.clientWidth * 100);
-  const startTopPct  = parseFloat(slot.style.top)  || (slot.offsetTop  / pitch.clientHeight * 100);
-  const startLpx = startLeftPct/100 * pitch.clientWidth;
-  const startTpx = startTopPct /100 * pitch.clientHeight;
+  const curLeftPct = parseFloat(slot.style.left) || (slot.offsetLeft / pitch.clientWidth * 100);
+  const curTopPct  = parseFloat(slot.style.top)  || (slot.offsetTop  / pitch.clientHeight * 100);
+  const startLpx = curLeftPct/100 * pitch.clientWidth;
+  const startTpx = curTopPct /100 * pitch.clientHeight;
 
   let moved = false;
-  const DRAG_THRESHOLD = 4;  // pixels
+  const DRAG_THRESHOLD = 4;
 
   function move(ev){
     ev.preventDefault();
-    const cur = getPt(ev);
+    const cur = pt(ev);
     const dx = cur.x - start.x, dy = cur.y - start.y;
-    if (!moved && (dx*dx + dy*dy) < DRAG_THRESHOLD*DRAG_THRESHOLD) return; // ignore tiny wiggles
+    if (!moved && (dx*dx + dy*dy) < DRAG_THRESHOLD*DRAG_THRESHOLD) return;
     moved = true;
 
     let nx = startLpx + dx;
@@ -645,19 +660,17 @@ function startPan(e){
     slot.style.top  = nyPct + '%';
     slot.style.transform = 'translate(-50%,-50%)';
   }
-
   function end(){
     window.removeEventListener('mousemove', move);
     window.removeEventListener('mouseup', end);
     window.removeEventListener('touchmove', move);
     window.removeEventListener('touchend', end);
   }
-  // ⬇️ add these, then close the function
   window.addEventListener('mousemove', move);
   window.addEventListener('mouseup', end);
-  window.addEventListener('touchmove', move, { passive:false });
+  window.addEventListener('touchmove', move, {passive:false});
   window.addEventListener('touchend', end);
-} // <-- close startPan
+}
 
 
 
@@ -752,6 +765,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   //on('shape','change',     relabelForShape);
   on('btnEdit','click', toggleLayoutEdit);
   on('btnGrid','click', toggleSnap);
+  
 
 });
 </script>
