@@ -29,7 +29,7 @@
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1200px;margin:0 auto;padding:20px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:hidden}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:hidden}
   .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
   h1{font-size:18px;margin:0}
   .muted{color:var(--muted);font-size:12px}
@@ -273,8 +273,8 @@
             🗑 Drag here to remove from pitch
           </div>
         </div>
-        <div class="panel">
-          <div class="panel-title">Your Manager</div>
+        <div class="bench" id="manager">
+          <div class="bench-title">--Your Manager</div>
           <div class="manager">
             <div class="slot" data-slot="MANAGER" style="position:relative; left:auto; top:auto; transform:none;">
               <span class="lbl">Manager</span><img class="thumb" alt=""/>
@@ -328,6 +328,9 @@
 const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
 
 const API_KEY = localStorage.getItem('TLK_BROWSER_KEY') || ''; // or hardcode during dev
+
+const ENFORCE_MANAGER = false; // toggle to true when you want the rule
+
 
 
 /* ===== helpers ===== */
@@ -501,46 +504,81 @@ function renderInventory(){
 }
 
   
-function renderInventory(){
-  const root = $('inv'); if (!root) return;
-  root.innerHTML = '';
-  INVENTORY.forEach(it => {
-    const clubSel = v('club','ALL').toLowerCase();
-    const items = INVENTORY.filter(it=>{
-      const club = String(it.club || 'Unknown').toLowerCase();
-      const passClub = (clubSel === 'all') || (club === clubSel);
-      // (optional) rarity/position filters here too
-        return passClub;
-      });
-    const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
+async function loadInventory(){
+  const user_id = v('user_id').trim();
+  if (!user_id){ alert('Enter user ID first'); return; }
 
-    card.innerHTML = `
-      <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
-      <div class="meta">
-        <div class="name">${it.name || it.card_id}</div>
-        <div class="muted">${[it.rarity, it.position || it.type, it.club].filter(Boolean).join(' • ')}</div>
-      </div>`;
-    
-    // make the image non-draggable (prevents native img-drag)
-    const imgEl = card.querySelector('img.thumb'); if (imgEl) imgEl.setAttribute('draggable','false');
- 
-    // add a small zoom button (NOW it persists)
-    const zoom = document.createElement('button');
-    zoom.type='button';
-    zoom.textContent='🔍';
-    zoom.title='Preview';
-    zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
-    zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
-    card.style.position='relative';
-    card.appendChild(zoom);
- 
-    // drag & click-to-select handlers
-    card.addEventListener('dragstart', (ev)=>{ ev.dataTransfer.setData('text/plain', JSON.stringify(it)); ev.dataTransfer.effectAllowed='copyMove'; selectedCard=it; });
-    card.addEventListener('click', ()=>{ selectedCard=it; document.querySelectorAll('#inv .card').forEach(n=>n.style.outline=''); card.style.outline='2px solid #38bdf8'; });
-    if (placedSet.has(keyOf(it))) card.classList.add('dim');
-    root.appendChild(card);
-  });
+  startBusy('Loading inventory…'); setUiDisabled(true);
+  try{
+    // Ask backend for the user's collection (server will ignore unknown filters)
+    const q = {
+      user_id,
+      page: 1,
+      page_size: 240,
+      unique_only: false,
+      rarity:  v('rarity','ALL')   || 'ALL',
+      position:v('position','ALL') || 'ALL',
+      batch:   'ALL',
+      club:    'ALL'
+    };
+
+    const data = await callApi('collection', q);
+
+    // Normalize inventory
+    INVENTORY = (data.items || []).map(x => {
+      const clubRaw = x.club || x.team || x.club_name || '';
+      return {
+        card_id: x.card_id,
+        name:    x.name,
+        rarity:  x.rarity,
+        position:x.position,
+        type:    x.type,
+        club:    clubRaw,                 // display label
+        image:   x.image_url,
+        serial:  x.serial
+      };
+    });
+
+    // Update balances (if present)
+    if ($('tickets')) $('tickets').textContent = data?.balances?.tickets ?? '0';
+    if ($('tokens'))  $('tokens').textContent  = data?.balances?.tokens  ?? '0';
+
+    // Populate Club dropdown (values are lowercase; labels are nice)
+    const sel = $('club');
+    if (sel){
+      const clubs = Array.from(new Set(
+        INVENTORY
+          .map(i => (i.club || '').trim())
+          .filter(Boolean)
+      )).sort((a,b)=>a.localeCompare(b));
+
+      const current = (sel.value || 'ALL').toLowerCase();
+      sel.innerHTML =
+        '<option value="ALL">Club: ALL</option>' +
+        clubs.map(c => `<option value="${c.toLowerCase()}">${c}</option>`).join('');
+
+      // restore selection if possible
+      const keep = Array.from(sel.options).find(o => o.value === current);
+      if (keep) keep.selected = true;
+
+      // (re)wire change handler only once
+      if (!sel._wired){
+        sel.addEventListener('change', renderInventory);
+        sel._wired = true;
+      }
+    }
+
+    // Render grid once, filtered by the (possibly restored) club value
+    renderInventory();
+    toast('Inventory loaded ✔');
+  } catch(err){
+    console.error(err);
+    toast('Inventory load failed: ' + (err?.message || err), true);
+  } finally{
+    stopBusy(); setUiDisabled(false);
+  }
 }
+
 
 
 
