@@ -102,7 +102,7 @@
   /* prevent text selection / scroll gestures blocking drag */
   .pitch{ -webkit-user-select:none; user-select:none; touch-action:none; }
   /* make sure slots sit above lines */
-  #pitch .slot{ z-index:2; }
+  #pitch .slot{ z-index:2; position:absolute;}
   #pitch .box-top, #pitch .box-bot, #pitch .wing-left, #pitch .wing-right,
   #pitch .half, #pitch .centre, #pitch .ga-top, #pitch .ga-bot { z-index:1; }
   
@@ -156,7 +156,7 @@
   /* bench strip */
   .bench{display:flex; gap:8px; flex-wrap:wrap; padding:12px 16px}
   .bench .slot .lbl{ bottom:auto; top:-16px }
-  .bench .slot{ position:relative; }
+  .bench .slot{ position:relative; left:auto; top:auto; transform:none; }
 
   /* inventory (side) */
   .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
@@ -639,31 +639,23 @@ function shake(el){
 
 function toggleLayoutEdit(){
   editingLayout = !editingLayout;
-
-  const pitch = document.getElementById('pitch');
-  if (pitch) pitch.classList.toggle('editing', editingLayout);
-
-  // update EVERY slot
   allSlots().forEach(s=>{
-    s.classList.toggle('moveable', editingLayout);
-
-    // allow drag-from-slot (move/swap) only when NOT editing
+    const isPitchSlot = !!s.closest('#pitch');
+    s.classList.toggle('moveable', editingLayout && isPitchSlot);
     setSlotDraggableForCards(s);
 
-    // remove handlers first to avoid duplicates
     s.removeEventListener('mousedown', startPan);
     s.removeEventListener('touchstart', startPan);
-
-    // add pan only in edit mode
-    if (editingLayout){
+    if (editingLayout && isPitchSlot){
       s.addEventListener('mousedown', startPan);
-      s.addEventListener('touchstart', startPan, { passive:false });
+      s.addEventListener('touchstart', startPan, {passive:false});
     }
   });
-
   const btn = document.getElementById('btnEdit');
   if (btn) btn.textContent = editingLayout ? 'Stop Editing' : 'Edit Layout';
 }
+
+
 
 
 
@@ -680,6 +672,7 @@ function startPan(e){
   e.preventDefault();
 
   const slot = e.currentTarget;
+  if (!editingLayout || !slot.closest('#pitch')) return; // <- only pitch
   const pitch = document.getElementById('pitch');
   const rect = pitch.getBoundingClientRect();
 
@@ -739,19 +732,26 @@ function startPan(e){
 function collectSlots(){
   const pitch = document.getElementById('pitch');
   return allSlots().map(s=>{
+    const inPitch = !!s.closest('#pitch');
     const cid = s.dataset.cardId || null;
     const ser = s.dataset.serial || '';
-    const leftPct = parseFloat(s.style.left) || (s.offsetLeft / pitch.clientWidth * 100);
-    const topPct  = parseFloat(s.style.top)  || (s.offsetTop  / pitch.clientHeight * 100);
-    return {
+
+    let out = {
       slot_id: (s.dataset.slot || '').trim(),
       card_id: cid,
-      serial:  ser==='' ? null : Number(ser),
-      x_pct:   +leftPct.toFixed(2),
-      y_pct:   +topPct.toFixed(2)
+      serial:  ser==='' ? null : Number(ser)
     };
+
+    if (inPitch){
+      const leftPct = parseFloat(s.style.left) || (s.offsetLeft / pitch.clientWidth * 100);
+      const topPct  = parseFloat(s.style.top)  || (s.offsetTop  / pitch.clientHeight * 100);
+      out.x_pct = +leftPct.toFixed(2);
+      out.y_pct = +topPct.toFixed(2);
+    }
+    return out;
   });
 }
+
 
 
 async function saveFormation(){
@@ -794,10 +794,17 @@ async function loadFormation(){
     (data.slots || []).forEach(s=>{
       const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
       if (!slotEl) return;
-      if (typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
+      const inPitch = !!slotEl.closest('#pitch');
+      // restore custom coords ONLY for pitch slots
+      if (inPitch && typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
         slotEl.style.left = s.x_pct + '%';
         slotEl.style.top  = s.y_pct + '%';
         slotEl.style.transform = 'translate(-50%,-50%)';
+      } else if (!inPitch){
+        // make sure bench slots never keep any inline left/top from previous runs
+        slotEl.style.left = '';
+        slotEl.style.top = '';
+        slotEl.style.transform = '';
       }
       if (!s.card_id) return;
       const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
