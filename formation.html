@@ -124,7 +124,7 @@
     overflow:hidden;             /* clip image corners */
   }
   /* When a card is placed: remove frame + gap so image fills exactly */
-    .slot.filled{
+  .slot.filled{
     border:0;
     padding:0;
   }
@@ -140,6 +140,8 @@
     object-fit:cover;
     border-radius:inherit;       /* match slot corners */
     opacity:0;                   /* hidden until filled */
+    -webkit-user-drag: none;
+    user-drag: none;
     pointer-events:none;
     transition:opacity .12s ease;
   }
@@ -499,8 +501,10 @@ function attachDnD(){
   for (const slot of allSlots()){
     slot.addEventListener('dragover', (e)=>{ e.preventDefault(); slot.classList.add('hover'); });
     slot.addEventListener('dragleave', ()=> slot.classList.remove('hover'));
-    slot.addEventListener('click', ()=>{
-      if (!selectedCard) return;
+    // Single click to PLACE only when not editing and a card is selected
+    slot.addEventListener('click', (e)=>{
+      if (editingLayout) return;          // do nothing in edit mode
+      if (!selectedCard) return;          // only place when a card is selected
       placeInSlot(slot, selectedCard);
     });
     slot.addEventListener('contextmenu', (e)=>{ e.preventDefault(); clearSlot(slot); markInventoryDim(); updatePlacedCount(); });
@@ -635,22 +639,32 @@ function shake(el){
 
 function toggleLayoutEdit(){
   editingLayout = !editingLayout;
+
+  const pitch = document.getElementById('pitch');
+  if (pitch) pitch.classList.toggle('editing', editingLayout);
+
+  // update EVERY slot
   allSlots().forEach(s=>{
     s.classList.toggle('moveable', editingLayout);
-    setSlotDraggableForCards(s); // disable/enable card-drag based on mode
 
-    // attach/remove pan handlers
+    // allow drag-from-slot (move/swap) only when NOT editing
+    setSlotDraggableForCards(s);
+
+    // remove handlers first to avoid duplicates
+    s.removeEventListener('mousedown', startPan);
+    s.removeEventListener('touchstart', startPan);
+
+    // add pan only in edit mode
     if (editingLayout){
       s.addEventListener('mousedown', startPan);
-      s.addEventListener('touchstart', startPan, {passive:false});
-    } else {
-      s.removeEventListener('mousedown', startPan);
-      s.removeEventListener('touchstart', startPan);
+      s.addEventListener('touchstart', startPan, { passive:false });
     }
   });
+
   const btn = document.getElementById('btnEdit');
   if (btn) btn.textContent = editingLayout ? 'Stop Editing' : 'Edit Layout';
 }
+
 
 
 function toggleSnap(){
@@ -678,7 +692,7 @@ function startPan(e){
   const startTpx = curTopPct /100 * pitch.clientHeight;
 
   let moved = false;
-  const DRAG_THRESHOLD = 4;
+  const DRAG_THRESHOLD = 8;
 
   function move(ev){
     ev.preventDefault();
