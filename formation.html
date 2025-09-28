@@ -261,7 +261,6 @@
 
         <!-- Manager + Bench -->
         <div class="bench" id="bench">
-          <div class="slot" data-slot="MGR"><span class="lbl">Manager</span><img class="thumb" alt=""/></div>
           <div class="slot" data-slot="B1"><span class="lbl">B1</span><img class="thumb" alt=""/></div>
           <div class="slot" data-slot="B2"><span class="lbl">B2</span><img class="thumb" alt=""/></div>
           <div class="slot" data-slot="B3"><span class="lbl">B3</span><img class="thumb" alt=""/></div>
@@ -269,12 +268,13 @@
           <div class="slot" data-slot="B5"><span class="lbl">B5</span><img class="thumb" alt=""/></div>
           <div class="slot" data-slot="B6"><span class="lbl">B6</span><img class="thumb" alt=""/></div>
           <div class="slot" data-slot="B7"><span class="lbl">B7</span><img class="thumb" alt=""/></div>
+          <div class="slot" data-slot="B8"><span class="lbl">B8</span><img class="thumb" alt=""/></div>
           <div id="trash" class="panel" style="margin:0 16px 16px 16px; padding:10px; text-align:center; border:1px dashed #64748b;">
             🗑 Drag here to remove from pitch
           </div>
         </div>
         <div class="panel">
-          <div class="panel-title">Manager</div>
+          <div class="panel-title">Your Manager</div>
           <div class="manager">
             <div class="slot" data-slot="MANAGER" style="position:relative; left:auto; top:auto; transform:none;">
               <span class="lbl">Manager</span><img class="thumb" alt=""/>
@@ -481,16 +481,14 @@ async function loadInventory(){
 function renderInventory(){
   const root = $('inv'); if (!root) return;
   root.innerHTML = '';
-  const clubSel = v('club','ALL').toLowerCase();
-
-  const items = INVENTORY.filter(it=>{
-    const club = String(it.club || 'Unknown').toLowerCase();
-    const passClub = (clubSel === 'all') || (club === clubSel);
-    // (optional) rarity/position filters here too
-    return passClub;
-  });
-
   INVENTORY.forEach(it => {
+    const clubSel = v('club','ALL').toLowerCase();
+    const items = INVENTORY.filter(it=>{
+      const club = String(it.club || 'Unknown').toLowerCase();
+      const passClub = (clubSel === 'all') || (club === clubSel);
+      // (optional) rarity/position filters here too
+        return passClub;
+      });
     const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
 
     card.innerHTML = `
