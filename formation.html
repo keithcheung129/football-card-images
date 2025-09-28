@@ -526,16 +526,21 @@ async function loadInventory(){
 
     // Normalize inventory
     INVENTORY = (data.items || []).map(x => {
-      const clubRaw = x.club || x.team || x.club_name || '';
+      const rawSerial = x.serial;
+      const serial =
+      (rawSerial === '' || rawSerial === null || rawSerial === undefined)
+        ? null
+        : Number(rawSerial);
+
       return {
         card_id: x.card_id,
-        name:    x.name,
-        rarity:  x.rarity,
-        position:x.position,
-        type:    x.type,
-        club:    clubRaw,                 // display label
-        image:   x.image_url,
-        serial:  x.serial
+        name: x.name,
+        rarity: x.rarity,
+        position: x.position,
+        type: x.type,
+        club: x.club || x.team || x.club_name || '',
+        image: x.image_url,
+        serial // <-- null if missing, a Number otherwise
       };
     });
 
