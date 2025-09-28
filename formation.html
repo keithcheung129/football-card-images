@@ -342,6 +342,11 @@ const v = (id, def='') => {
   return (el && typeof el.value === 'string') ? el.value : def;
 };
 
+const getVal = (id, def='ALL') => {
+  const el = document.getElementById(id);
+  return (el ? el.value : def);
+};
+const U = s => String(s ?? '').toUpperCase();
 // event binder (guarded) – defines `on()` and `safeOn()`
 // so either name will work across your code
 const on = (id, evt, fn) => {
@@ -436,35 +441,67 @@ async function callApi(action, payload){
 
 
 /* ==== club filter ==== */
-function populateClubFilter(){
-  const sel = $('#club'); if (!sel) return;
-  const clubs = Array.from(new Set(
-    INVENTORY.map(i => (i.club || 'Unknown').trim()).filter(Boolean)
-  )).sort((a,b)=>a.localeCompare(b));
-  const cur = v('club','ALL');
-  sel.innerHTML = '<option value="ALL">Club: ALL</option>'
-                + clubs.map(c=>`<option value="${c}">${c}</option>`).join('');
-  // keep selection if possible
-  Array.from(sel.options).some(o => (o.selected = (o.value === cur)));
-}
+function populateFilters(){
+  // Distinct lists from current inventory
+  const clubs    = Array.from(new Set(INVENTORY.map(i => (i.club ?? '').trim()))).sort((a,b)=>a.localeCompare(b));
+  const rarities = Array.from(new Set(INVENTORY.map(i => (i.rarity ?? '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  const positions= Array.from(new Set(INVENTORY.map(i => (i.position ?? '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
 
+  // CLUB: include explicit “No Club” option with value="" (this is the fix)
+  const clubSel = document.getElementById('club');
+  if (clubSel){
+    const cur = clubSel.value || 'ALL';
+    clubSel.innerHTML =
+      `<option value="ALL">Club: ALL</option>` +
+      `<option value="">Club: No Club</option>` +          // value === '' matches utilities
+      clubs.filter(c=>c).map(c => `<option value="${c}">${c}</option>`).join('');
+    if ([...clubSel.options].some(o=>o.value===cur)) clubSel.value = cur;
+  }
+
+  // RARITY
+  const rarSel = document.getElementById('rarity');
+  if (rarSel){
+    const cur = rarSel.value || 'ALL';
+    rarSel.innerHTML =
+      `<option value="ALL">Rarity: ALL</option>` +
+      rarities.map(r => `<option value="${r}">${r}</option>`).join('');
+    if ([...rarSel.options].some(o=>o.value===cur)) rarSel.value = cur;
+  }
+
+  // POSITION (don’t invent a pseudo “No Position”; just ALL vs specific)
+  const posSel = document.getElementById('position');
+  if (posSel){
+    const cur = posSel.value || 'ALL';
+    posSel.innerHTML =
+      `<option value="ALL">Position: ALL</option>` +
+      positions.map(p => `<option value="${p}">${p}</option>`).join('');
+    if ([...posSel.options].some(o=>o.value===cur)) posSel.value = cur;
+  }
+}
   
 /* ===== inventory ===== */
 function renderInventory(){
-  const root = $('inv'); if (!root) return;
+  const root = document.getElementById('inv'); if (!root) return;
   root.innerHTML = '';
 
-  // 1) read filter once
-  const clubSel = (v('club','ALL') || 'ALL').toLowerCase();
+  const clubSel = getVal('club','ALL');       // '' means “No Club”
+  const rarSel  = getVal('rarity','ALL');
+  const posSel  = getVal('position','ALL');
 
-  // 2) filter once (use fallbacks for club field)
-  const items = INVENTORY.filter(it=>{
-    const club = String(it.club || it.team || it.club_name || '').trim().toLowerCase();
-    return clubSel === 'all' || (club && club === clubSel);
+  // Single pass filter; note the club check uses raw value ('' is valid)
+  const items = INVENTORY.filter(it => {
+    const club = (it.club ?? '').trim();
+    const rar  = (it.rarity ?? '').trim();
+    const pos  = (it.position ?? '').trim();
+
+    if (clubSel !== 'ALL' && club !== clubSel) return false;   // shows utilities when clubSel===''
+    if (rarSel  !== 'ALL' && U(rar) !== U(rarSel)) return false;
+    if (posSel  !== 'ALL' && U(pos) !== U(posSel)) return false;
+    return true;
   });
 
-  // 3) render filtered items
-  items.forEach(it => {
+  // Render
+  for (const it of items){
     const card = document.createElement('div');
     card.className='card';
     card.setAttribute('draggable','true');
@@ -473,12 +510,15 @@ function renderInventory(){
       <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
       <div class="meta">
         <div class="name">${it.name || it.card_id}</div>
-        <div class="muted">${[it.rarity, it.position || it.type, it.club || it.team || it.club_name].filter(Boolean).join(' • ')}</div>
+        <div class="muted">
+          ${[it.rarity, it.position || it.type, (it.club ?? '') || '—'].filter(Boolean).join(' • ')}
+        </div>
       </div>`;
 
     const imgEl = card.querySelector('img.thumb');
-    if (imgEl) imgEl.setAttribute('draggable','false'); // prevent native img-drag
+    if (imgEl) imgEl.setAttribute('draggable','false');
 
+    // quick preview button
     const zoom = document.createElement('button');
     zoom.type='button'; zoom.textContent='🔍'; zoom.title='Preview';
     zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
@@ -500,7 +540,7 @@ function renderInventory(){
 
     if (placedSet.has(keyOf(it))) card.classList.add('dim');
     root.appendChild(card);
-  });
+  }
 }
 
   
@@ -971,6 +1011,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   on('btnList','click',    listFormations);
   on('btnClear','click',   clearAll);
   on('club','change', renderInventory);
+  on('rarity','change', renderInventory);
+  on('position','change', renderInventory);
   //on('shape','change',     relabelForShape);
   on('btnEdit','click', toggleLayoutEdit);
   on('btnGrid','click', toggleSnap);
