@@ -158,6 +158,9 @@
   .bench .slot .lbl{ bottom:auto; top:-16px }
   .bench .slot{ position:relative; left:auto; top:auto; transform:none; }
 
+  .manager .slot{ position:relative; left:auto; top:auto; transform:none; }
+
+
   /* inventory (side) */
   .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:10px}
@@ -270,6 +273,15 @@
             🗑 Drag here to remove from pitch
           </div>
         </div>
+        <div class="panel">
+          <div class="panel-title">Manager</div>
+          <div class="manager">
+            <div class="slot" data-slot="MANAGER" style="position:relative; left:auto; top:auto; transform:none;">
+              <span class="lbl">Manager</span><img class="thumb" alt=""/>
+            </div>
+          </div>
+        </div>
+
       </main>
 
       <!-- Inventory side -->
@@ -419,6 +431,20 @@ async function callApi(action, payload){
   } finally { clearTimeout(t); }
 }
 
+
+/* ==== club filter ==== */
+function populateClubFilter(){
+  const sel = $('#club'); if (!sel) return;
+  const clubs = Array.from(new Set(
+    INVENTORY.map(i => (i.club || 'Unknown').trim()).filter(Boolean)
+  )).sort((a,b)=>a.localeCompare(b));
+  const cur = v('club','ALL');
+  sel.innerHTML = '<option value="ALL">Club: ALL</option>'
+                + clubs.map(c=>`<option value="${c}">${c}</option>`).join('');
+  // keep selection if possible
+  Array.from(sel.options).some(o => (o.selected = (o.value === cur)));
+}
+
   
 /* ===== inventory ===== */
 async function loadInventory(){
@@ -455,6 +481,15 @@ async function loadInventory(){
 function renderInventory(){
   const root = $('inv'); if (!root) return;
   root.innerHTML = '';
+  const clubSel = v('club','ALL').toLowerCase();
+
+  const items = INVENTORY.filter(it=>{
+    const club = String(it.club || 'Unknown').toLowerCase();
+    const passClub = (clubSel === 'all') || (club === clubSel);
+    // (optional) rarity/position filters here too
+    return passClub;
+  });
+
   INVENTORY.forEach(it => {
     const card = document.createElement('div'); card.className='card'; card.setAttribute('draggable','true');
 
@@ -538,6 +573,15 @@ function attachDnD(){
       e.preventDefault(); slot.classList.remove('hover');
       let it; try{ it = JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); }catch{ it=null; }
       if (!it || !it.card_id) return;
+
+      const isManagerSlot = (slot.dataset.slot === 'MANAGER');
+      const isManagerCard = (String(it.type||'').toLowerCase() === 'manager') ||
+                            (String(it.position||'').toLowerCase() === 'manager');
+    
+      if (ENFORCE_MANAGER){
+        if (isManagerSlot && !isManagerCard){ toast('Drop a manager card here', true); return; }
+        if (!isManagerSlot && isManagerCard){ toast('Managers can only go into the Manager slot', true); return; }
+      }
 
       const src = document.querySelector('.slot[data-dragging-from="1"]'); // moving from another slot?
       if (src && src !== slot){
@@ -862,6 +906,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   on('btnLoad','click',    loadFormation);
   on('btnList','click',    listFormations);
   on('btnClear','click',   clearAll);
+  on('club','change', renderInventory);
   //on('shape','change',     relabelForShape);
   on('btnEdit','click', toggleLayoutEdit);
   on('btnGrid','click', toggleSnap);
