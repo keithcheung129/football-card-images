@@ -447,36 +447,59 @@ function populateClubFilter(){
 
   
 /* ===== inventory ===== */
-async function loadInventory(){
-  const user_id = v('user_id').trim();
-  if (!user_id){ alert('Enter user ID first'); return; }
+function renderInventory(){
+  const root = $('inv'); if (!root) return;
+  root.innerHTML = '';
 
-  startBusy('Loading inventory…'); setUiDisabled(true);
-  try{
-    const q = {
-      user_id, page:1, page_size:240, unique_only:false,
-      rarity: v('rarity','ALL') || 'ALL',
-      position: v('position','ALL') || 'ALL',
-      batch:'ALL',
-      club: v('club','ALL') || 'ALL'
-    };
-    const data = await callApi('collection', q);
-    INVENTORY = (data.items || []).map(x=>({
-      card_id:x.card_id, name:x.name, rarity:x.rarity, position:x.position,
-      club:x.club, image:x.image_url, serial:x.serial, type:x.type
-    }));
-    const clubs = Array.from(new Set(INVENTORY.map(i=>i.club).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-    if ($('#club')) $('#club').innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
-    if ($('#tickets')) $('#tickets').textContent = data?.balances?.tickets ?? '0';
-    if ($('#tokens'))  $('#tokens').textContent  = data?.balances?.tokens  ?? '0';
-    renderInventory(); toast('Inventory loaded ✔');
-  } catch(err){
-    console.error(err);
-    toast('Inventory load failed: ' + (err?.message || err), true);
-  } finally{
-    stopBusy(); setUiDisabled(false);
-  }
+  // 1) read filter once
+  const clubSel = (v('club','ALL') || 'ALL').toLowerCase();
+
+  // 2) filter once (use fallbacks for club field)
+  const items = INVENTORY.filter(it=>{
+    const club = String(it.club || it.team || it.club_name || '').trim().toLowerCase();
+    return clubSel === 'all' || (club && club === clubSel);
+  });
+
+  // 3) render filtered items
+  items.forEach(it => {
+    const card = document.createElement('div');
+    card.className='card';
+    card.setAttribute('draggable','true');
+
+    card.innerHTML = `
+      <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
+      <div class="meta">
+        <div class="name">${it.name || it.card_id}</div>
+        <div class="muted">${[it.rarity, it.position || it.type, it.club || it.team || it.club_name].filter(Boolean).join(' • ')}</div>
+      </div>`;
+
+    const imgEl = card.querySelector('img.thumb');
+    if (imgEl) imgEl.setAttribute('draggable','false'); // prevent native img-drag
+
+    const zoom = document.createElement('button');
+    zoom.type='button'; zoom.textContent='🔍'; zoom.title='Preview';
+    zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
+    zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
+    card.style.position='relative';
+    card.appendChild(zoom);
+
+    // DnD payload + click select
+    card.addEventListener('dragstart', (ev)=>{
+      ev.dataTransfer.setData('text/plain', JSON.stringify(it));
+      ev.dataTransfer.effectAllowed='copy';
+      selectedCard=it;
+    });
+    card.addEventListener('click', ()=>{
+      selectedCard=it;
+      document.querySelectorAll('#inv .card').forEach(n=>n.style.outline='');
+      card.style.outline='2px solid #38bdf8';
+    });
+
+    if (placedSet.has(keyOf(it))) card.classList.add('dim');
+    root.appendChild(card);
+  });
 }
+
   
 function renderInventory(){
   const root = $('inv'); if (!root) return;
