@@ -924,6 +924,20 @@ async function loadFormation(){
   const name    = v('fname').trim();
   if (!user_id || !name){ alert('enter user id & formation name to load'); return; }
 
+  if (!INVENTORY.length) {
+    const ok = confirm('Load your inventory first so we can render images. Load it now?');
+    if (ok) {
+      // Force ALL filters to make sure every placed card is available for images
+      const clubSel = v('club','ALL'), rarSel = v('rarity','ALL'), posSel = v('position','ALL');
+      $('#club')?.value = 'ALL'; $('#rarity')?.value = 'ALL'; $('#position')?.value = 'ALL';
+      await loadInventory();
+      // restore the UI selections (data stays cached)
+      if ($('#club')) $('#club').value = clubSel;
+      if ($('#rarity')) $('#rarity').value = rarSel;
+      if ($('#position')) $('#position').value = posSel;
+    }
+  }
+  
   startBusy('Loading formation…'); setUiDisabled(true);
   try{
     const data = await callApi('formation_get', { user_id, name });
