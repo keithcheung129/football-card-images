@@ -548,77 +548,72 @@ function renderInventory(){
   if ($('pgNext')) $('pgNext').disabled = (PAGE >= pages);
 }
 
-/* ===== load inventory ===== */
+/* ===== load inventory (with loader) ===== */
 async function loadInventory(){
   const user_id = v('user_id','').trim();
   if (!user_id) { alert('Enter user ID'); return; }
 
-  // build query from current filters
-  const params = {
-    user_id,
-    rarity:   v('rarity','ALL')   || 'ALL',
-    position: v('position','ALL') || 'ALL',
-    club:     v('club','ALL')     || 'ALL',
-    unique_only: false
-  };
+  // show loader + guard UI
+  startBusy('Loading inventory…');
+  setUiDisabled(true);
 
-  const api = (window.callApi || window.callCollection);
-  if (!api) throw new Error('No API function (callApi/callCollection) found');
+  try {
+    // build query from current filters
+    const params = {
+      user_id,
+      rarity:   v('rarity','ALL')   || 'ALL',
+      position: v('position','ALL') || 'ALL',
+      club:     v('club','ALL')     || 'ALL',
+      unique_only: false
+    };
 
-  // fetch ALL pages (server caps page_size at 96)
-  let page = 1, pageSize = 96, items = [], total = null, balances = null, facets = null;
-  while (true) {
-    const data = await api('collection', { ...params, page, page_size: pageSize });
-    if (!facets && data?.facets) facets = data.facets;            // clubs/positions/rarities (if your API returns them)
-    if (!balances && data?.balances) balances = data.balances;
-    const batch = Array.isArray(data?.items) ? data.items : [];
-    if (total === null) total = Number(data?.total ?? batch.length);
-    items.push(...batch);
-    if (items.length >= total || batch.length < pageSize) break;
-    page++;
+    const api = (window.callApi || window.callCollection);
+    if (!api) throw new Error('No API function (callApi/callCollection) found');
+
+    // fetch ALL pages (server caps page_size at 96)
+    let page = 1, pageSize = 96, items = [], total = null, balances = null, facets = null;
+    while (true) {
+      const data = await api('collection', { ...params, page, page_size: pageSize });
+      if (!facets && data?.facets)   facets   = data.facets;
+      if (!balances && data?.balances) balances = data.balances;
+      const batch = Array.isArray(data?.items) ? data.items : [];
+      if (total === null) total = Number(data?.total ?? batch.length);
+      items.push(...batch);
+      if (items.length >= total || batch.length < pageSize) break;
+      page++;
+    }
+
+    // normalize to client shape
+    INVENTORY = items.map(x => ({
+      card_id:  x.card_id,
+      name:     x.name,
+      type:     x.type,
+      rarity:   x.rarity || '',
+      position: x.position || '',
+      club:     (x.club ?? '').trim(),
+      image:    x.image_url || x.image_ref || '',
+      serial:   (x.serial===''||x.serial==null) ? null : Number(x.serial)
+    }));
+
+    // balances (optional UI)
+    if (balances){
+      if ($('tickets')) $('tickets').textContent = balances.tickets ?? '0';
+      if ($('tokens'))  $('tokens').textContent  = balances.tokens  ?? '0';
+    }
+
+    // filters and first render
+    populateFilters(facets);
+    PAGE = 1;
+    renderInventory();
+
+    toast('Inventory loaded ✔');
+  } catch (err) {
+    console.error(err);
+    toast('Inventory load failed: ' + (err?.message || err), true);
+  } finally {
+    stopBusy();
+    setUiDisabled(false);
   }
-
-  // normalize
-  INVENTORY = items.map(x => ({
-    card_id:  x.card_id,
-    name:     x.name,
-    type:     x.type,
-    rarity:   x.rarity || '',
-    position: x.position || '',
-    club:     (x.club ?? '').trim(),
-    image:    x.image_url || x.image_ref || '',
-    serial:   (x.serial===''||x.serial==null) ? null : Number(x.serial)
-  }));
-
-  // balances (optional UI)
-  if (balances){
-    if ($('tickets')) $('tickets').textContent = balances.tickets ?? '0';
-    if ($('tokens'))  $('tokens').textContent  = balances.tokens  ?? '0';
-  }
-
-  // build dropdowns (from facets if available; otherwise from INVENTORY)
-  populateFilters(facets);
-
-  // reset to first page and draw
-  PAGE = 1;
-  renderInventory();
-}
-
-/* ===== fetch ALL pages for the chosen filters ===== */
-async function fetchAllPages(params){
-  const out = [];
-  let page = 1, pageSize = 96, total = null, balances = null;
-
-  while (true) {
-    const data = await callApi('collection', { ...params, page, page_size: pageSize });
-    const items = Array.isArray(data.items) ? data.items : [];
-    if (balances == null) balances = data.balances || null;
-    if (total == null) total = Number(data.total ?? items.length);
-    out.push(...items);
-    if (out.length >= total || items.length < pageSize) break;
-    page++;
-  }
-  return { items: out, total: total ?? out.length, balances };
 }
 
 
