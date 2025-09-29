@@ -360,7 +360,22 @@ const on = (id, evt, fn) => {
   if (el) el.addEventListener(evt, fn);
   else console.warn('Missing #' + id);
 };
+  
+const keyOf = (it) => `${it.card_id}::${it.serial ?? ''}`;
 
+// Image cache: keyed by "card_id::serial" and also "card_id::"
+const IMG_CACHE = new Map();
+function cacheImage(it){
+  const k = keyOf(it);
+  if (it.image) IMG_CACHE.set(k, it.image);
+  // also cache a serial-agnostic key (utilities, or when serial not set)
+  const baseK = `${it.card_id}::`;
+  if (it.image && !IMG_CACHE.has(baseK)) IMG_CACHE.set(baseK, it.image);
+}
+
+
+
+  
 function startBusy(msg='Working…'){ const b=$('busy'); if(!b) return; b.classList.add('open'); const m=$('busyMsg'); if(m) m.textContent=msg; }
 function stopBusy(){ const b=$('busy'); if(b) b.classList.remove('open'); }
 function toast(msg, isErr=false){
@@ -528,6 +543,8 @@ function renderInventory(){
       </div>`;
     const img = card.querySelector('img.thumb'); if (img) img.setAttribute('draggable','false');
 
+    if (typeof cacheImage === 'function') cacheImage(it);
+
     // DnD + click select
     card.addEventListener('dragstart', (ev)=>{
       ev.dataTransfer.setData('text/plain', JSON.stringify(it));
@@ -619,6 +636,32 @@ async function loadInventory(){
 }
 
 
+
+  
+async function ensureImagesFor(cardIds){
+  // We only need serial-agnostic images to draw the formation
+  const missing = cardIds.filter(id => !IMG_CACHE.has(`${id}::`));
+  if (missing.length === 0) return;
+
+  // Try to fill from INVENTORY first (if it was loaded later)
+  for (const it of INVENTORY) {
+    const img = it.image || '';
+    if (img) {
+      IMG_CACHE.set(`${it.card_id}::`, img);
+    }
+  }
+  const stillMissing = missing.filter(id => !IMG_CACHE.has(`${id}::`));
+  if (stillMissing.length === 0) return;
+
+  // Fallback: fetch the full cards catalog once and map card_id -> image
+  const payload = await callApi('cards', {}); // same action used by the Dex page
+  const all = Array.isArray(payload?.items) ? payload.items
+            : (Array.isArray(payload) ? payload : []);
+  for (const c of all) {
+    const img = c.image_url || c.image_ref || '';
+    if (img) IMG_CACHE.set(`${c.card_id}::`, img);
+  }
+}
 
 
 
@@ -924,45 +967,40 @@ async function loadFormation(){
   const name    = v('fname').trim();
   if (!user_id || !name){ alert('enter user id & formation name to load'); return; }
 
-  if (!INVENTORY.length) {
-    const ok = confirm('Load your inventory first so we can render images. Load it now?');
-    if (ok) {
-      // Force ALL filters to make sure every placed card is available for images
-      const clubSel = v('club','ALL'), rarSel = v('rarity','ALL'), posSel = v('position','ALL');
-      $('#club')?.value = 'ALL'; $('#rarity')?.value = 'ALL'; $('#position')?.value = 'ALL';
-      await loadInventory();
-      // restore the UI selections (data stays cached)
-      if ($('#club')) $('#club').value = clubSel;
-      if ($('#rarity')) $('#rarity').value = rarSel;
-      if ($('#position')) $('#position').value = posSel;
-    }
-  }
-  
   startBusy('Loading formation…'); setUiDisabled(true);
   try{
     const data = await callApi('formation_get', { user_id, name });
     if (data?.error){ toast('Not found', true); return; }
+
+    // NEW: make sure we have images for all cards in the saved formation
+    const needIds = Array.from(new Set((data.slots||[])
+                      .filter(s => s.card_id)
+                      .map(s => s.card_id)));
+    await ensureImagesFor(needIds);
+
     placedSet.clear(); allSlots().forEach(clearSlot);
 
     (data.slots || []).forEach(s=>{
       const slotEl = allSlots().find(x => String(x.dataset.slot)===String(s.slot_id));
       if (!slotEl) return;
+
       const inPitch = !!slotEl.closest('#pitch');
-      // restore custom coords ONLY for pitch slots
       if (inPitch && typeof s.x_pct === 'number' && typeof s.y_pct === 'number'){
         slotEl.style.left = s.x_pct + '%';
         slotEl.style.top  = s.y_pct + '%';
         slotEl.style.transform = 'translate(-50%,-50%)';
       } else if (!inPitch){
-        // make sure bench slots never keep any inline left/top from previous runs
-        slotEl.style.left = '';
-        slotEl.style.top = '';
-        slotEl.style.transform = '';
+        slotEl.style.left = ''; slotEl.style.top = ''; slotEl.style.transform = '';
       }
+
       if (!s.card_id) return;
       const meta = INVENTORY.find(it => it.card_id===s.card_id && String(it.serial ?? '')===String(s.serial ?? ''));
-      const img = slotEl.querySelector('.thumb');
-      if (img && meta && meta.image) { img.src = meta.image; img.setAttribute('draggable','false'); }
+      const imgEl = slotEl.querySelector('.thumb');
+
+      // Prefer inventory image if present; else use cached catalog image
+      let src = meta?.image || IMG_CACHE.get(`${s.card_id}::`) || '';
+      if (imgEl && src) { imgEl.src = src; imgEl.setAttribute('draggable','false'); }
+
       slotEl.classList.add('filled');
       slotEl.dataset.cardId = s.card_id;
       slotEl.dataset.serial = (s.serial ?? '');
@@ -980,6 +1018,7 @@ async function loadFormation(){
     stopBusy(); setUiDisabled(false);
   }
 }
+
 
 
 async function listFormations(){
