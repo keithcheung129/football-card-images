@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -527,6 +527,25 @@ function renderInventory(){
 
     const img = card.querySelector('img.thumb');
     if (img) img.setAttribute('draggable','false');
+
+    /* --- restore magnifier / quick preview --- */
+    card.style.position = 'relative'; // host absolute overlay
+
+    const zoom = document.createElement('button');
+    zoom.type = 'button';
+    zoom.textContent = '🔍';
+    zoom.title = 'Preview';
+    zoom.style.cssText = `
+      position:absolute; top:6px; right:6px;
+      padding:4px 6px; font-size:13px; line-height:1;
+      border:1px solid #94a3b855; border-radius:6px;
+      background:#0f172ab3; color:#fff; cursor:pointer; z-index:2;
+    `;
+    zoom.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openCardModal(it);
+    });
+    card.appendChild(zoom);
 
     // DnD + click select
     card.addEventListener('dragstart', (ev)=>{
