@@ -436,7 +436,6 @@ async function callApi(action, payload){
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'X-Access-Key': API_KEY,     // <— add a header the Worker expects
       },
       body: JSON.stringify({ action, ...payload }),
       signal: ctl.signal
@@ -515,6 +514,9 @@ function renderInventory(){
 
   // draw
   for (const it of view){
+    const k = `${it.card_id}::${it.serial ?? ''}`;
+    card.dataset.k = k;
+    if (placedSet.has(k)) card.classList.add('dim');
     const card = document.createElement('div');
     card.className = 'card';
     card.setAttribute('draggable','true');
@@ -736,12 +738,13 @@ function clearSlot(slot){
 }
 
 function markInventoryDim(){
-  const cards = Array.from(document.querySelectorAll('#inv .card'));
-  cards.forEach((node, i)=>{
-    const it = INVENTORY[i]; if (!it) return;
-    if (placedSet.has(keyOf(it))) node.classList.add('dim'); else node.classList.remove('dim');
+  document.querySelectorAll('#inv .card').forEach(node=>{
+    const k = node.dataset.k || '';
+    if (k && placedSet.has(k)) node.classList.add('dim');
+    else node.classList.remove('dim');
   });
 }
+
 function updatePlacedCount(){ const pc=$('placedCount'); if (pc) pc.textContent = placedSet.size; }
 function shake(el){
   el.style.transition='transform .08s';
