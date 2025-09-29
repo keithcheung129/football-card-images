@@ -514,19 +514,29 @@ function renderInventory(){
 
   // draw
   for (const it of view){
-    const k = `${it.card_id}::${it.serial ?? ''}`;
-    card.dataset.k = k;
-    if (placedSet.has(k)) card.classList.add('dim');
+    // CREATE THE CARD FIRST
     const card = document.createElement('div');
     card.className = 'card';
     card.setAttribute('draggable','true');
+
+    // then fill its HTML
     card.innerHTML = `
       <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
       <div class="meta">
         <div class="name">${it.name || it.card_id}</div>
         <div class="muted">${[it.rarity, it.position || it.type, it.club || '—'].filter(Boolean).join(' • ')}</div>
       </div>`;
-    const img = card.querySelector('img.thumb'); if (img) img.setAttribute('draggable','false');
+
+    // only now is it safe to reference 'card'
+    const img = card.querySelector('img.thumb');
+    if (img) img.setAttribute('draggable','false');
+
+    // seed the image cache (if you added cacheImage earlier)
+    if (typeof cacheImage === 'function') cacheImage(it);
+
+    // store a stable key on the DOM node for dimming sync (optional but recommended)
+    const k = `${it.card_id}::${it.serial ?? ''}`;
+    card.dataset.k = k;
 
     // DnD + click select
     card.addEventListener('dragstart', (ev)=>{
@@ -540,15 +550,19 @@ function renderInventory(){
       card.style.outline = '2px solid #38bdf8';
     });
 
-    if (placedSet?.has?.(`${it.card_id}::${it.serial ?? ''}`)) card.classList.add('dim');
+    // initial dim if already placed
+    if (placedSet?.has?.(k)) card.classList.add('dim');
+
+    // finally append to DOM
     root.appendChild(card);
   }
 
-  // pager UI (optional elements)
+  // pager UI
   const info = $('pgInfo'); if (info) info.textContent = `${PAGE} / ${pages}`;
   if ($('pgPrev')) $('pgPrev').disabled = (PAGE <= 1);
   if ($('pgNext')) $('pgNext').disabled = (PAGE >= pages);
 }
+
 
 /* ===== load inventory (with loader) ===== */
 async function loadInventory(){
