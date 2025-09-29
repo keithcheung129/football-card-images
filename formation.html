@@ -439,8 +439,7 @@ const placedSet = new Set(); // "card_id::serial?" to block duplicates
 let TOTAL = 0;               // server-reported total for current filters
 let PAGE = 1;                // client-side page for the side grid
 let PAGE_SIZE = 48;          // how many to show per page in the side grid
-  
-const keyOf = (it) => `${it.card_id}::${it.serial ?? ''}`;
+
 
 /* ===== API ===== */
 async function callApi(action, payload){
