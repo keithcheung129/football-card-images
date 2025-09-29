@@ -503,23 +503,22 @@ function renderInventory(){
   const root = $('inv'); if (!root) return;
   root.innerHTML = '';
 
-  // (We already fetched with club applied; keep a light client check in case user toggles club very quickly)
-  const clubSel = v('club','ALL'); // '' means (none)
+  const clubSel = v('club','ALL');
   let list = (clubSel === 'ALL') ? INVENTORY : INVENTORY.filter(it => it.club === clubSel);
 
-  // paginate
   const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   PAGE = Math.min(Math.max(1, PAGE), pages);
   const view = list.slice((PAGE-1)*PAGE_SIZE, PAGE*PAGE_SIZE);
 
-  // draw
   for (const it of view){
-    // CREATE THE CARD FIRST
-    const card = document.createElement('div');
+    const card = document.createElement('div');      // ← create first
     card.className = 'card';
     card.setAttribute('draggable','true');
 
-    // then fill its HTML
+    // stable key for dimming + duplicate guard
+    const k = `${it.card_id}::${it.serial ?? ''}`;
+    card.dataset.k = k;
+
     card.innerHTML = `
       <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
       <div class="meta">
@@ -527,16 +526,8 @@ function renderInventory(){
         <div class="muted">${[it.rarity, it.position || it.type, it.club || '—'].filter(Boolean).join(' • ')}</div>
       </div>`;
 
-    // only now is it safe to reference 'card'
     const img = card.querySelector('img.thumb');
     if (img) img.setAttribute('draggable','false');
-
-    // seed the image cache (if you added cacheImage earlier)
-    if (typeof cacheImage === 'function') cacheImage(it);
-
-    // store a stable key on the DOM node for dimming sync (optional but recommended)
-    const k = `${it.card_id}::${it.serial ?? ''}`;
-    card.dataset.k = k;
 
     // DnD + click select
     card.addEventListener('dragstart', (ev)=>{
@@ -553,15 +544,14 @@ function renderInventory(){
     // initial dim if already placed
     if (placedSet?.has?.(k)) card.classList.add('dim');
 
-    // finally append to DOM
     root.appendChild(card);
   }
 
-  // pager UI
   const info = $('pgInfo'); if (info) info.textContent = `${PAGE} / ${pages}`;
   if ($('pgPrev')) $('pgPrev').disabled = (PAGE <= 1);
   if ($('pgNext')) $('pgNext').disabled = (PAGE >= pages);
 }
+
 
 
 /* ===== load inventory (with loader) ===== */
