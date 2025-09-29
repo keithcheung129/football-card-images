@@ -297,7 +297,13 @@
             <button class="btn alt" id="btnRefresh">Refresh</button>
           </div>
           <div id="inv" class="grid" aria-live="polite"></div>
-          <div class="row-footer">
+          <div class="row-footer" style="justify-content:space-between;align-items:center;margin-top:8px">
+            <div class="muted">Placed: <span id="placedCount">0</span> / 20</div>
+            <div class="muted" id="invPager">
+              <button class="btn alt" id="pgPrev">Prev</button>
+              <span class="muted" id="pgInfo">1 / 1</span>
+              <button class="btn alt" id="pgNext">Next</button>
+            </div>
             <div class="muted">Placed: <span id="placedCount">0</span> / 20</div>
             <div class="muted">🎟 <span id="tickets">–</span> • 🪙 <span id="tokens">–</span></div>
           </div>
@@ -415,6 +421,10 @@ let INVENTORY = [];          // user inventory
 let selectedCard = null;     // for tap-to-place on mobile
 const placedSet = new Set(); // "card_id::serial?" to block duplicates
 
+let TOTAL = 0;               // server-reported total for current filters
+let PAGE = 1;                // client-side page for the side grid
+let PAGE_SIZE = 48;          // how many to show per page in the side grid
+  
 const keyOf = (it) => `${it.card_id}::${it.serial ?? ''}`;
 
 /* ===== API ===== */
@@ -440,193 +450,176 @@ async function callApi(action, payload){
 }
 
 
-/* ==== club filter ==== */
-function populateFilters(){
-  // Distinct lists from current inventory
-  const clubs    = Array.from(new Set(INVENTORY.map(i => (i.club ?? '').trim()))).sort((a,b)=>a.localeCompare(b));
-  const rarities = Array.from(new Set(INVENTORY.map(i => (i.rarity ?? '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  const positions= Array.from(new Set(INVENTORY.map(i => (i.position ?? '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+/* ====  filter ==== */
+function populateFilters(facets){
+  // ----- Club -----
+  const clubEl = $('club');
+  if (clubEl){
+    const cur = clubEl.value || 'ALL';
+    let clubs = [], hasNone = false;
 
-  // CLUB: include explicit “No Club” option with value="" (this is the fix)
-  const clubSel = document.getElementById('club');
-  if (clubSel){
-    const cur = clubSel.value || 'ALL';
-    clubSel.innerHTML =
-      `<option value="ALL">Club: ALL</option>` +
-      `<option value="">Club: No Club</option>` +          // value === '' matches utilities
-      clubs.filter(c=>c).map(c => `<option value="${c}">${c}</option>`).join('');
-    if ([...clubSel.options].some(o=>o.value===cur)) clubSel.value = cur;
+    if (facets?.clubs) {                 // preferred: from API
+      clubs   = [...facets.clubs];
+      hasNone = !!facets.hasNone;
+    } else {                              // fallback: derive from loaded items
+      const allClubs = INVENTORY.map(i => (i.club||'').trim());
+      hasNone = allClubs.some(c => !c);
+      clubs   = Array.from(new Set(allClubs.filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    }
+
+    clubEl.innerHTML =
+      '<option value="ALL">Club: ALL</option>' +
+      (hasNone ? '<option value="">(none)</option>' : '') +
+      clubs.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    if ([...clubEl.options].some(o => o.value === cur)) clubEl.value = cur;
   }
 
-  // RARITY
-  const rarSel = document.getElementById('rarity');
-  if (rarSel){
-    const cur = rarSel.value || 'ALL';
-    rarSel.innerHTML =
-      `<option value="ALL">Rarity: ALL</option>` +
+  // ----- Rarity -----
+  const rarEl = $('rarity');
+  if (rarEl){
+    const cur = rarEl.value || 'ALL';
+    const rarities = facets?.rarities
+      || Array.from(new Set(INVENTORY.map(i => (i.rarity||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    rarEl.innerHTML = '<option value="ALL">Rarity: ALL</option>' +
       rarities.map(r => `<option value="${r}">${r}</option>`).join('');
-    if ([...rarSel.options].some(o=>o.value===cur)) rarSel.value = cur;
+    if ([...rarEl.options].some(o => o.value === cur)) rarEl.value = cur;
   }
 
-  // POSITION (don’t invent a pseudo “No Position”; just ALL vs specific)
-  const posSel = document.getElementById('position');
-  if (posSel){
-    const cur = posSel.value || 'ALL';
-    posSel.innerHTML =
-      `<option value="ALL">Position: ALL</option>` +
+  // ----- Position -----
+  const posEl = $('position');
+  if (posEl){
+    const cur = posEl.value || 'ALL';
+    const positions = facets?.positions
+      || Array.from(new Set(INVENTORY.map(i => (i.position||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    posEl.innerHTML = '<option value="ALL">Position: ALL</option>' +
       positions.map(p => `<option value="${p}">${p}</option>`).join('');
-    if ([...posSel.options].some(o=>o.value===cur)) posSel.value = cur;
+    if ([...posEl.options].some(o => o.value === cur)) posEl.value = cur;
   }
 }
   
+
 /* ===== inventory ===== */
 function renderInventory(){
-  const root = document.getElementById('inv'); if (!root) return;
+  const root = $('inv'); if (!root) return;
   root.innerHTML = '';
 
-  const clubSel = getVal('club','ALL');       // '' means “No Club”
-  const rarSel  = getVal('rarity','ALL');
-  const posSel  = getVal('position','ALL');
+  // (We already fetched with club applied; keep a light client check in case user toggles club very quickly)
+  const clubSel = v('club','ALL'); // '' means (none)
+  let list = (clubSel === 'ALL') ? INVENTORY : INVENTORY.filter(it => it.club === clubSel);
 
-  // Single pass filter; note the club check uses raw value ('' is valid)
-  const items = INVENTORY.filter(it => {
-    const club = (it.club ?? '').trim();
-    const rar  = (it.rarity ?? '').trim();
-    const pos  = (it.position ?? '').trim();
+  // paginate
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  PAGE = Math.min(Math.max(1, PAGE), pages);
+  const view = list.slice((PAGE-1)*PAGE_SIZE, PAGE*PAGE_SIZE);
 
-    if (clubSel !== 'ALL' && club !== clubSel) return false;   // shows utilities when clubSel===''
-    if (rarSel  !== 'ALL' && U(rar) !== U(rarSel)) return false;
-    if (posSel  !== 'ALL' && U(pos) !== U(posSel)) return false;
-    return true;
-  });
-
-  // Render
-  for (const it of items){
+  // draw
+  for (const it of view){
     const card = document.createElement('div');
-    card.className='card';
+    card.className = 'card';
     card.setAttribute('draggable','true');
-
     card.innerHTML = `
       <img class="thumb" src="${it.image||''}" alt="${it.name||it.card_id||''}"/>
       <div class="meta">
         <div class="name">${it.name || it.card_id}</div>
-        <div class="muted">
-          ${[it.rarity, it.position || it.type, (it.club ?? '') || '—'].filter(Boolean).join(' • ')}
-        </div>
+        <div class="muted">${[it.rarity, it.position || it.type, it.club || '—'].filter(Boolean).join(' • ')}</div>
       </div>`;
+    const img = card.querySelector('img.thumb'); if (img) img.setAttribute('draggable','false');
 
-    const imgEl = card.querySelector('img.thumb');
-    if (imgEl) imgEl.setAttribute('draggable','false');
-
-    // quick preview button
-    const zoom = document.createElement('button');
-    zoom.type='button'; zoom.textContent='🔍'; zoom.title='Preview';
-    zoom.style.cssText='position:absolute; top:6px; right:6px; background:#334155; color:#fff; border:0; border-radius:8px; padding:2px 6px; cursor:pointer;';
-    zoom.addEventListener('click', (ev)=>{ ev.stopPropagation(); openCardModal(it); });
-    card.style.position='relative';
-    card.appendChild(zoom);
-
-    // DnD payload + click select
+    // DnD + click select
     card.addEventListener('dragstart', (ev)=>{
       ev.dataTransfer.setData('text/plain', JSON.stringify(it));
-      ev.dataTransfer.effectAllowed='copy';
-      selectedCard=it;
+      ev.dataTransfer.effectAllowed = 'copy';
+      selectedCard = it;
     });
     card.addEventListener('click', ()=>{
-      selectedCard=it;
+      selectedCard = it;
       document.querySelectorAll('#inv .card').forEach(n=>n.style.outline='');
-      card.style.outline='2px solid #38bdf8';
+      card.style.outline = '2px solid #38bdf8';
     });
 
-    if (placedSet.has(keyOf(it))) card.classList.add('dim');
+    if (placedSet?.has?.(`${it.card_id}::${it.serial ?? ''}`)) card.classList.add('dim');
     root.appendChild(card);
   }
+
+  // pager UI (optional elements)
+  const info = $('pgInfo'); if (info) info.textContent = `${PAGE} / ${pages}`;
+  if ($('pgPrev')) $('pgPrev').disabled = (PAGE <= 1);
+  if ($('pgNext')) $('pgNext').disabled = (PAGE >= pages);
 }
 
-  
+/* ===== load inventory ===== */
 async function loadInventory(){
-  const user_id = v('user_id').trim();
-  if (!user_id){ alert('Enter user ID first'); return; }
+  const user_id = v('user_id','').trim();
+  if (!user_id) { alert('Enter user ID'); return; }
 
-  startBusy('Loading inventory…'); setUiDisabled(true);
-  try{
-    // Ask backend for the user's collection (server will ignore unknown filters)
-    const q = {
-      user_id,
-      page: 1,
-      page_size: 240,
-      unique_only: false,
-      rarity:  v('rarity','ALL')   || 'ALL',
-      position:v('position','ALL') || 'ALL',
-      batch:   'ALL',
-      club:    'ALL'
-    };
+  // build query from current filters
+  const params = {
+    user_id,
+    rarity:   v('rarity','ALL')   || 'ALL',
+    position: v('position','ALL') || 'ALL',
+    club:     v('club','ALL')     || 'ALL',
+    unique_only: false
+  };
 
-    const data = await callApi('collection', q);
+  const api = (window.callApi || window.callCollection);
+  if (!api) throw new Error('No API function (callApi/callCollection) found');
 
-    // Normalize inventory
-    INVENTORY = (data.items || []).map(x => {
-      const rawSerial = x.serial;
-      const serial =
-      (rawSerial === '' || rawSerial === null || rawSerial === undefined)
-        ? null
-        : Number(rawSerial);
-
-      return {
-        card_id: x.card_id,
-        name: x.name,
-        rarity: x.rarity,
-        position: x.position,
-        type: x.type,
-        club: x.club || x.team || x.club_name || '',
-        image: x.image_url,
-        serial // <-- null if missing, a Number otherwise
-      };
-    });
-
-    // Update balances (if present)
-    if ($('tickets')) $('tickets').textContent = data?.balances?.tickets ?? '0';
-    if ($('tokens'))  $('tokens').textContent  = data?.balances?.tokens  ?? '0';
-
-    // Populate Club dropdown (values are lowercase; labels are nice)
-    const sel = $('club');
-    if (sel){
-      const clubs = Array.from(new Set(
-        INVENTORY
-          .map(i => (i.club || '').trim())
-          .filter(Boolean)
-      )).sort((a,b)=>a.localeCompare(b));
-
-      const current = (sel.value || 'ALL').toLowerCase();
-      sel.innerHTML =
-        '<option value="ALL">Club: ALL</option>' +
-        clubs.map(c => `<option value="${c.toLowerCase()}">${c}</option>`).join('');
-
-      // restore selection if possible
-      const keep = Array.from(sel.options).find(o => o.value === current);
-      if (keep) keep.selected = true;
-
-      // (re)wire change handler only once
-      if (!sel._wired){
-        sel.addEventListener('change', renderInventory);
-        sel._wired = true;
-      }
-    }
-
-    // Render grid once, filtered by the (possibly restored) club value
-    renderInventory();
-    toast('Inventory loaded ✔');
-  } catch(err){
-    console.error(err);
-    toast('Inventory load failed: ' + (err?.message || err), true);
-  } finally{
-    stopBusy(); setUiDisabled(false);
+  // fetch ALL pages (server caps page_size at 96)
+  let page = 1, pageSize = 96, items = [], total = null, balances = null, facets = null;
+  while (true) {
+    const data = await api('collection', { ...params, page, page_size: pageSize });
+    if (!facets && data?.facets) facets = data.facets;            // clubs/positions/rarities (if your API returns them)
+    if (!balances && data?.balances) balances = data.balances;
+    const batch = Array.isArray(data?.items) ? data.items : [];
+    if (total === null) total = Number(data?.total ?? batch.length);
+    items.push(...batch);
+    if (items.length >= total || batch.length < pageSize) break;
+    page++;
   }
+
+  // normalize
+  INVENTORY = items.map(x => ({
+    card_id:  x.card_id,
+    name:     x.name,
+    type:     x.type,
+    rarity:   x.rarity || '',
+    position: x.position || '',
+    club:     (x.club ?? '').trim(),
+    image:    x.image_url || x.image_ref || '',
+    serial:   (x.serial===''||x.serial==null) ? null : Number(x.serial)
+  }));
+
+  // balances (optional UI)
+  if (balances){
+    if ($('tickets')) $('tickets').textContent = balances.tickets ?? '0';
+    if ($('tokens'))  $('tokens').textContent  = balances.tokens  ?? '0';
+  }
+
+  // build dropdowns (from facets if available; otherwise from INVENTORY)
+  populateFilters(facets);
+
+  // reset to first page and draw
+  PAGE = 1;
+  renderInventory();
 }
 
+/* ===== fetch ALL pages for the chosen filters ===== */
+async function fetchAllPages(params){
+  const out = [];
+  let page = 1, pageSize = 96, total = null, balances = null;
 
-
-
+  while (true) {
+    const data = await callApi('collection', { ...params, page, page_size: pageSize });
+    const items = Array.isArray(data.items) ? data.items : [];
+    if (balances == null) balances = data.balances || null;
+    if (total == null) total = Number(data.total ?? items.length);
+    out.push(...items);
+    if (out.length >= total || items.length < pageSize) break;
+    page++;
+  }
+  return { items: out, total: total ?? out.length, balances };
+}
 
 
 
@@ -1004,21 +997,27 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if (u && $('user_id')) $('user_id').value = u;
 
   attachDnD();
-  on('btnSearch','click', loadInventory);
-  on('btnRefresh','click', renderInventory);
+
+  on('btnSearch','click',  loadInventory);
+  on('btnRefresh','click', loadInventory);         // ✅ was renderInventory
+
   on('btnSave','click',    saveFormation);
   on('btnLoad','click',    loadFormation);
   on('btnList','click',    listFormations);
   on('btnClear','click',   clearAll);
-  on('club','change', renderInventory);
-  on('rarity','change', renderInventory);
-  on('position','change', renderInventory);
-  //on('shape','change',     relabelForShape);
-  on('btnEdit','click', toggleLayoutEdit);
-  on('btnGrid','click', toggleSnap);
-  
+  // Filters should RE-FETCH, not just repaint:
+  on('club','change',   ()=>{ PAGE = 1; loadInventory(); });     // ✅ was renderInventory
+  on('rarity','change', ()=>{ PAGE = 1; loadInventory(); });     // ✅ was renderInventory
+  on('position','change',()=>{ PAGE = 1; loadInventory(); });    // ✅ was renderInventory
+  //on('shape','change', relabelForShape);
+  on('btnEdit','click',  toggleLayoutEdit);
+  on('btnGrid','click',  toggleSnap);
 
+  const prev = $('pgPrev'), next = $('pgNext');
+  if (prev) prev.addEventListener('click', ()=>{ PAGE = Math.max(1, PAGE-1); renderInventory(); });
+  if (next) next.addEventListener('click', ()=>{ PAGE = PAGE+1; renderInventory(); });
 });
+
 </script>
 
 </body>
