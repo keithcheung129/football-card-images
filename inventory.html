@@ -225,18 +225,16 @@ const byId = (id) => {
 const val = (id, fallback = "") => (byId(id)?.value ?? fallback);
 const chk = (id) => !!byId(id)?.checked;
 
-const $ = sel => document.querySelector(sel);
-
 function setLoading(v){
-  const el = $('#loader');
-  if (!el) return;
-  if (v) el.classList.remove('hidden');
-  else   el.classList.add('hidden');
-
-  // (optional) disable the search button while loading
-  const btn = $('#searchBtn');
+  const el  = $('loader');     // NOT '#loader'
+  const btn = $('searchBtn');  // NOT '#searchBtn'
+  if (el){
+    if (v) el.classList.remove('hidden');
+    else   el.classList.add('hidden');
+  }
   if (btn) btn.disabled = !!v;
 }
+
 
 
   
