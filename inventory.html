@@ -248,15 +248,26 @@ const rank = (val, order) => {
   return i === -1 ? 999 : i;
 };
 
-const keyOf = it => String(it.card_id || it.printcode || it.name || it.player || "");
-const freq = items.reduce((m, it) => {
-  const k = keyOf(it);
-  if (k) m[k] = (m[k] || 0) + 1;
-  return m;
-}, {});
 
+function toMs(v){
+  if (v == null || v === "") return 0;
+  if (typeof v === "number") return v < 1e12 ? v * 1000 : v; // seconds → ms
+  // string: try number first
+  const n = Number(v);
+  if (!Number.isNaN(n)) return n < 1e12 ? n * 1000 : n;
+  // ISO/date-like string
+  const d = Date.parse(v);
+  return Number.isNaN(d) ? 0 : d;
+}
+  
 
 function sortItems(items, mode) {
+  const keyOf = it => String(it.card_id || it.printcode || it.name || it.player || "");
+  const freq = items.reduce((m, it) => {
+    const k = keyOf(it);
+    if (k) m[k] = (m[k] || 0) + 1;
+    return m;
+  }, {});
   items.sort((a, b) => {
     const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
     const posA = String(a.position || '').trim().toUpperCase();
@@ -267,8 +278,8 @@ function sortItems(items, mode) {
     const ba = U(a.batch), bb = U(b.batch);
     const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
     const nb = (b.name || b.player || b.printcode || b.card_id || "").toString();
-    const ta = Number(a.acquired_ts || a.acquiredAt || a.ts || 0);
-    const tb = Number(b.acquired_ts || b.acquiredAt || b.ts || 0);
+    const ta = toMs(a.acquired_ts ?? a.acquiredAt ?? a.ts);
+    const tb = toMs(b.acquired_ts ?? b.acquiredAt ?? b.ts);
     const qa = freq[keyOf(a)] || 1;
     const qb = freq[keyOf(b)] || 1;
 
@@ -278,8 +289,8 @@ function sortItems(items, mode) {
       case "position":     return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "batch":        return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "name":         return na.localeCompare(nb);
-      case "newest":       return tb - ta || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "oldest":       return ta - tb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "newest":       return (tb - ta) || na.localeCompare(nb);
+      case "oldest":       return (ta - tb) || na.localeCompare(nb);
       case "count_desc":   return (qb - qa) || na.localeCompare(nb);
       case "count_asc":    return (qa - qb) || na.localeCompare(nb);
       case "rarity_desc":
