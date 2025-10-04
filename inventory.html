@@ -248,19 +248,29 @@ const rank = (val, order) => {
   return i === -1 ? 999 : i;
 };
 
+const keyOf = it => String(it.card_id || it.printcode || it.name || it.player || "");
+const freq = items.reduce((m, it) => {
+  const k = keyOf(it);
+  if (k) m[k] = (m[k] || 0) + 1;
+  return m;
+}, {});
+
+
 function sortItems(items, mode) {
   items.sort((a, b) => {
     const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
-    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
+    const posA = String(a.position || '').trim().toUpperCase();
+    const posB = String(b.position || '').trim().toUpperCase();
+    const pa = (POSITION_ORDER[posA] ?? 999);  // always a number
+    const pb = (POSITION_ORDER[posB] ?? 999);  // always a number
     const ca = U(a.club), cb = U(b.club);                     // <-- add
     const ba = U(a.batch), bb = U(b.batch);
     const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
     const nb = (b.name || b.player || b.printcode || b.card_id || "").toString();
     const ta = Number(a.acquired_ts || a.acquiredAt || a.ts || 0);
     const tb = Number(b.acquired_ts || b.acquiredAt || b.ts || 0);
-    const qa = Number(a.count ?? a.qty ?? a.quantity ?? a.copies ?? a.dupes ?? a.owned ?? 1);
-    const qb = Number(b.count ?? b.qty ?? b.quantity ?? b.copies ?? b.dupes ?? b.owned ?? 1);
-
+    const qa = freq[keyOf(a)] || 1;
+    const qb = freq[keyOf(b)] || 1;
 
     switch (mode) {
       case "rarity_asc":   return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
@@ -270,8 +280,8 @@ function sortItems(items, mode) {
       case "name":         return na.localeCompare(nb);
       case "newest":       return tb - ta || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case "oldest":       return ta - tb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "count_desc":   return qb - qa || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "count_asc":    return qa - qb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case "count_desc":   return (qb - qa) || na.localeCompare(nb);
+      case "count_asc":    return (qa - qb) || na.localeCompare(nb);
       case "rarity_desc":
       default:             return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);  // <-- default
     }
