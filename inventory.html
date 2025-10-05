@@ -248,6 +248,8 @@ const rank = (val, order) => {
   return i === -1 ? 999 : i;
 };
 
+let ALL_ITEMS = [];      // full result of the last search
+
 
 function toMs(v){
   if (v == null || v === "") return 0;
@@ -262,18 +264,9 @@ function toMs(v){
   
 
 function sortItems(items, mode) {
-  const keyOf = it => String(it.card_id || it.printcode || it.name || it.player || "");
-  const freq = items.reduce((m, it) => {
-    const k = keyOf(it);
-    if (k) m[k] = (m[k] || 0) + 1;
-    return m;
-  }, {});
   items.sort((a, b) => {
     const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
-    const posA = String(a.position || '').trim().toUpperCase();
-    const posB = String(b.position || '').trim().toUpperCase();
-    const pa = (POSITION_ORDER[posA] ?? 999);  // always a number
-    const pb = (POSITION_ORDER[posB] ?? 999);  // always a number
+    const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
     const ca = U(a.club), cb = U(b.club);                     // <-- add
     const ba = U(a.batch), bb = U(b.batch);
     const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
@@ -301,6 +294,31 @@ function sortItems(items, mode) {
 }
 
 
+function applySortAndShow() {
+  const sortMode = $('#sortBy').value || 'rarity_club';
+  const page = Math.max(1, parseInt($('#page').value || '1') || 1);
+  const pageSize = Math.max(1, parseInt($('#pageSize').value || '48') || 48);
+
+  // sort a copy so we don’t mutate ALL_ITEMS
+  const arr = sortItems([...ALL_ITEMS], sortMode);
+
+  // slice for the current page
+  const start = (page - 1) * pageSize;
+  const view  = arr.slice(start, start + pageSize);
+
+  // render the current page
+  render(view);
+
+  // update counts / pager UI
+  updateCounts(arr.length, page, pageSize);
+  // also update “shown/total” text like you do today
+  $('#countInfo').textContent = `${view.length} shown • ${arr.length} total`;
+
+  // friendly empty state
+  if (!view.length) {
+    $('#dex').innerHTML = '<div style="padding:12px;opacity:.7">No cards match your filters for this user.</div>';
+  }
+}
 
 
 function buildQuery() {
@@ -426,63 +444,57 @@ function updateCounts(total, page, pageSize){
 async function search() {
   setLoading(true);
   try {
-    // 1) Build query from inputs
+    // 1) Build query from inputs (keep your current helper)
     const q = buildQuery();
 
-    // 2) Call API
-    const data = await callCollection(q);
+    // 2) Fetch ALL pages
+    const combined = [];
+    let page = 1;
+    const fetchSize = 200; // batch size per request (tune as needed)
+    let total = 0;
 
-    // 3) Normalize response
-    const items = (data.items || []).map(it => ({
-      ...it,
-      printcode: it.printcode ?? it.card_id // ensure renderer sees a printcode
-    }));
-    const total = Number(data.total ?? items.length);
-    const balances = data.balances || { tickets: 0, tokens: 0 };
-    const sortMode = $('#sortBy').value || 'rarity_club';
-    sortItems(items, sortMode);
+    while (true) {
+      const res = await callCollection({ ...q, page, page_size: fetchSize });
+      const items = (res.items || []).map(it => ({
+        ...it,
+        printcode: it.printcode ?? it.card_id
+      }));
+      combined.push(...items);
 
-    function populateClubs(items) {
+      total = Number(res.total ?? combined.length);
+      if (combined.length >= total) break;
+      page++;
+      // safety: stop runaway loops
+      if (page > 200) break;
+    }
+
+    // 3) Update club filter options based on the full set (same code you had)
+    (function populateClubs(items) {
       const sel = byId('club');
       if (!sel) return;
-
       const cur = sel.value || 'ALL';
       const clubs = Array.from(new Set(items.map(it => (it.club || '').trim()).filter(Boolean)))
         .sort((a,b)=>a.localeCompare(b));
-
-      // rebuild options: ALL + unique clubs from results
       sel.innerHTML = '<option value="ALL">ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
-
-      // keep prior selection if possible
       if (Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
-    }
+    })(combined);
 
-    // in search(), after you compute `items` from the API response:
-    populateClubs(items);
-    
-    // 4) Render cards
-    render(items);
-
-    // 5) Update balances and counts
+    // 4) Balances (unchanged)
+    const balances = (combined.length && typeof res !== 'undefined' && res.balances) ? res.balances
+                     : { tickets: 0, tokens: 0 };
     updateBalances(balances);
-    document.getElementById('pages').textContent   =
-      Math.max(1, Math.ceil(total / Number(document.getElementById('pageSize').value || 48)));
-    document.getElementById('countInfo').textContent =
-      `${items.length} shown • ${total} total`;
 
-    // 6) Friendly empty state
-    if (!items.length) {
-      document.getElementById('dex').innerHTML =
-        '<div style="padding:12px;opacity:.7">No cards match your filters for this user.</div>';
-    }
+    // 5) Save to memory and show the current page
+    ALL_ITEMS = combined;
+    applySortAndShow();
 
   } catch (err) {
     console.error(err);
     alert('Failed to load collection. Check API base/secret in code.');
   } finally {
     setLoading(false);          // <-- add this block
-  }
 }
+
 
 
 // ---- Wire up safely after DOM is ready ----
@@ -496,17 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
   safeOn('btnSearch', 'click', () => { byId('page').value = 1; search(); });
   safeOn('btnReset',  'click', () => { location.href = location.pathname; });
   safeOn('prevBtn',   'click', () => {
-    const cur = +(val('page','1')); byId('page').value = Math.max(1, cur - 1); search();
+    const cur = +(val('page','1')); byId('page').value = Math.max(1, cur - 1);
+    applySortAndShow();
   });
-  safeOn('club', 'change', () => { byId('page').value = 1; search(); });
-  safeOn('sortBy', 'change', () => {
-    // Re-run search so the current page is re-fetched & re-sorted
-    search();
-  });
+  safeOn('club',      'change', () => { byId('page').value = 1; search(); }); // club changes the dataset → refetch
+  safeOn('sortBy',    'change', () => { byId('page').value = 1; applySortAndShow(); });
   safeOn('nextBtn',   'click', () => {
-    const cur = +(val('page','1')); byId('page').value = cur + 1; search();
+    const cur = +(val('page','1')); byId('page').value = cur + 1;
+    applySortAndShow();
   });
-  safeOn('pageSize',  'change', () => { byId('page').value = 1; search(); });
+  safeOn('pageSize',  'change', () => { byId('page').value = 1; applySortAndShow(); });
+
 
   // auto-search if ?u= is present
   const u = new URLSearchParams(location.search).get('u');
