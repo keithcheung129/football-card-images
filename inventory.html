@@ -227,7 +227,7 @@ const chk = (id) => !!byId(id)?.checked;
 
 function setLoading(v){
   const el  = $('loader');     // NOT '#loader'
-  const btn = $('searchBtn');  // NOT '#searchBtn'
+  const btn = $('btnSearch');  // NOT '#searchBtn'
   if (el){
     if (v) el.classList.remove('hidden');
     else   el.classList.add('hidden');
@@ -264,34 +264,46 @@ function toMs(v){
   
 
 function sortItems(items, mode) {
+  // Build a “duplicate key” and counts for this array
+  const keyOf = (it) => String(
+    it.card_id || it.printcode || it.name || it.player || ''
+  );
+  const freq = items.reduce((m, it) => {
+    const k = keyOf(it);
+    m[k] = (m[k] || 0) + 1;
+    return m;
+  }, {});
+
   items.sort((a, b) => {
-    const ra = rank(a.rarity,   RARITY_ORDER),   rb = rank(b.rarity,   RARITY_ORDER);
+    const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
     const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
-    const ca = U(a.club), cb = U(b.club);                     // <-- add
+    const ca = U(a.club), cb = U(b.club);
     const ba = U(a.batch), bb = U(b.batch);
-    const na = (a.name || a.player || a.printcode || a.card_id || "").toString();
-    const nb = (b.name || b.player || b.printcode || b.card_id || "").toString();
+    const na = (a.name || a.player || a.printcode || a.card_id || '').toString();
+    const nb = (b.name || b.player || b.printcode || b.card_id || '').toString();
     const ta = toMs(a.acquired_ts ?? a.acquiredAt ?? a.ts);
     const tb = toMs(b.acquired_ts ?? b.acquiredAt ?? b.ts);
     const qa = freq[keyOf(a)] || 1;
     const qb = freq[keyOf(b)] || 1;
 
     switch (mode) {
-      case "rarity_asc":   return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-      case "club":         return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
-      case "position":     return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "batch":        return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "name":         return na.localeCompare(nb);
-      case "newest":       return (tb - ta) || na.localeCompare(nb);
-      case "oldest":       return (ta - tb) || na.localeCompare(nb);
-      case "count_desc":   return (qb - qa) || na.localeCompare(nb);
-      case "count_asc":    return (qa - qb) || na.localeCompare(nb);
-      case "rarity_desc":
-      default:             return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);  // <-- default
+      case 'rarity_asc':  return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case 'club':        return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
+      case 'position':    return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case 'batch':       return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case 'name':        return na.localeCompare(nb);
+      case 'newest':      return (tb - ta) || na.localeCompare(nb);
+      case 'oldest':      return (ta - tb) || na.localeCompare(nb);
+      case 'count_desc':  return (qb - qa) || na.localeCompare(nb);
+      case 'count_asc':   return (qa - qb) || na.localeCompare(nb);
+      case 'rarity_club': // your UI default
+      case 'rarity_desc':
+      default:            return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
     }
   });
   return items;
 }
+
 
 
 function applySortAndShow() {
