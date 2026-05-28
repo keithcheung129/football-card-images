@@ -666,7 +666,7 @@ async function triggerOpen() {
 
   let cards = [];
   try {
-    const res = await post({ action: activePack.action, user_id: userId });
+    const res = await post({ action: 'open_pack', pack_id: activePack.packId, user_id: userId });
     cards = normalizeCards(res?.data);
   } catch (e) {
     showOverlayError(e.message || 'Could not open pack. Please try again.');
