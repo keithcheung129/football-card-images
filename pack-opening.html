@@ -583,12 +583,18 @@ async function loadPacks() {
         <div class="pack-name">${pack.display_name}</div>
         <div class="pack-meta">${price} tickets · ${size} cards</div>
         <button class="pack-open-btn"
-          onclick="showConfirm(${JSON.stringify(pack.pack_id)}, ${JSON.stringify(action)}, ${JSON.stringify(pack.display_name)}, ${JSON.stringify(imgUrl)}, ${price}, ${size})">
+          data-pack='${JSON.stringify({packId:pack.pack_id,action,displayName:pack.display_name,imgUrl,price,size})}'
+          onclick="showConfirmFromEl(this)">
           Open Pack
         </button>
       </div>`;
     grid.appendChild(card);
   });
+}
+
+function showConfirmFromEl(btn) {
+  const d = JSON.parse(btn.dataset.pack);
+  showConfirm(d.packId, d.action, d.displayName, d.imgUrl, d.price, d.size);
 }
 
 // ── CONFIRMATION MODAL ────────────────────────────────────────────────────
