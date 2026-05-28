@@ -14,6 +14,7 @@
       --border: rgba(255,255,255,0.08);
       --border-blue: rgba(55,138,221,0.35);
       --gold: #c8963c;
+      --gold-light: #e8b458;
       --rarity-n: #888780;
       --rarity-r: #378ADD;
       --rarity-ar: #7F77DD;
@@ -24,6 +25,7 @@
       --text-dim: rgba(255,255,255,0.28);
       --card-w: 175px;
       --card-h: 245px;
+      --danger: #f87171;
     }
 
     body {
@@ -45,408 +47,250 @@
       top: 0;
       z-index: 100;
     }
-    .nav-logo {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.1em;
-      margin-right: 28px;
-      text-decoration: none;
-    }
+    .nav-logo { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 0.1em; margin-right: 28px; text-decoration: none; }
     .nav-links { display: flex; flex: 1; }
-    .nav-link {
-      padding: 0 14px;
-      height: 52px;
-      display: flex;
-      align-items: center;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 13px;
-      border-bottom: 2px solid transparent;
-      transition: color 0.2s;
-      white-space: nowrap;
-    }
+    .nav-link { padding: 0 14px; height: 52px; display: flex; align-items: center; color: var(--text-muted); text-decoration: none; font-size: 13px; border-bottom: 2px solid transparent; transition: color 0.2s; white-space: nowrap; }
     .nav-link:hover { color: var(--text); }
     .nav-link.active { color: var(--text); border-bottom-color: #378ADD; }
     .nav-right { display: flex; align-items: center; gap: 16px; margin-left: auto; }
-    .nav-balance {
-      font-size: 12px;
-      color: var(--text-muted);
-      display: flex;
-      gap: 12px;
-    }
+    .nav-balance { font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; }
     .nav-balance .val { color: var(--rarity-ssr); font-weight: 600; }
     .nav-user { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .nav-avatar {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: #1a3a6e;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 600; color: #7eb4f5;
-      flex-shrink: 0;
-    }
+    .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #1a3a6e; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #7eb4f5; flex-shrink: 0; }
     .nav-username { font-size: 13px; color: rgba(255,255,255,0.7); }
 
     /* ── MAIN ── */
-    main {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 36px 24px;
-    }
+    main { max-width: 960px; margin: 0 auto; padding: 36px 24px; }
     .page-title { font-size: 22px; font-weight: 700; color: var(--gold); letter-spacing: 0.04em; margin-bottom: 4px; }
     .page-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+    .balance-highlight { color: var(--rarity-ssr); font-weight: 600; }
 
     /* ── PACK GRID ── */
-    .pack-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 16px;
-    }
-    .pack-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
-    }
-    .pack-card:hover {
-      border-color: var(--border-blue);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-    .pack-img-wrap {
-      width: 100%;
-      aspect-ratio: 3/4;
-      overflow: hidden;
-      background: #0d1e3a;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+    .pack-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; }
+    .pack-card:hover { border-color: var(--border-blue); transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.45); }
+    .pack-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; background: #0d1e3a; display: flex; align-items: center; justify-content: center; }
     .pack-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .pack-no-img {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      width: 100%; height: 100%;
-      background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%, #1a2c50 100%);
-    }
+    .pack-no-img { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%, #1a2c50 100%); }
     .pack-no-img-logo { font-size: 38px; font-weight: 800; color: var(--gold); letter-spacing: 0.1em; }
-    .pack-no-img-name { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px; letter-spacing: 0.1em; text-align: center; padding: 0 8px; }
+    .pack-no-img-name { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 6px; letter-spacing: 0.08em; text-align: center; padding: 0 8px; }
     .pack-footer { padding: 12px 14px 14px; }
     .pack-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
     .pack-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
-    .pack-open-btn {
-      width: 100%;
-      padding: 9px;
-      background: transparent;
-      border: 1px solid var(--border-blue);
-      border-radius: 6px;
-      color: #7eb4f5;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      letter-spacing: 0.04em;
-      transition: background 0.2s;
-    }
-    .pack-open-btn:hover { background: rgba(55,138,221,0.15); }
-    .pack-open-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pack-open-btn { width: 100%; padding: 9px; background: transparent; border: 1px solid var(--border-blue); border-radius: 6px; color: #7eb4f5; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.04em; transition: background 0.2s; }
+    .pack-open-btn:hover { background: rgba(55,138,221,0.18); }
 
-    /* ── STATES ── */
-    .loading-state {
-      display: flex; flex-direction: column;
+    /* ── SHARED MODAL BASE ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(7,11,20,0.88);
+      z-index: 300;
       align-items: center; justify-content: center;
-      gap: 12px; padding: 64px;
-      color: var(--text-muted); font-size: 13px;
-      grid-column: 1 / -1;
+      padding: 16px;
     }
-    .spinner {
-      width: 28px; height: 28px;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top-color: #378ADD;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .modal-backdrop.active { display: flex; }
+
+    /* ── CONFIRMATION MODAL ── */
+    #confirmModal .confirm-box {
+      background: var(--panel);
+      border: 1px solid rgba(200,150,60,0.3);
+      border-radius: 18px;
+      max-width: 420px; width: 100%;
+      overflow: hidden;
+      animation: modalIn 0.25s ease-out;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes modalIn { from { transform: scale(0.94) translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    .confirm-img-banner {
+      width: 100%; height: 220px;
+      overflow: hidden; position: relative;
+      background: #0d1e3a;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .confirm-img-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .confirm-img-banner .no-img { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%, #1a2c50 100%); }
+    .confirm-img-banner .no-img-logo { font-size: 48px; font-weight: 800; color: var(--gold); letter-spacing: 0.1em; }
+    .confirm-img-banner .banner-gradient { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, var(--panel), transparent); }
+    .confirm-img-banner .banner-name { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.05em; text-shadow: 0 2px 8px rgba(0,0,0,0.8); padding: 0 16px; }
+
+    .confirm-body { padding: 20px 24px 24px; }
+    .confirm-stats { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+    .confirm-stat { flex: 1; padding: 12px; text-align: center; border-right: 1px solid var(--border); }
+    .confirm-stat:last-child { border-right: none; }
+    .confirm-stat-val { font-size: 18px; font-weight: 700; color: var(--gold-light); }
+    .confirm-stat-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.06em; }
+
+    .confirm-note { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; padding: 12px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--border); }
+    .confirm-note strong { color: rgba(255,255,255,0.75); }
+
+    .confirm-btns { display: flex; gap: 10px; }
+    .btn-confirm {
+      flex: 1; padding: 13px;
+      background: linear-gradient(135deg, #c8963c, #e8b458);
+      border: none; border-radius: 10px;
+      color: #0b1220; font-size: 14px; font-weight: 800;
+      cursor: pointer; letter-spacing: 0.06em;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-confirm:hover { opacity: 0.92; transform: scale(1.01); }
+    .btn-confirm:active { transform: scale(0.98); }
+    .btn-cancel { padding: 13px 20px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); font-size: 13px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+    .btn-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
 
     /* ── OPENING OVERLAY ── */
     #openingOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
+      display: none; position: fixed; inset: 0;
       background: rgba(7,11,20,0.97);
       z-index: 200;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
     }
     #openingOverlay.active { display: flex; }
 
-    .overlay-close {
-      position: fixed;
-      top: 16px; right: 16px;
-      width: 38px; height: 38px;
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      background: rgba(255,255,255,0.05);
-      color: var(--text-muted);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: color 0.2s, border-color 0.2s;
-      z-index: 210;
-    }
+    .overlay-close { position: fixed; top: 16px; right: 16px; width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 50%; background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s, border-color 0.2s; z-index: 210; }
     .overlay-close:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
 
     /* Phase 1: Pack */
     #phasePack { display: flex; flex-direction: column; align-items: center; }
 
-    .pack-anim-wrap {
-      width: 200px; height: 280px;
-      border-radius: 14px;
-      overflow: hidden;
-      cursor: pointer;
-      animation: packFloat 2.8s ease-in-out infinite;
-    }
-    .pack-anim-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .pack-anim-placeholder {
-      width: 100%; height: 100%;
-      background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%, #1a2c50 100%);
-      border: 2px solid rgba(55,138,221,0.5);
-      border-radius: 14px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 8px;
-    }
-    .pack-anim-placeholder .logo { font-size: 36px; font-weight: 800; color: var(--gold); letter-spacing: 0.1em; }
-    .pack-anim-placeholder .sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.2em; }
+    .pack-anim-outer { position: relative; }
+    .pack-name-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; text-align: center; margin-bottom: 12px; }
 
-    @keyframes packFloat {
-      0%, 100% { transform: translateY(0) rotate(-0.5deg); }
-      50%       { transform: translateY(-12px) rotate(0.5deg); }
-    }
-    @keyframes packPop {
-      0%   { transform: scale(1) rotate(0deg); opacity: 1; }
-      40%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
-      100% { transform: scale(0) rotate(-8deg); opacity: 0; }
-    }
+    .pack-anim-wrap { width: 200px; height: 280px; border-radius: 14px; overflow: hidden; cursor: pointer; animation: packFloat 2.8s ease-in-out infinite; }
+    .pack-anim-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pack-anim-placeholder { width: 100%; height: 100%; background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%, #1a2c50 100%); border: 2px solid rgba(55,138,221,0.4); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+    .pack-anim-placeholder .logo { font-size: 36px; font-weight: 800; color: var(--gold); letter-spacing: 0.1em; }
+    .pack-anim-placeholder .sub { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.18em; }
+
+    @keyframes packFloat { 0%,100% { transform: translateY(0) rotate(-0.5deg); } 50% { transform: translateY(-12px) rotate(0.5deg); } }
+    @keyframes packPop { 0% { transform: scale(1) rotate(0); opacity: 1; } 40% { transform: scale(1.08) rotate(2deg); opacity: 1; } 100% { transform: scale(0) rotate(-8deg); opacity: 0; } }
     .pack-opening { animation: packPop 0.5s ease-in forwards !important; }
 
-    .open-hint {
-      margin-top: 22px;
-      font-size: 13px;
-      color: rgba(255,255,255,0.38);
-      letter-spacing: 0.06em;
-      animation: blink 2s ease-in-out infinite;
-    }
+    .open-hint { margin-top: 22px; font-size: 13px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; animation: blink 2s ease-in-out infinite; }
     @keyframes blink { 0%,100% { opacity: 0.38; } 50% { opacity: 0.75; } }
 
-    .phase-error {
-      margin-top: 20px;
-      background: rgba(220,53,69,0.15);
+    /* Loading state inside overlay */
+    .pack-loading { display: none; flex-direction: column; align-items: center; gap: 16px; }
+    .pack-loading .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.08); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .pack-loading p { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; }
+
+    /* Error inside overlay */
+    .overlay-error {
+      margin-top: 24px;
+      background: rgba(220,53,69,0.12);
       border: 1px solid rgba(220,53,69,0.35);
-      border-radius: 8px;
-      padding: 12px 18px;
-      font-size: 12px;
-      color: #f87171;
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 13px; color: var(--danger);
       text-align: center;
-      max-width: 320px;
+      max-width: 340px;
+      display: none;
     }
+    .overlay-error .retry-btn { margin-top: 10px; display: inline-block; padding: 7px 18px; border: 1px solid rgba(220,53,69,0.4); border-radius: 6px; font-size: 12px; color: var(--danger); background: transparent; cursor: pointer; }
+    .overlay-error .retry-btn:hover { background: rgba(220,53,69,0.1); }
 
     /* Phase 2: Reveal */
     #phaseReveal { display: flex; flex-direction: column; align-items: center; }
 
     .progress-dots { display: flex; gap: 10px; margin-bottom: 28px; }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      transition: background 0.3s, transform 0.3s;
-    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.18); transition: background 0.3s, transform 0.3s; }
     .dot.seen { background: rgba(255,255,255,0.45); }
     .dot.current { background: #fff; transform: scale(1.4); }
 
-    .card-scene {
-      width: var(--card-w);
-      height: var(--card-h);
-      perspective: 1000px;
-      cursor: pointer;
-    }
-    .card-inner {
-      width: 100%; height: 100%;
-      position: relative;
-      transform-style: preserve-3d;
-    }
+    .card-scene { width: var(--card-w); height: var(--card-h); perspective: 1000px; cursor: pointer; }
+    .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
     .card-inner.flipping { transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); }
-    .card-inner.flipped  { transform: rotateY(180deg); }
-
-    .card-face {
-      position: absolute; inset: 0;
-      border-radius: 12px;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      overflow: hidden;
-    }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
     .card-back-face { background: #0d1e3a; }
     .card-back-face img { width: 100%; height: 100%; object-fit: cover; }
-    .card-front-face {
-      transform: rotateY(180deg);
-      border: 3px solid var(--rarity-n);
-    }
+    .card-front-face { transform: rotateY(180deg); border: 3px solid var(--rarity-n); }
     .card-front-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .card-hint {
-      margin-top: 22px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.35);
-      letter-spacing: 0.06em;
-    }
+    .card-counter { font-size: 11px; color: var(--text-dim); margin-bottom: 16px; letter-spacing: 0.08em; }
+    .card-hint { margin-top: 22px; font-size: 12px; color: rgba(255,255,255,0.35); letter-spacing: 0.06em; }
 
-    @keyframes dropIn   { from { transform: translateY(28px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
-    @keyframes slideIn  { from { transform: translateX(70px); opacity: 0; } to { transform: none; opacity: 1; } }
-    @keyframes slideOut { from { transform: none; opacity: 1; } to { transform: translateX(-70px); opacity: 0; } }
+    @keyframes dropIn  { from { transform: translateY(28px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes slideIn { from { transform: translateX(70px); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes slideOut{ from { transform: none; opacity: 1; } to { transform: translateX(-70px); opacity: 0; } }
 
-    .card-scene.anim-drop-in  { animation: dropIn  0.35s ease-out forwards; }
-    .card-scene.anim-slide-in { animation: slideIn 0.28s ease-out forwards; }
-    .card-scene.anim-slide-out{ animation: slideOut 0.22s ease-in forwards; pointer-events: none; }
+    .card-scene.anim-drop  { animation: dropIn  0.35s ease-out forwards; }
+    .card-scene.anim-in    { animation: slideIn 0.28s ease-out forwards; }
+    .card-scene.anim-out   { animation: slideOut 0.22s ease-in forwards; pointer-events: none; }
 
     /* Phase 3: Summary */
-    #phaseSummary {
-      display: flex; flex-direction: column;
-      align-items: center;
-      padding: 0 16px;
-      max-width: 600px; width: 100%;
-    }
-    .summary-title {
-      font-size: 14px; font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.12em;
-      margin-bottom: 20px;
-    }
-    .summary-grid {
-      display: flex; gap: 10px;
-      flex-wrap: wrap; justify-content: center;
-      margin-bottom: 28px;
-    }
-    .summary-card {
-      width: 98px;
-      border-radius: 8px;
-      border: 2px solid var(--rarity-n);
-      overflow: hidden;
-      background: var(--panel2);
-      animation: dropIn 0.4s ease-out both;
-    }
+    #phaseSummary { display: flex; flex-direction: column; align-items: center; padding: 0 16px; max-width: 600px; width: 100%; }
+
+    .summary-header { text-align: center; margin-bottom: 20px; }
+    .summary-title { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 0.08em; margin-bottom: 4px; }
+    .summary-subtitle { font-size: 12px; color: var(--text-muted); }
+
+    .summary-grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+    .summary-card { width: 98px; border-radius: 8px; border: 2px solid var(--rarity-n); overflow: hidden; background: var(--panel2); animation: dropIn 0.4s ease-out both; }
     .summary-card img { width: 100%; aspect-ratio: 5/7; object-fit: cover; display: block; }
     .summary-card-footer { padding: 4px 6px 6px; background: rgba(0,0,0,0.65); text-align: center; }
-    .summary-card-name  { font-size: 9px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .summary-card-rarity{ font-size: 9px; font-weight: 700; margin-top: 1px; }
+    .summary-card-name { font-size: 9px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-card-rarity { font-size: 9px; font-weight: 700; margin-top: 1px; }
+
+    /* SR/SSR card glow in summary */
+    .summary-card.is-sr  { box-shadow: 0 0 12px rgba(186,117,23,0.5); }
+    .summary-card.is-ssr { box-shadow: 0 0 20px rgba(239,159,39,0.7); animation: dropIn 0.4s ease-out both, ssrPulse 2s 0.5s ease-in-out infinite; }
+    @keyframes ssrPulse { 0%,100% { box-shadow: 0 0 18px rgba(239,159,39,0.6); } 50% { box-shadow: 0 0 32px rgba(239,159,39,0.9); } }
+
+    .summary-collection-note {
+      background: rgba(29,158,117,0.1);
+      border: 1px solid rgba(29,158,117,0.3);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 12px; color: #5DCAA5;
+      text-align: center;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .summary-collection-note strong { color: #7FD9BC; }
 
     .summary-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    .btn-blue {
-      padding: 11px 24px;
-      background: rgba(55,138,221,0.15);
-      border: 1px solid rgba(55,138,221,0.5);
-      border-radius: 8px;
-      color: #7eb4f5;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      text-decoration: none;
-    }
-    .btn-blue:hover { background: rgba(55,138,221,0.28); }
-    .btn-ghost {
-      padding: 11px 24px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-muted);
-      font-size: 13px;
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-      text-decoration: none;
-    }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+    .btn-gold { padding: 12px 28px; background: linear-gradient(135deg, #c8963c, #e8b458); border: none; border-radius: 10px; color: #0b1220; font-size: 13px; font-weight: 800; cursor: pointer; letter-spacing: 0.04em; transition: opacity 0.15s; }
+    .btn-gold:hover { opacity: 0.9; }
+    .btn-outline { padding: 12px 22px; background: transparent; border: 1px solid var(--border-blue); border-radius: 10px; color: #7eb4f5; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-block; }
+    .btn-outline:hover { background: rgba(55,138,221,0.15); }
+    .btn-ghost-sm { padding: 12px 22px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); font-size: 13px; cursor: pointer; transition: color 0.2s, border-color 0.2s; text-decoration: none; display: inline-block; }
+    .btn-ghost-sm:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
 
     /* ── RARITY TOAST ── */
-    .rarity-toast {
-      position: fixed;
-      top: 24px; left: 50%;
-      transform: translateX(-50%) translateY(-16px);
-      padding: 8px 28px;
-      border-radius: 24px;
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.1em;
-      color: #fff;
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 0.35s, opacity 0.35s;
-      z-index: 300;
-      white-space: nowrap;
-    }
+    .rarity-toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-16px); padding: 9px 32px; border-radius: 28px; font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: #fff; opacity: 0; pointer-events: none; transition: transform 0.35s, opacity 0.35s; z-index: 400; white-space: nowrap; }
     .rarity-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .rarity-toast.sr  { background: rgba(186,117,23,0.95); }
     .rarity-toast.ssr { background: linear-gradient(90deg, #BA7517 0%, #EF9F27 50%, #BA7517 100%); }
 
     /* ── LOGIN MODAL ── */
-    #loginModal {
-      display: none; position: fixed; inset: 0;
-      background: rgba(7,11,20,0.93);
-      z-index: 400;
-      align-items: center; justify-content: center;
-    }
+    #loginModal { display: none; position: fixed; inset: 0; background: rgba(7,11,20,0.93); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
     #loginModal.active { display: flex; }
-    .login-box {
-      background: var(--panel);
-      border: 1px solid var(--border-blue);
-      border-radius: 16px;
-      padding: 36px 32px;
-      max-width: 380px; width: 90%;
-      text-align: center;
-    }
+    .login-box { background: var(--panel); border: 1px solid rgba(200,150,60,0.3); border-radius: 18px; padding: 36px 32px; max-width: 380px; width: 100%; text-align: center; }
     .login-logo { font-size: 30px; font-weight: 800; color: var(--gold); letter-spacing: 0.12em; }
-    .login-game-name { font-size: 11px; color: var(--text-dim); letter-spacing: 0.2em; margin-bottom: 28px; margin-top: 2px; }
+    .login-game-name { font-size: 11px; color: var(--text-dim); letter-spacing: 0.2em; margin-bottom: 28px; margin-top: 3px; }
     .login-label { font-size: 12px; color: var(--text-muted); text-align: left; display: block; margin-bottom: 6px; }
-    .login-input {
-      width: 100%;
-      padding: 11px 14px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-      margin-bottom: 10px;
-    }
+    .login-input { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; margin-bottom: 10px; }
     .login-input:focus { border-color: rgba(55,138,221,0.6); }
     .login-hint { font-size: 11px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; text-align: left; }
-    .login-btn {
-      width: 100%; padding: 12px;
-      background: rgba(55,138,221,0.2);
-      border: 1px solid rgba(55,138,221,0.5);
-      border-radius: 8px;
-      color: #fff; font-size: 14px; font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .login-btn:hover { background: rgba(55,138,221,0.35); }
-    .login-error {
-      background: rgba(220,53,69,0.12);
-      border: 1px solid rgba(220,53,69,0.3);
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 12px; color: #f87171;
-      margin-top: 12px;
-      display: none;
-    }
+    .login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg,#c8963c,#e8b458); border: none; border-radius: 8px; color: #0b1220; font-size: 14px; font-weight: 800; cursor: pointer; }
+    .login-error { background: rgba(220,53,69,0.12); border: 1px solid rgba(220,53,69,0.3); border-radius: 6px; padding: 10px 14px; font-size: 12px; color: var(--danger); margin-top: 12px; display: none; }
+
+    /* ── STATES ── */
+    .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 64px; color: var(--text-muted); font-size: 13px; grid-column: 1 / -1; }
+    .spinner { width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 500px) {
       :root { --card-w: 148px; --card-h: 207px; }
       main { padding: 20px 14px; }
-      nav  { padding: 0 14px; }
+      nav { padding: 0 14px; }
       .nav-balance { display: none; }
       .nav-link { padding: 0 10px; font-size: 12px; }
       .summary-card { width: 82px; }
       .pack-anim-wrap { width: 170px; height: 238px; }
+      .confirm-btns { flex-direction: column; }
     }
   </style>
 </head>
@@ -476,32 +320,84 @@
 <!-- ── MAIN ── -->
 <main>
   <div class="page-title">Open Packs</div>
-  <div class="page-sub">Choose a pack · <span id="balanceInline" style="color:var(--rarity-ssr)"></span></div>
+  <div class="page-sub">
+    Select a pack to open
+    <span id="balanceInline"></span>
+  </div>
   <div id="packGrid" class="pack-grid">
     <div class="loading-state"><div class="spinner"></div><span>Loading packs…</span></div>
   </div>
 </main>
 
+<!-- ── CONFIRMATION MODAL ── -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-img-banner">
+      <img id="confirmImg" src="" alt=""
+           onerror="this.style.display='none';document.getElementById('confirmNoImg').style.display='flex'">
+      <div class="no-img" id="confirmNoImg" style="display:none">
+        <div class="no-img-logo">TLK</div>
+      </div>
+      <div class="banner-gradient"></div>
+      <div class="banner-name" id="confirmPackName"></div>
+    </div>
+    <div class="confirm-body">
+      <div class="confirm-stats">
+        <div class="confirm-stat">
+          <div class="confirm-stat-val" id="confirmCost">—</div>
+          <div class="confirm-stat-label">TICKETS</div>
+        </div>
+        <div class="confirm-stat">
+          <div class="confirm-stat-val" id="confirmSize">5</div>
+          <div class="confirm-stat-label">CARDS</div>
+        </div>
+        <div class="confirm-stat">
+          <div class="confirm-stat-val" id="confirmBox">30</div>
+          <div class="confirm-stat-label">BOX SIZE</div>
+        </div>
+      </div>
+      <div class="confirm-note" id="confirmNote">
+        Each box of 30 packs is shared across all players. Guaranteed SRs and SSRs are hidden inside every box.
+      </div>
+      <div class="confirm-btns">
+        <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="btn-confirm" onclick="confirmOpen()">OPEN PACK !</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── OPENING OVERLAY ── -->
 <div id="openingOverlay">
   <button class="overlay-close" id="closeBtn" onclick="closeOverlay()">✕</button>
 
-  <!-- Phase 1: Pack animation -->
+  <!-- Phase 1: Pack + loading -->
   <div id="phasePack">
-    <div class="pack-anim-wrap" id="packWrap" onclick="triggerOpen()">
-      <img id="packImg" src="" alt="Pack"
-           onerror="this.style.display='none';document.getElementById('packPlaceholder').style.display='flex'">
-      <div class="pack-anim-placeholder" id="packPlaceholder" style="display:none">
-        <div class="logo">TLK</div>
-        <div class="sub" id="packPlaceholderName"></div>
+    <div class="pack-name-label" id="overlayPackName"></div>
+    <div class="pack-anim-outer">
+      <div class="pack-anim-wrap" id="packWrap" onclick="triggerOpen()">
+        <img id="packImg" src="" alt=""
+             onerror="this.style.display='none';document.getElementById('packPlaceholder').style.display='flex'">
+        <div class="pack-anim-placeholder" id="packPlaceholder" style="display:none">
+          <div class="logo">TLK</div>
+          <div class="sub" id="packPlaceholderSub"></div>
+        </div>
       </div>
     </div>
-    <div class="open-hint">tap to open</div>
-    <div id="phaseError" class="phase-error" style="display:none"></div>
+    <div class="open-hint" id="openHint">tap to open</div>
+    <div class="pack-loading" id="packLoading">
+      <div class="spinner"></div>
+      <p>Opening pack…</p>
+    </div>
+    <div class="overlay-error" id="overlayError">
+      <div id="overlayErrorMsg"></div>
+      <button class="retry-btn" onclick="resetPackPhase()">Try again</button>
+    </div>
   </div>
 
   <!-- Phase 2: Card flip reveal -->
   <div id="phaseReveal">
+    <div class="card-counter" id="cardCounter"></div>
     <div class="progress-dots" id="progressDots"></div>
     <div class="card-scene" id="cardScene" onclick="handleCardTap()">
       <div class="card-inner" id="cardInner">
@@ -518,11 +414,19 @@
 
   <!-- Phase 3: Summary -->
   <div id="phaseSummary">
-    <div class="summary-title">PACK RESULTS</div>
+    <div class="summary-header">
+      <div class="summary-title" id="summaryTitle">Pack Opened!</div>
+      <div class="summary-subtitle" id="summarySubtitle"></div>
+    </div>
     <div class="summary-grid" id="summaryGrid"></div>
+    <div class="summary-collection-note">
+      ✓ &nbsp;<strong>All cards have been added to your collection.</strong>
+      &nbsp;Head to Collection to see them!
+    </div>
     <div class="summary-actions">
-      <button class="btn-blue" onclick="openAnotherPack()">Open Another</button>
-      <a class="btn-ghost" href="inventory.html">View Collection</a>
+      <button class="btn-gold" onclick="openAnotherPack()">Open Another</button>
+      <a class="btn-outline" href="inventory.html">View Collection</a>
+      <button class="btn-ghost-sm" onclick="closeOverlay()">Back to Packs</button>
     </div>
   </div>
 </div>
@@ -539,9 +443,9 @@
     <input class="login-input" type="text" id="loginInput"
            placeholder="e.g. 123456789012345678" inputmode="numeric">
     <p class="login-hint">
-      Enter your Discord user ID — this is how the game knows who you are.<br>
+      Enter your Discord user ID to access your collection.<br>
       To find it: Discord → Settings → Advanced → turn on Developer Mode,
-      then right-click your own name and copy the ID.
+      then right-click your own name → Copy User ID.
     </p>
     <button class="login-btn" onclick="doLogin()">Continue</button>
     <div class="login-error" id="loginError"></div>
@@ -550,40 +454,32 @@
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────
-const API    = 'https://the-last-kick.keithcheung129.workers.dev';
-const CDN    = 'https://keithcheung129.github.io/football-card-images';
+const API = 'https://the-last-kick.keithcheung129.workers.dev';
+const CDN = 'https://keithcheung129.github.io/football-card-images';
 
-// Pack artwork — keyed by pack_id
 const PACK_IMAGES = {
   '2025_NS':   CDN + '/assets/packs/2025%20new%20signings.png',
-  '2025_XMAS': null,   // upload artwork when available
+  '2025_XMAS': null,
   'AFCON25':   CDN + '/assets/packs/AFCON25.png',
   'SURV26':    CDN + '/assets/packs/SURV26.png',
   'UCLLP26':   CDN + '/assets/packs/UCLLP26.png',
   'WINTER26':  CDN + '/assets/packs/WINTER26.png',
 };
 
-// Action strings from Railway PACK_ACTIONS (pack_id → action)
 const PACK_ACTIONS = {
-  '2025_NS':   '2025_NS',
-  '2025_XMAS': '2025_XMAS',
-  'AFCON25':   'AFCON25',
-  'SURV26':    'SURV26',
-  'UCLLP26':   'UCLLP26',
-  'WINTER26':  'WINTER26',
-  'base':      'open_base',
+  '2025_NS':'2025_NS', '2025_XMAS':'2025_XMAS',
+  'AFCON25':'AFCON25', 'SURV26':'SURV26',
+  'UCLLP26':'UCLLP26', 'WINTER26':'WINTER26',
 };
 
-const RARITY_COLOR = {
-  N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', SSR:'#EF9F27'
-};
+const RC = { N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', SSR:'#EF9F27' };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let userId      = localStorage.getItem('tlk_discord_id') || '';
-let activePack  = null;   // { pack_id, action, display_name, image_url }
+let activePack  = null;
 let pulledCards = [];
 let revealIdx   = 0;
-let cardState   = 'down'; // 'down' | 'up'
+let cardState   = 'down';
 let busy        = false;
 
 // ── INIT ──────────────────────────────────────────────────────────────────
@@ -594,31 +490,27 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function initPage() {
   updateNav();
-  await Promise.all([fetchBalance(), loadPacks()]);
+  fetchBalance();
+  loadPacks();
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 function showLoginModal() {
   document.getElementById('loginModal').classList.add('active');
-  setTimeout(() => document.getElementById('loginInput').focus(), 100);
+  setTimeout(() => document.getElementById('loginInput').focus(), 120);
 }
-
 function promptLogin() {
   document.getElementById('loginInput').value = userId;
   showLoginModal();
 }
-
-document.getElementById('loginInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
+document.getElementById('loginInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 function doLogin() {
   const val = document.getElementById('loginInput').value.trim();
   const err = document.getElementById('loginError');
   if (!/^\d{17,20}$/.test(val)) {
     err.textContent = 'Discord IDs are 17–20 digit numbers. Check and try again.';
-    err.style.display = 'block';
-    return;
+    err.style.display = 'block'; return;
   }
   err.style.display = 'none';
   userId = val;
@@ -637,56 +529,51 @@ function updateNav() {
 async function fetchBalance() {
   if (!userId) return;
   try {
-    const res  = await post({ action: 'collection', user_id: userId, page: 1, page_size: 1 });
-    const d    = res?.data;
-    const t    = d?.ticket_balance ?? d?.tickets ?? null;
-    const tok  = d?.token_balance  ?? d?.tokens  ?? null;
+    const res = await post({ action: 'collection', user_id: userId, page: 1, page_size: 1 });
+    const d   = res?.data;
+    const t   = d?.ticket_balance ?? d?.tickets ?? null;
+    const tok = d?.token_balance  ?? d?.tokens  ?? null;
     if (t !== null) {
-      document.getElementById('navTickets').textContent    = t;
-      document.getElementById('navTokens').textContent     = tok ?? '—';
-      document.getElementById('navBalance').style.display  = 'flex';
-      document.getElementById('balanceInline').textContent = t + ' tickets available';
+      document.getElementById('navTickets').textContent   = t;
+      document.getElementById('navTokens').textContent    = tok ?? '—';
+      document.getElementById('navBalance').style.display = 'flex';
+      document.getElementById('balanceInline').innerHTML  =
+        ' · <span class="balance-highlight">' + t + ' tickets</span> available';
     }
-  } catch { /* balance is non-critical, fail silently */ }
+  } catch { /* non-critical */ }
 }
 
 // ── LOAD PACKS ────────────────────────────────────────────────────────────
 async function loadPacks() {
   const grid = document.getElementById('packGrid');
   grid.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading packs…</span></div>';
-
   let packs = [];
   try {
     const res = await fetch(API + '/packs');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     packs = Array.isArray(json) ? json : (json.data ?? []);
-  } catch (e) {
+  } catch {
     grid.innerHTML = '<div class="loading-state" style="color:#f87171">Could not load packs — check your connection and try again.</div>';
     return;
   }
-
   const active = packs.filter(p => p.is_active !== false);
   if (!active.length) {
     grid.innerHTML = '<div class="loading-state">No packs available right now.</div>';
     return;
   }
-
   grid.innerHTML = '';
   active.forEach(pack => {
     const imgUrl = PACK_IMAGES[pack.pack_id] ?? null;
     const action = PACK_ACTIONS[pack.pack_id] ?? pack.pack_id;
     const price  = pack.price_tickets ?? '?';
     const size   = pack.draw_size ?? 5;
-
-    const card = document.createElement('div');
+    const card   = document.createElement('div');
     card.className = 'pack-card';
     card.innerHTML = `
       <div class="pack-img-wrap">
-        ${imgUrl
-          ? `<img src="${imgUrl}" alt="${pack.display_name}"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-          : ''}
+        ${imgUrl ? `<img src="${imgUrl}" alt="${pack.display_name}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
         <div class="pack-no-img" style="${imgUrl ? 'display:none' : ''}">
           <div class="pack-no-img-logo">TLK</div>
           <div class="pack-no-img-name">${pack.display_name.toUpperCase()}</div>
@@ -696,7 +583,7 @@ async function loadPacks() {
         <div class="pack-name">${pack.display_name}</div>
         <div class="pack-meta">${price} tickets · ${size} cards</div>
         <button class="pack-open-btn"
-          onclick="selectPack(${JSON.stringify(pack.pack_id)}, ${JSON.stringify(action)}, ${JSON.stringify(pack.display_name)}, ${JSON.stringify(imgUrl)})">
+          onclick="showConfirm(${JSON.stringify(pack.pack_id)}, ${JSON.stringify(action)}, ${JSON.stringify(pack.display_name)}, ${JSON.stringify(imgUrl)}, ${price}, ${size})">
           Open Pack
         </button>
       </div>`;
@@ -704,29 +591,52 @@ async function loadPacks() {
   });
 }
 
-// ── SELECT PACK ───────────────────────────────────────────────────────────
-function selectPack(packId, action, displayName, imgUrl) {
+// ── CONFIRMATION MODAL ────────────────────────────────────────────────────
+function showConfirm(packId, action, displayName, imgUrl, price, size) {
   if (!userId) { showLoginModal(); return; }
+  activePack = { packId, action, displayName, imgUrl, price, size };
 
-  activePack = { packId, action, displayName, imgUrl };
+  // Populate modal
+  const img = document.getElementById('confirmImg');
+  const noImg = document.getElementById('confirmNoImg');
+  if (imgUrl) { img.src = imgUrl; img.style.display = 'block'; noImg.style.display = 'none'; }
+  else        { img.style.display = 'none'; noImg.style.display = 'flex'; }
 
-  // Set up pack image in overlay
+  document.getElementById('confirmPackName').textContent = displayName;
+  document.getElementById('confirmCost').textContent     = price ?? '?';
+  document.getElementById('confirmSize').textContent     = size ?? 5;
+  // Box size will show 30 by default (we can fetch manifest later for specifics)
+  document.getElementById('confirmBox').textContent      = 30;
+
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('active');
+}
+
+function confirmOpen() {
+  closeConfirm();
+  // Set up overlay with pack image
   const img = document.getElementById('packImg');
   const placeholder = document.getElementById('packPlaceholder');
-  document.getElementById('packPlaceholderName').textContent = displayName.toUpperCase();
+  document.getElementById('packPlaceholderSub').textContent = activePack.displayName.toUpperCase();
+  document.getElementById('overlayPackName').textContent    = activePack.displayName.toUpperCase();
 
-  if (imgUrl) {
-    img.src = imgUrl;
-    img.style.display = 'block';
+  if (activePack.imgUrl) {
+    img.src = activePack.imgUrl; img.style.display = 'block';
     placeholder.style.display = 'none';
   } else {
-    img.style.display = 'none';
-    placeholder.style.display = 'flex';
+    img.style.display = 'none'; placeholder.style.display = 'flex';
   }
 
-  // Reset overlay
+  // Reset overlay state
   document.getElementById('packWrap').classList.remove('pack-opening');
-  document.getElementById('phaseError').style.display = 'none';
+  document.getElementById('packWrap').style.display   = '';
+  document.getElementById('openHint').style.display   = '';
+  document.getElementById('packLoading').style.display = 'none';
+  document.getElementById('overlayError').style.display = 'none';
+
   showPhase('pack');
   document.getElementById('openingOverlay').classList.add('active');
   document.getElementById('closeBtn').style.display = 'flex';
@@ -738,24 +648,27 @@ async function triggerOpen() {
   if (busy || !activePack) return;
   busy = true;
 
+  // Animate pack away, show spinner
   const wrap = document.getElementById('packWrap');
   wrap.classList.add('pack-opening');
+
+  setTimeout(() => {
+    wrap.style.display = 'none';
+    document.getElementById('openHint').style.display   = 'none';
+    document.getElementById('packLoading').style.display = 'flex';
+  }, 480);
 
   let cards = [];
   try {
     const res = await post({ action: activePack.action, user_id: userId });
     cards = normalizeCards(res?.data);
   } catch (e) {
-    wrap.classList.remove('pack-opening');
-    busy = false;
-    showPhaseError(e.message || 'Could not open pack. Please try again.');
+    showOverlayError(e.message || 'Could not open pack. Please try again.');
     return;
   }
 
   if (!cards.length) {
-    wrap.classList.remove('pack-opening');
-    busy = false;
-    showPhaseError('No cards returned. Your pack may have failed — check your ticket balance.');
+    showOverlayError('No cards returned. Check your ticket balance and try again.');
     return;
   }
 
@@ -763,23 +676,40 @@ async function triggerOpen() {
   revealIdx   = 0;
   cardState   = 'down';
 
+  document.getElementById('packLoading').style.display = 'none';
   setTimeout(() => {
     showPhase('reveal');
     buildDots();
-    loadCard(0, true /* first card face-down */, true);
-    fetchBalance(); // refresh after spend
-  }, 520);
+    loadCard(0, true, true);
+    fetchBalance();
+  }, 200);
+}
+
+function showOverlayError(msg) {
+  document.getElementById('packLoading').style.display = 'none';
+  document.getElementById('overlayErrorMsg').textContent = msg;
+  document.getElementById('overlayError').style.display = 'block';
+  busy = false;
+}
+
+function resetPackPhase() {
+  const wrap = document.getElementById('packWrap');
+  wrap.classList.remove('pack-opening');
+  wrap.style.display = '';
+  document.getElementById('openHint').style.display   = '';
+  document.getElementById('overlayError').style.display = 'none';
+  busy = false;
 }
 
 // ── CARD REVEAL ───────────────────────────────────────────────────────────
 function buildDots() {
-  const dotsEl = document.getElementById('progressDots');
-  dotsEl.innerHTML = '';
+  const el = document.getElementById('progressDots');
+  el.innerHTML = '';
   pulledCards.forEach((_, i) => {
     const d = document.createElement('div');
     d.className = 'dot' + (i === 0 ? ' current' : '');
     d.id = 'rdot-' + i;
-    dotsEl.appendChild(d);
+    el.appendChild(d);
   });
 }
 
@@ -790,40 +720,32 @@ function updateDots(i) {
   });
 }
 
-// faceUp=false → show face-down first; faceUp=true → enter already face-up
 function loadCard(i, faceDown, isFirst) {
   cardState = faceDown ? 'down' : 'up';
-  busy      = false;
-
+  busy = false;
   const card  = pulledCards[i];
   const inner = document.getElementById('cardInner');
   inner.classList.remove('flipping', 'flipped');
   if (!faceDown) inner.classList.add('flipped');
 
-  document.getElementById('cardFront').style.borderColor = RARITY_COLOR[card.rarity] || '#888';
-  document.getElementById('cardFrontImg').src = card.image_ref || '';
-  document.getElementById('cardHint').textContent = faceDown ? 'tap to reveal' : 'tap to continue';
+  document.getElementById('cardFront').style.borderColor    = RC[card.rarity] || '#888';
+  document.getElementById('cardFrontImg').src               = card.image_ref || '';
+  document.getElementById('cardHint').textContent           = faceDown ? 'tap to reveal' : 'tap to continue';
+  document.getElementById('cardCounter').textContent        = `${i + 1} of ${pulledCards.length}`;
   updateDots(i);
 
-  // Animate card entry
   const scene = document.getElementById('cardScene');
-  scene.classList.remove('anim-drop-in', 'anim-slide-in', 'anim-slide-out');
+  scene.classList.remove('anim-drop', 'anim-in', 'anim-out');
   void scene.offsetWidth;
-  scene.classList.add(isFirst ? 'anim-drop-in' : 'anim-slide-in');
-  scene.addEventListener('animationend', () =>
-    scene.classList.remove('anim-drop-in', 'anim-slide-in'), { once: true });
+  scene.classList.add(isFirst ? 'anim-drop' : 'anim-in');
+  scene.addEventListener('animationend', () => scene.classList.remove('anim-drop','anim-in'), { once: true });
 
-  // Toast for high-rarity face-up reveals
-  if (!faceDown && (card.rarity === 'SR' || card.rarity === 'SSR')) {
-    showToast(card.rarity);
-  }
+  if (!faceDown && (card.rarity === 'SR' || card.rarity === 'SSR')) showToast(card.rarity);
 }
 
 function handleCardTap() {
   if (busy) return;
-
   if (cardState === 'down') {
-    // Flip the first card face-up
     busy = true;
     const inner = document.getElementById('cardInner');
     inner.classList.add('flipping');
@@ -837,27 +759,22 @@ function handleCardTap() {
     }, { once: true });
     return;
   }
-
-  // Advance — next card enters face-up
   busy = true;
   const scene = document.getElementById('cardScene');
-  scene.classList.add('anim-slide-out');
+  scene.classList.add('anim-out');
   scene.addEventListener('animationend', () => {
     revealIdx++;
-    if (revealIdx < pulledCards.length) {
-      loadCard(revealIdx, false /* face-up */, false);
-    } else {
-      showSummary();
-    }
+    if (revealIdx < pulledCards.length) loadCard(revealIdx, false, false);
+    else showSummary();
   }, { once: true });
 }
 
 function showToast(rarity) {
   const t = document.getElementById('rarityToast');
-  t.textContent  = rarity === 'SSR' ? '✦  SSR PULLED!  ✦' : '★  SR CARD!  ★';
-  t.className    = 'rarity-toast show ' + rarity.toLowerCase();
+  t.textContent = rarity === 'SSR' ? '✦  SSR PULLED!  ✦' : '★  SR CARD!  ★';
+  t.className   = 'rarity-toast show ' + rarity.toLowerCase();
   clearTimeout(t._t);
-  t._t = setTimeout(() => { t.className = 'rarity-toast'; }, 2500);
+  t._t = setTimeout(() => { t.className = 'rarity-toast'; }, 2800);
 }
 
 // ── SUMMARY ───────────────────────────────────────────────────────────────
@@ -865,18 +782,27 @@ function showSummary() {
   showPhase('summary');
   document.getElementById('closeBtn').style.display = 'none';
 
+  // Title — highlight if god pack or has SR/SSR
+  const hasSSR = pulledCards.some(c => c.rarity === 'SSR');
+  const hasSR  = pulledCards.some(c => c.rarity === 'SR');
+  document.getElementById('summaryTitle').textContent =
+    hasSSR ? '✦ Amazing Pull! ✦' : hasSR ? '★ Great Pull! ★' : 'Pack Opened!';
+  document.getElementById('summarySubtitle').textContent =
+    `${pulledCards.length} new cards from ${activePack?.displayName || 'your pack'}`;
+
   const grid = document.getElementById('summaryGrid');
   grid.innerHTML = '';
   pulledCards.forEach((card, i) => {
     const el = document.createElement('div');
-    el.className = 'summary-card';
-    el.style.cssText = `border-color:${RARITY_COLOR[card.rarity]||'#888'};animation-delay:${i*75}ms`;
+    el.className = 'summary-card' +
+      (card.rarity === 'SSR' ? ' is-ssr' : card.rarity === 'SR' ? ' is-sr' : '');
+    el.style.cssText = `border-color:${RC[card.rarity]||'#888'};animation-delay:${i*80}ms`;
     el.innerHTML = `
       <img src="${card.image_ref||''}" alt="${card.name}"
-           onerror="this.style.background='#1a2540';this.style.height='130px'">
+           onerror="this.style.background='#1a2540';this.style.height='120px'">
       <div class="summary-card-footer">
         <div class="summary-card-name">${card.name}</div>
-        <div class="summary-card-rarity" style="color:${RARITY_COLOR[card.rarity]||'#888'}">${card.rarity}</div>
+        <div class="summary-card-rarity" style="color:${RC[card.rarity]||'#888'}">${card.rarity}</div>
       </div>`;
     grid.appendChild(el);
   });
@@ -884,32 +810,22 @@ function showSummary() {
 
 function openAnotherPack() {
   if (!activePack) { closeOverlay(); return; }
-  document.getElementById('packWrap').classList.remove('pack-opening');
-  document.getElementById('phaseError').style.display = 'none';
-  showPhase('pack');
-  document.getElementById('closeBtn').style.display = 'flex';
-  busy = false;
+  confirmOpen(); // re-show pack with same activePack
 }
 
 function closeOverlay() {
   document.getElementById('openingOverlay').classList.remove('active');
-  activePack = null;
   busy = false;
 }
 
-// ── HELPERS ───────────────────────────────────────────────────────────────
+// ── PHASE HELPER ──────────────────────────────────────────────────────────
 function showPhase(name) {
   document.getElementById('phasePack').style.display    = name === 'pack'    ? 'flex' : 'none';
   document.getElementById('phaseReveal').style.display  = name === 'reveal'  ? 'flex' : 'none';
   document.getElementById('phaseSummary').style.display = name === 'summary' ? 'flex' : 'none';
 }
 
-function showPhaseError(msg) {
-  const el = document.getElementById('phaseError');
-  el.textContent   = msg;
-  el.style.display = 'block';
-}
-
+// ── API ───────────────────────────────────────────────────────────────────
 async function post(body) {
   const res  = await fetch(API + '/api', {
     method: 'POST',
@@ -919,7 +835,7 @@ async function post(body) {
   const json = await res.json();
   if (!json.ok) {
     if (json.error === 'forbidden')
-      throw new Error('Pack opening via web is not enabled yet — the Worker needs updating.');
+      throw new Error('Pack opening via web is not enabled yet. The Cloudflare Worker needs updating.');
     throw new Error(json.error || 'API error');
   }
   return json;
