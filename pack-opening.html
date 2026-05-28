@@ -849,7 +849,7 @@ async function post(body) {
 
 function normalizeCards(data) {
   if (!data) return [];
-  const list = data.cards ?? data.pulled_cards ?? data.result ?? data;
+  const list = data.cards ?? data.pulled_cards ?? data.results ?? data.result ?? data;
   if (!Array.isArray(list)) return [];
   return list.map(c => ({
     card_id:   c.card_id   ?? c.id          ?? '',
