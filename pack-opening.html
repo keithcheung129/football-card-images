@@ -369,31 +369,15 @@
 </div>
 
 <!-- ── TICKET CONFIRMATION MODAL ── -->
-<div class="modal-backdrop" id="ticketModal">
-  <div class="confirm-box" style="max-width:340px">
-    <div class="confirm-body" style="padding:28px 24px 24px">
-      <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px" id="ticketModalPackName"></div>
-        <div style="font-size:13px;color:var(--text-muted)">Are you sure you want to open this pack?</div>
-      </div>
-      <div class="confirm-stats" style="margin-bottom:18px">
-        <div class="confirm-stat">
-          <div class="confirm-stat-val" id="ticketModalCost"></div>
-          <div class="confirm-stat-label">COST</div>
-        </div>
-        <div class="confirm-stat">
-          <div class="confirm-stat-val" id="ticketModalBalance"></div>
-          <div class="confirm-stat-label">YOUR BALANCE</div>
-        </div>
-        <div class="confirm-stat">
-          <div class="confirm-stat-val" id="ticketModalAfter"></div>
-          <div class="confirm-stat-label">AFTER OPEN</div>
-        </div>
-      </div>
-      <div class="confirm-btns">
-        <button class="btn-cancel" onclick="closeTicketModal()">Cancel</button>
-        <button class="btn-confirm" onclick="proceedOpen()">YES, OPEN!</button>
-      </div>
+<div class="modal-backdrop" id="ticketModal" style="background:rgba(5,8,16,0.96)">
+  <div style="background:#0f172a;border:1px solid rgba(200,150,60,0.4);border-radius:16px;padding:32px 28px;max-width:320px;width:100%;text-align:center">
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Opening</div>
+    <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:20px" id="ticketModalPackName"></div>
+    <div style="font-size:22px;font-weight:800;color:var(--gold-light);margin-bottom:6px" id="ticketModalCost"></div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px" id="ticketModalBalance"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-cancel" style="flex:1" onclick="closeTicketModal()">Cancel</button>
+      <button class="btn-confirm" style="flex:2" onclick="proceedOpen()">Yes, open!</button>
     </div>
   </div>
 </div>
@@ -654,12 +638,16 @@ function closeConfirm() {
 
 function confirmOpen() {
   closeConfirm();
-  const balance = parseInt(document.getElementById('navTickets').textContent) || 0;
+  const rawBalance = document.getElementById('navTickets').textContent.trim();
+  const balance = parseInt(rawBalance);
   const cost = activePack.price ?? 30;
+  const balanceKnown = !isNaN(balance);
+
   document.getElementById('ticketModalPackName').textContent = activePack.displayName;
-  document.getElementById('ticketModalCost').textContent     = cost + ' 🎟';
-  document.getElementById('ticketModalBalance').textContent  = balance + ' 🎟';
-  document.getElementById('ticketModalAfter').textContent    = (balance - cost) + ' 🎟';
+  document.getElementById('ticketModalCost').textContent     = `Use ${cost} tickets`;
+  document.getElementById('ticketModalBalance').textContent  = balanceKnown
+    ? `Current balance: ${balance} tickets`
+    : `Current balance: loading…`;
   document.getElementById('ticketModal').classList.add('active');
 }
 
