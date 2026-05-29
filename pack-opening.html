@@ -368,6 +368,36 @@
   </div>
 </div>
 
+<!-- ── TICKET CONFIRMATION MODAL ── -->
+<div class="modal-backdrop" id="ticketModal">
+  <div class="confirm-box" style="max-width:340px">
+    <div class="confirm-body" style="padding:28px 24px 24px">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px" id="ticketModalPackName"></div>
+        <div style="font-size:13px;color:var(--text-muted)">Are you sure you want to open this pack?</div>
+      </div>
+      <div class="confirm-stats" style="margin-bottom:18px">
+        <div class="confirm-stat">
+          <div class="confirm-stat-val" id="ticketModalCost"></div>
+          <div class="confirm-stat-label">COST</div>
+        </div>
+        <div class="confirm-stat">
+          <div class="confirm-stat-val" id="ticketModalBalance"></div>
+          <div class="confirm-stat-label">YOUR BALANCE</div>
+        </div>
+        <div class="confirm-stat">
+          <div class="confirm-stat-val" id="ticketModalAfter"></div>
+          <div class="confirm-stat-label">AFTER OPEN</div>
+        </div>
+      </div>
+      <div class="confirm-btns">
+        <button class="btn-cancel" onclick="closeTicketModal()">Cancel</button>
+        <button class="btn-confirm" onclick="proceedOpen()">YES, OPEN!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── OPENING OVERLAY ── -->
 <div id="openingOverlay">
   <button class="overlay-close" id="closeBtn" onclick="closeOverlay()">✕</button>
@@ -623,32 +653,38 @@ function closeConfirm() {
 }
 
 function confirmOpen() {
-  const balance = parseInt(document.getElementById('navTickets').textContent) || null;
-  const cost = activePack.price;
-  const balanceText = balance !== null ? `Current balance: ${balance} tickets.` : '';
-  if (!confirm(`Use ${cost} tickets to open this pack?\n${balanceText}`)) return;
   closeConfirm();
-  
-  // Set up overlay with pack image
+  const balance = parseInt(document.getElementById('navTickets').textContent) || 0;
+  const cost = activePack.price ?? 30;
+  document.getElementById('ticketModalPackName').textContent = activePack.displayName;
+  document.getElementById('ticketModalCost').textContent     = cost + ' 🎟';
+  document.getElementById('ticketModalBalance').textContent  = balance + ' 🎟';
+  document.getElementById('ticketModalAfter').textContent    = (balance - cost) + ' 🎟';
+  document.getElementById('ticketModal').classList.add('active');
+}
+
+function closeTicketModal() {
+  document.getElementById('ticketModal').classList.remove('active');
+}
+
+function proceedOpen() {
+  closeTicketModal();
+  // Set up overlay — same as before
   const img = document.getElementById('packImg');
   const placeholder = document.getElementById('packPlaceholder');
   document.getElementById('packPlaceholderSub').textContent = activePack.displayName.toUpperCase();
   document.getElementById('overlayPackName').textContent    = activePack.displayName.toUpperCase();
-
   if (activePack.imgUrl) {
     img.src = activePack.imgUrl; img.style.display = 'block';
     placeholder.style.display = 'none';
   } else {
     img.style.display = 'none'; placeholder.style.display = 'flex';
   }
-
-  // Reset overlay state
   document.getElementById('packWrap').classList.remove('pack-opening');
-  document.getElementById('packWrap').style.display   = '';
-  document.getElementById('openHint').style.display   = '';
+  document.getElementById('packWrap').style.display    = '';
+  document.getElementById('openHint').style.display    = '';
   document.getElementById('packLoading').style.display = 'none';
   document.getElementById('overlayError').style.display = 'none';
-
   showPhase('pack');
   document.getElementById('openingOverlay').classList.add('active');
   document.getElementById('closeBtn').style.display = 'flex';
