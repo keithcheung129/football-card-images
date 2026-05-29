@@ -33,6 +33,7 @@
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       min-height: 100vh;
+      font-size: 16px;
     }
 
     /* ── NAV ── */
@@ -229,8 +230,8 @@
     .summary-card { width: 130px; border-radius: 8px; border: 2px solid var(--rarity-n); overflow: hidden; background: var(--panel2); animation: dropIn 0.4s ease-out both; }
     .summary-card img { width: 100%; aspect-ratio: 5/7; object-fit: cover; display: block; }
     .summary-card-footer { padding: 4px 6px 6px; background: rgba(0,0,0,0.65); text-align: center; }
-    .summary-card-name { font-size: 9px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .summary-card-rarity { font-size: 9px; font-weight: 700; margin-top: 1px; }
+    .summary-card-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-card-rarity { font-size: 14px; font-weight: 700; margin-top: 1px; }
 
     /* SR/SSR card glow in summary */
     .summary-card.is-sr  { box-shadow: 0 0 12px rgba(186,117,23,0.5); }
@@ -622,7 +623,12 @@ function closeConfirm() {
 }
 
 function confirmOpen() {
+  const balance = parseInt(document.getElementById('navTickets').textContent) || null;
+  const cost = activePack.price;
+  const balanceText = balance !== null ? `Current balance: ${balance} tickets.` : '';
+  if (!confirm(`Use ${cost} tickets to open this pack?\n${balanceText}`)) return;
   closeConfirm();
+  
   // Set up overlay with pack image
   const img = document.getElementById('packImg');
   const placeholder = document.getElementById('packPlaceholder');
