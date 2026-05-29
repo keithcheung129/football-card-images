@@ -678,7 +678,8 @@ async function triggerOpen() {
     return;
   }
 
-  pulledCards = cards;
+  const rarityOrder = { N: 0, R: 1, AR: 2, SR: 3, SSR: 4 };
+  pulledCards = cards.sort((a, b) => (rarityOrder[a.rarity] ?? 0) - (rarityOrder[b.rarity] ?? 0));
   revealIdx   = 0;
   cardState   = 'down';
 
