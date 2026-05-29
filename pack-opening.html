@@ -647,7 +647,7 @@ function confirmOpen() {
   document.getElementById('ticketModalCost').textContent     = `Use ${cost} tickets`;
   document.getElementById('ticketModalBalance').textContent  = balanceKnown
     ? `Current balance: ${balance} tickets`
-    : `Current balance: loading…`;
+    : '';
   document.getElementById('ticketModal').classList.add('active');
 }
 
