@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Open Packs — The Last Kick</title>
   <style>
+    @font-face {
+      font-family: 'Maxime';
+      src: url('assets/fonts/Maxime W01 Bd SC/Web Fonts/f997711963438aad23e3a7930b4bc50b.woff2') format('woff2'),
+           url('assets/fonts/Maxime W01 Bd SC/Web Fonts/f997711963438aad23e3a7930b4bc50b.woff') format('woff'),
+           url('assets/fonts/Maxime W01 Bd SC/Web Fonts/f997711963438aad23e3a7930b4bc50b.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -36,6 +45,7 @@
       min-height: 100vh;
       font-size: 16px;
     }
+    .nav-logo, .page-title, .pack-anim-placeholder .logo { font-family: 'Maxime', serif; }
 
     /* ── NAV ── */
     nav {
@@ -508,6 +518,14 @@
 const API = 'https://the-last-kick.keithcheung129.workers.dev';
 const CDN = 'https://keithcheung129.github.io/football-card-images';
 
+const PACK_IMAGES = {
+  '2025_NS':   CDN + '/assets/packs/2025%20new%20signings.png',
+  '2025_XMAS': null,
+  'AFCON25':   CDN + '/assets/packs/AFCON25.png',
+  'SURV26':    CDN + '/assets/packs/SURV26.png',
+  'UCLLP26':   CDN + '/assets/packs/UCLLP26.png',
+  'WINTER26':  CDN + '/assets/packs/WINTER26.png',
+};
 
 const RC = { N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', IR:'#a855f7', SSR:'#EF9F27' };
 
@@ -652,17 +670,14 @@ async function loadPacks() {
     grid.innerHTML = '<div class="loading-state" style="color:#f87171">Could not load packs — check your connection and try again.</div>';
     return;
   }
-  const active = packs.filter(p => {
-    const v = p.is_active;
-    return v !== false && v !== 'false' && v !== 0 && v !== '0';
-  });
+  const active = packs.filter(p => p.is_active !== false);
   if (!active.length) {
     grid.innerHTML = '<div class="loading-state">No packs available right now.</div>';
     return;
   }
   grid.innerHTML = '';
   active.forEach(pack => {
-    const imgUrl = pack.image_url ?? null;
+    const imgUrl = PACK_IMAGES[pack.pack_id] ?? null;
     const price  = pack.price_tickets ?? '?';
     const size   = pack.draw_size ?? 5;
     const card   = document.createElement('div');
