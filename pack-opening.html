@@ -19,6 +19,7 @@
       --rarity-r: #378ADD;
       --rarity-ar: #7F77DD;
       --rarity-sr: #BA7517;
+      --rarity-ir: #a855f7;
       --rarity-ssr: #EF9F27;
       --text: #fff;
       --text-muted: rgba(255,255,255,0.5);
@@ -244,7 +245,9 @@
 
     /* SR/SSR card glow in summary */
     .summary-card.is-sr  { box-shadow: 0 0 12px rgba(186,117,23,0.5); }
+    .summary-card.is-ir  { box-shadow: 0 0 18px rgba(168,85,247,0.7); animation: dropIn 0.4s ease-out both, irPulse 2s 0.5s ease-in-out infinite; }
     .summary-card.is-ssr { box-shadow: 0 0 20px rgba(239,159,39,0.7); animation: dropIn 0.4s ease-out both, ssrPulse 2s 0.5s ease-in-out infinite; }
+    @keyframes irPulse  { 0%,100% { box-shadow: 0 0 16px rgba(168,85,247,0.6); } 50% { box-shadow: 0 0 30px rgba(168,85,247,0.9); } }
     @keyframes ssrPulse { 0%,100% { box-shadow: 0 0 18px rgba(239,159,39,0.6); } 50% { box-shadow: 0 0 32px rgba(239,159,39,0.9); } }
 
     .summary-collection-note {
@@ -271,6 +274,7 @@
     .rarity-toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-16px); padding: 9px 32px; border-radius: 28px; font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: #fff; opacity: 0; pointer-events: none; transition: transform 0.35s, opacity 0.35s; z-index: 400; white-space: nowrap; }
     .rarity-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .rarity-toast.sr  { background: rgba(186,117,23,0.95); }
+    .rarity-toast.ir  { background: linear-gradient(90deg, #7800b4 0%, #a855f7 50%, #7800b4 100%); }
     .rarity-toast.ssr { background: linear-gradient(90deg, #BA7517 0%, #EF9F27 50%, #BA7517 100%); }
 
     /* ── LOGIN MODAL ── */
@@ -513,7 +517,7 @@ const PACK_IMAGES = {
   'WINTER26':  CDN + '/assets/packs/WINTER26.png',
 };
 
-const RC = { N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', SSR:'#EF9F27' };
+const RC = { N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', IR:'#a855f7', SSR:'#EF9F27' };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let sessionToken = localStorage.getItem('tlk_session') || '';
@@ -788,7 +792,7 @@ async function triggerOpen() {
     return;
   }
 
-  const rarityOrder = { N: 0, R: 1, AR: 2, SR: 3, SSR: 4 };
+  const rarityOrder = { N: 0, R: 1, AR: 2, SR: 3, IR: 4, SSR: 5 };
   pulledCards = cards.sort((a, b) => (rarityOrder[a.rarity] ?? 0) - (rarityOrder[b.rarity] ?? 0));
   revealIdx   = 0;
   cardState   = 'down';
@@ -857,7 +861,7 @@ function loadCard(i, faceDown, isFirst) {
   scene.classList.add(isFirst ? 'anim-drop' : 'anim-in');
   scene.addEventListener('animationend', () => scene.classList.remove('anim-drop','anim-in'), { once: true });
 
-  if (!faceDown && (card.rarity === 'SR' || card.rarity === 'SSR')) showToast(card.rarity);
+  if (!faceDown && (card.rarity === 'SR' || card.rarity === 'IR' || card.rarity === 'SSR')) showToast(card.rarity);
 }
 
 function handleCardTap() {
@@ -871,7 +875,7 @@ function handleCardTap() {
       cardState = 'up';
       document.getElementById('cardHint').textContent = 'tap to continue';
       const card = pulledCards[revealIdx];
-      if (card.rarity === 'SR' || card.rarity === 'SSR') showToast(card.rarity);
+      if (card.rarity === 'SR' || card.rarity === 'IR' || card.rarity === 'SSR') showToast(card.rarity);
       busy = false;
     }, { once: true });
     return;
@@ -888,7 +892,7 @@ function handleCardTap() {
 
 function showToast(rarity) {
   const t = document.getElementById('rarityToast');
-  t.textContent = rarity === 'SSR' ? '✦  SSR PULLED!  ✦' : '★  SR CARD!  ★';
+  t.textContent = rarity === 'SSR' ? '✦  SSR PULLED!  ✦' : rarity === 'IR' ? '◆  IR PULLED!  ◆' : '★  SR CARD!  ★';
   t.className   = 'rarity-toast show ' + rarity.toLowerCase();
   clearTimeout(t._t);
   t._t = setTimeout(() => { t.className = 'rarity-toast'; }, 2800);
@@ -900,9 +904,10 @@ function showSummary() {
   document.getElementById('closeBtn').style.display = 'none';
 
   const hasSSR = pulledCards.some(c => c.rarity === 'SSR');
+  const hasIR  = pulledCards.some(c => c.rarity === 'IR');
   const hasSR  = pulledCards.some(c => c.rarity === 'SR');
   document.getElementById('summaryTitle').textContent =
-    hasSSR ? '✦ Amazing Pull! ✦' : hasSR ? '★ Great Pull! ★' : 'Pack Opened!';
+    hasSSR ? '✦ Amazing Pull! ✦' : hasIR ? '◆ Rare Pull! ◆' : hasSR ? '★ Great Pull! ★' : 'Pack Opened!';
   document.getElementById('summarySubtitle').textContent =
     `${pulledCards.length} new cards from ${activePack?.displayName || 'your pack'}`;
 
@@ -911,7 +916,7 @@ function showSummary() {
   pulledCards.forEach((card, i) => {
     const el = document.createElement('div');
     el.className = 'summary-card' +
-      (card.rarity === 'SSR' ? ' is-ssr' : card.rarity === 'SR' ? ' is-sr' : '');
+      (card.rarity === 'SSR' ? ' is-ssr' : card.rarity === 'IR' ? ' is-ir' : card.rarity === 'SR' ? ' is-sr' : '');
     el.style.cssText = `border-color:${RC[card.rarity]||'#888'};animation-delay:${i*80}ms`;
     el.innerHTML = `
       <img src="${card.image_ref||''}" alt="${card.name}"

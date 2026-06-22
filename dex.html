@@ -3,175 +3,309 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TLK – Card Dex</title>
+  <title>Card Dex — The Last Kick</title>
   <style>
-    :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--line:#1f2937}
-    html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:1200px;margin:0 auto;padding:20px}
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-    .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
-    .hdr h1{font-size:18px;margin:0}
-    .muted{color:var(--muted);font-size:12px}
-    .row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:12px 16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
-    .input,select{width:100%;background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:10px;padding:10px;font-size:14px}
-    #search {
-      width: 140px;          /* make it shorter */
-      display: inline-block; /* prevents it from stretching */
+    /* ── FONTS ── */
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans.otf') format('opentype'),
+           url('assets/fonts/Gill Sans MT.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
     }
-    .btn{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
-    .btn.alt{background:#334155}
-    .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-    .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover}
-    .meta{padding:10px}
-    .meta .name{font-size:14px;font-weight:700}
-    .meta .sub{font-size:12px;color:var(--muted)}
-    .idline{font-size:11px;color:#cbd5e1;border-top:1px solid var(--line);padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-    .legend{margin:16px 0 8px; display:grid; grid-template-columns:repeat(5,1fr); gap:10px}
-    .legend .box{background:#0b1220;border:1px solid var(--line);border-radius:12px;padding:10px}
-    .legend .title{font-weight:700; font-size:13px}
-    .legend .kvs{font-size:12px; color:var(--muted); margin-top:4px}
-    a{color:var(--accent2)}
-    #imgPopup { position: fixed; display:none; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:9999; }
-    #imgPopup img { max-width:90%; max-height:90%; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6); }
-    #imgPopup.closeable { cursor:pointer; }
-    /* make the filter row behave */
-    #filters {
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans Heavy.otf') format('opentype');
+      font-weight: 800;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans Bold Italic.otf') format('opentype');
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b1220;
+      --panel: #0f172a;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --accent2: #38bdf8;
+      --line: #1f2937;
+      --gold: #c8963c;
+      --danger: #f87171;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'GillSans', 'Gill Sans', 'Gill Sans MT', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;              /* space between controls */
       align-items: center;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+    .nav-logo { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 0.1em; margin-right: 28px; text-decoration: none; }
+    .nav-links { display: flex; flex: 1; }
+    .nav-link { padding: 0 14px; height: 52px; display: flex; align-items: center; color: var(--muted); text-decoration: none; font-size: 13px; border-bottom: 2px solid transparent; transition: color 0.2s; white-space: nowrap; }
+    .nav-link:hover { color: var(--text); }
+    .nav-link.active { color: var(--text); border-bottom-color: #378ADD; }
+    .nav-right { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+    .nav-balance { font-size: 12px; color: var(--muted); display: flex; gap: 12px; }
+    .nav-balance .val { color: #EF9F27; font-weight: 600; }
+    .nav-user { display: flex; align-items: center; gap: 8px; cursor: pointer; position: relative; }
+    .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #1a3a6e; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #7eb4f5; flex-shrink: 0; overflow: hidden; }
+    .nav-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .nav-username { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .nav-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; min-width: 160px; padding: 6px; z-index: 200; }
+    .nav-user.open .nav-dropdown { display: block; }
+    .nav-dropdown-item { padding: 9px 12px; font-size: 13px; color: var(--muted); border-radius: 6px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .nav-dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-dropdown-item.danger { color: var(--danger); }
+    .nav-dropdown-item.danger:hover { background: rgba(248,113,113,0.08); }
 
-    /* each control gets a reasonable min size and can wrap */
-    #filters > select,
-    #filters > input {
-      flex: 1 1 220px;        /* grow/shrink, base ~220px */
-      width: auto;            /* let flex handle width */
-      box-sizing: border-box; /* include padding/border in width */
+    /* ── LAYOUT ── */
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+    .hdr { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .hdr h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    /* ── FILTERS ── */
+    .filter-row {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
     }
-
-    /* override just the search box to stay shorter */
-    #search {
-      flex: 0 0 220px;        /* fixed slot for search */
-      width: 200px;           /* visual width */
-      display: inline-block;  /* avoid stretching */
+    .input, select {
+      background: #0b1220;
+      border: 1px solid #263042;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
     }
+    #q { min-width: 200px; }
+    select option { background: #0b1220; color: #fff; }
 
-    /* optional: on small screens make search full-width */
-    @media (max-width: 520px) {
-      #search {
-        flex: 1 1 100%;
-        width: 100%;
-      }
+    /* ── LEGEND ── */
+    .legend { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .legend .box { background: #0b1220; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+    .legend .title { font-weight: 700; font-size: 13px; }
+    .legend .kvs { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── CARD GRID ── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 16px; }
+    .card { background: #0b1220; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer; transition: border-color 0.2s, transform 0.15s; }
+    .card:hover { border-color: rgba(55,138,221,0.4); transform: translateY(-2px); }
+    .thumb { aspect-ratio: 3/4; background: #060a12; display: block; width: 100%; object-fit: cover; }
+    .meta { padding: 10px; }
+    .meta .name { font-size: 14px; font-weight: 700; }
+    .meta .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .idline { font-size: 11px; color: #cbd5e1; border-top: 1px solid var(--line); padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+    /* ── COPY BUTTON ── */
+    .btn { background: #334155; border: 0; color: #fff; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    /* ── FOOTER ── */
+    .footer { padding: 12px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* ── LIGHTBOX ── */
+    #imgPopup { position: fixed; display: none; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); justify-content: center; align-items: center; z-index: 9999; cursor: pointer; }
+    #imgPopup img { max-width: 90%; max-height: 90%; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      nav { padding: 0 14px; }
+      .nav-balance { display: none; }
+      .nav-link { padding: 0 10px; font-size: 12px; }
+      .legend { grid-template-columns: repeat(3, 1fr); }
     }
-
+    @media (max-width: 400px) {
+      .legend { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="panel">
-      <div class="hdr">
-        <h1>TLK Card Dex <span class="muted">(all card categories)</span></h1>
-        <div><a href="./inventory.html">← Back to Inventory</a></div>
-      </div>
 
-      <!-- Filters (populated from data) -->
-      <div class="row">
-        <input id="q" class="input" placeholder="Search name / club / ID..." />
-        <select id="category" class="input"><option value="ALL">Category: ALL</option></select>
-        <select id="rarity"  class="input"><option value="ALL">Rarity: ALL</option></select>
-        <select id="position" class="input"><option value="ALL">Position: ALL</option></select>
-        <select id="batch"   class="input"><option value="ALL">Batch: ALL</option></select>
-        <select id="club"    class="input"><option value="ALL">Club: ALL</option></select>
-        <select id="p_type"    class="input"><option value="ALL">Player Type: ALL</option></select>
-        <select id="sortBy"  class="input">
-          <option value="rarity_club" selected>Sort: Rarity</option>
-          <option value="name">Name (A→Z)</option>
-          <option value="club">Club</option>
-          <option value="position">Position (GK→ST)</option>
-          <option value="batch">Batch</option>
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-        </select>
-      </div>
-
-      <!-- Legend (hard-code your figures below) -->
-      <div class="legend" id="legend"></div>
-      
-      <!-- Grid -->
-      <div id="dex" class="grid" aria-live="polite"></div>
-
-      <!-- Footer -->
-      <div class="hdr" style="border-top:1px solid var(--line); border-bottom:0;">
-        <div class="muted" id="countInfo">0 cards</div>
-        <div class="muted">Tip: filter dropdowns are populated from the sheet values.</div>
+<!-- ── NAV ── -->
+<nav>
+  <a class="nav-logo" href="pack-opening.html">TLK</a>
+  <div class="nav-links">
+    <a class="nav-link" href="pack-opening.html">Open Packs</a>
+    <a class="nav-link" href="inventory.html">Collection</a>
+    <a class="nav-link active" href="dex.html">Card Dex</a>
+    <a class="nav-link" href="formation.html">Formation</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-balance" id="navBalance" style="display:none">
+      <span><span class="val" id="navTickets">—</span> tickets</span>
+      <span><span class="val" id="navTokens">—</span> tokens</span>
+    </div>
+    <div class="nav-user" id="navUser" onclick="toggleUserMenu()">
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <span class="nav-username" id="navUsername">Sign in</span>
+      <div class="nav-dropdown" id="navDropdown">
+        <div class="nav-dropdown-item" id="adminLink" style="display:none">⚙ Admin</div>
+        <div class="nav-dropdown-item danger" onclick="doLogout()">Sign out</div>
       </div>
     </div>
-
-
-
-    <p class="muted" style="margin:12px 4px">Share a link like <code>?r=SSR&c=Arsenal</code> to prefill filters.</p>
   </div>
+</nav>
 
-  <!-- Lightbox -->
-  <div id="imgPopup" class="closeable"><img src="" alt="preview"></div>
+<!-- ── MAIN ── -->
+<div class="wrap">
+  <div class="panel">
+    <div class="hdr">
+      <h1>Card Dex <span class="muted">(all cards in the game)</span></h1>
+      <div class="muted" id="countInfo">Loading…</div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row">
+      <input id="q" class="input" placeholder="Search name / club / ID…" />
+      <select id="category" class="input"><option value="ALL">Category: ALL</option></select>
+      <select id="rarity"   class="input"><option value="ALL">Rarity: ALL</option></select>
+      <select id="position" class="input"><option value="ALL">Position: ALL</option></select>
+      <select id="batch"    class="input"><option value="ALL">Batch: ALL</option></select>
+      <select id="club"     class="input"><option value="ALL">Club: ALL</option></select>
+      <select id="p_type"   class="input"><option value="ALL">Player Type: ALL</option></select>
+      <select id="sortBy"   class="input">
+        <option value="rarity_club" selected>Sort: Rarity</option>
+        <option value="name">Name (A→Z)</option>
+        <option value="club">Club</option>
+        <option value="position">Position (GK→ST)</option>
+        <option value="batch">Batch</option>
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+      </select>
+    </div>
+
+    <!-- Rarity legend -->
+    <div class="legend" id="legend"></div>
+
+    <!-- Card grid -->
+    <div id="dex" class="grid" aria-live="polite">
+      <div style="padding:32px;color:var(--muted);grid-column:1/-1;text-align:center">Loading cards…</div>
+    </div>
+
+    <div class="footer">
+      <span id="footerCount">0 cards</span>
+      <span class="muted">Tip: filter with <code>?r=SSR&c=Arsenal</code></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIGHTBOX ── -->
+<div id="imgPopup"><img src="" alt="preview"></div>
+
+<!-- ── LOGIN MODAL (optional — dex is public but shows nav if logged in) ── -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,0.96);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--panel);border:1px solid rgba(200,150,60,0.3);border-radius:18px;padding:44px 36px;max-width:380px;width:100%;text-align:center">
+    <div style="font-size:36px;font-weight:800;color:var(--gold);letter-spacing:0.12em">TLK</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.2em;margin-bottom:32px;margin-top:4px">THE LAST KICK</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:28px">Sign in with Discord to access your collection and game features.</p>
+    <a href="https://the-last-kick.keithcheung129.workers.dev/auth/login"
+       style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#5865F2;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.05a19.9 19.9 0 0 0 5.992 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.995a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+      Login with Discord
+    </a>
+    <button onclick="document.getElementById('loginModal').style.display='none'"
+            style="margin-top:12px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:8px;padding:8px 20px;cursor:pointer;font-family:inherit;font-size:13px">
+      Browse without signing in
+    </button>
+  </div>
+</div>
 
 <script>
-// ====== CONFIG (same pattern as inventory) ======
+// ── CONFIG ────────────────────────────────────────────────────────────────
 const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
+const WORKER   = 'https://the-last-kick.keithcheung129.workers.dev';
 
-// Reuse helpers/naming from inventory
+// ── AUTH STATE ────────────────────────────────────────────────────────────
+let sessionToken = localStorage.getItem('tlk_session') || '';
+let currentUser  = null;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(String(id).replace(/^#/, ''));
 const qs = new URLSearchParams(location.search);
 
-const RARITY_ORDER   = ["GOD","SSR","SR","AR","R","N","U","ALL"];
-const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE","ALL"];
-const U = (s) => String(s ?? "").toUpperCase();
+const RARITY_ORDER   = ['GOD','SSR','IR','SR','AR','R','N','U','ALL'];
+const POSITION_ORDER = ['GK','CB','RB','LB','DM','CM','AM','LW','RW','ST','MGR','STM','EVE','ALL'];
+const U = (s) => String(s ?? '').toUpperCase();
 const rank = (v, order) => { const i = order.indexOf(U(v)); return i === -1 ? 999 : i; };
 
-// ---- API (one unfiltered call to get ALL cards) ----
-async function callCollection(params = {}) {
+// ── API ───────────────────────────────────────────────────────────────────
+async function callCards() {
   const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    // Important: first load sends ONLY {action:"cards"}
-    body: JSON.stringify(Object.keys(params).length ? { action: 'cards', ...params } : { action: 'cards' })
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Session-Token': sessionToken,
+    },
+    body: JSON.stringify({ action: 'cards' }),
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,500)}`);
-  let body; try { body = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
+  if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0, 500)}`);
+  let body;
+  try { body = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
   return (body && typeof body === 'object' && 'ok' in body && 'data' in body) ? body.data : body;
 }
 
-// ---- state ----
-let ALL = []; // normalized full list
+// ── STATE ─────────────────────────────────────────────────────────────────
+let ALL = [];
 
-// ---- normalize (use exact sheet fields) ----
+// ── NORMALIZE ─────────────────────────────────────────────────────────────
 function normalize(it) {
   return {
-    card_id: it.card_id ?? it.printcode ?? it.code ?? '',
-    name: it.name ?? it.player ?? '',
-    rarity: it.rarity ?? '',
-    category: it.type ?? '',         // player / manager / stadium / ...
-    p_type: it.p_type ?? '',         // Phy / Spd / Tec (players)
-    gko: it.gk_outfield ?? '',       // GK / OT
+    card_id:  it.card_id ?? it.printcode ?? it.code ?? '',
+    name:     it.name ?? it.player ?? '',
+    rarity:   it.rarity ?? '',
+    category: it.type ?? '',
+    p_type:   it.p_type ?? '',
+    gko:      it.gk_outfield ?? '',
     position: it.position ?? '',
-    club: it.club ?? '',
-    batch: it.batch ?? it.set ?? '',
-    image: it.image_ref ?? '',       // image_ref is the canonical column
-    serial: it.serial ?? '',
-    ts: Number(it.acquired_ts || it.acquiredAt || it.ts || 0),
-    _raw: it
+    club:     it.club ?? '',
+    batch:    it.batch ?? it.set ?? '',
+    image:    it.image_ref ?? '',
+    serial:   it.serial ?? '',
+    ts:       Number(it.acquired_ts || it.acquiredAt || it.ts || 0),
+    _raw:     it,
   };
 }
 
-// ---- populate filter dropdowns from data ----
+// ── FILTERS ───────────────────────────────────────────────────────────────
 function populateFilters(list) {
-  const distinct = (key) => Array.from(new Set(list.map(x => (x[key] || '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  const distinct = (key) =>
+    Array.from(new Set(list.map(x => (x[key] || '').trim()).filter(Boolean)))
+         .sort((a, b) => a.localeCompare(b));
 
-  function fill(selId, label, values, allValue="ALL") {
+  function fill(selId, label, values, allValue = 'ALL') {
     const sel = $(selId); if (!sel) return;
     const cur = sel.value || allValue;
     sel.innerHTML = `<option value="${allValue}">${label}: ${allValue}</option>` +
@@ -179,95 +313,83 @@ function populateFilters(list) {
     if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
   }
 
-  fill('category','Category', distinct('category'));
-  fill('rarity', 'Rarity', distinct('rarity'));
-  fill('position','Position', distinct('position'));
-  fill('batch',  'Batch', distinct('batch'));
-  fill('club',   'Club', distinct('club'));
-  fill('p_type','Player Type', distinct('p_type'));
-
-  // p_type is only meaningful for players
-  $('#p_type').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
+  fill('category', 'Category', distinct('category'));
+  fill('rarity',   'Rarity',   distinct('rarity').sort((a,b) => RARITY_ORDER.indexOf(a) - RARITY_ORDER.indexOf(b)));
+  fill('position', 'Position', distinct('position'));
+  fill('batch',    'Batch',    distinct('batch'));
+  fill('club',     'Club',     distinct('club'));
+  fill('p_type',   'Player Type', distinct('p_type'));
+  $('p_type').disabled = ($('category').value !== 'player' && $('category').value !== 'ALL');
 }
 
-// ---- filtering (client-side only) ----
+// ── FILTER LOGIC ──────────────────────────────────────────────────────────
 function applyFilters() {
-  // --- read inputs safely (default to 'ALL')
-  const q        = ( ($('#q')?.value || '').trim().toLowerCase() );
-  const category = ($('#category')?.value || 'ALL');
-  const p_type   = ($('#p_type')?.value || 'ALL');
-  const rarity   = ($('#rarity')?.value || 'ALL');
-  const position = ($('#position')?.value || 'ALL');
-  const batch    = ($('#batch')?.value || 'ALL');
-  const club     = ($('#club')?.value || 'ALL');
-  const sortBy   = ($('#sortBy')?.value || 'rarity_club');
+  const q        = ($('q')?.value || '').trim().toLowerCase();
+  const category = $('category')?.value || 'ALL';
+  const p_type   = $('p_type')?.value || 'ALL';
+  const rarity   = $('rarity')?.value || 'ALL';
+  const position = $('position')?.value || 'ALL';
+  const batch    = $('batch')?.value || 'ALL';
+  const club     = $('club')?.value || 'ALL';
+  const sortBy   = $('sortBy')?.value || 'rarity_club';
 
-  // toggle Player Type control based on Category
-  const catEl   = $('#category');
-  const pTypeEl = $('#p_type');
+  const catEl = $('category'), pTypeEl = $('p_type');
   if (catEl && pTypeEl) {
     pTypeEl.disabled = (catEl.value !== 'player' && catEl.value !== 'ALL');
   }
 
-  // --- filter client-side from ALL (normalized list)
   let items = (Array.isArray(ALL) ? ALL : []).filter(it => {
-    if (q && !( (it.name || '').toLowerCase() + ' ' + (it.club || '').toLowerCase() + ' ' + (it.card_id || '').toLowerCase() ).includes(q)) return false;
-
-  // new
-  if (category !== 'ALL' && (it.category || '') !== category) return false;
-
-  // If a Player Type is chosen, we implicitly restrict to players of that type
-  if (p_type !== 'ALL') {
-    if ((it.category || '') !== 'player') return false;
-    if ((it.p_type   || '') !== p_type)   return false;
-  }
-
-
-    if (rarity   !== 'ALL' && (it.rarity   || '') !== rarity) return false;
+    if (q && !(
+      (it.name || '').toLowerCase() + ' ' +
+      (it.club || '').toLowerCase() + ' ' +
+      (it.card_id || '').toLowerCase()
+    ).includes(q)) return false;
+    if (category !== 'ALL' && (it.category || '') !== category) return false;
+    if (p_type !== 'ALL') {
+      if ((it.category || '') !== 'player') return false;
+      if ((it.p_type   || '') !== p_type)   return false;
+    }
+    if (rarity   !== 'ALL' && (it.rarity   || '') !== rarity)   return false;
     if (position !== 'ALL' && (it.position || '') !== position) return false;
-    if (batch    !== 'ALL' && (it.batch    || '') !== batch) return false;
-    if (club     !== 'ALL' && (it.club     || '') !== club) return false;
-
+    if (batch    !== 'ALL' && (it.batch    || '') !== batch)    return false;
+    if (club     !== 'ALL' && (it.club     || '') !== club)     return false;
     return true;
   });
 
-  // --- sort, render, counts
   items = sortItems(items, sortBy);
   render(items);
-  const info = $('#countInfo');
-  if (info) info.textContent = `${items.length} shown • ${Array.isArray(ALL) ? ALL.length : 0} total`;
+  const total = Array.isArray(ALL) ? ALL.length : 0;
+  const info = `${items.length} shown • ${total} total`;
+  $('countInfo').textContent = info;
+  $('footerCount').textContent = info;
 }
 
-
-// ---- sorting (same spirit as inventory) ----
+// ── SORT ──────────────────────────────────────────────────────────────────
 function sortItems(items, mode) {
   items.sort((a, b) => {
     const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
     const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
     const ca = U(a.club), cb = U(b.club);
     const ba = U(a.batch), bb = U(b.batch);
-    const na = (a.name || a.card_id).toString();
-    const nb = (b.name || b.card_id).toString();
+    const na = (a.name || a.card_id).toString(), nb = (b.name || b.card_id).toString();
     const ta = a.ts, tb = b.ts;
-
     switch (mode) {
-      case "rarity_asc": return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
-      case "club":       return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
-      case "position":   return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "batch":      return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "name":       return na.localeCompare(nb);
-      case "newest":     return tb - ta || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "oldest":     return ta - tb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
-      case "rarity_club":
+      case 'rarity_asc': return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
+      case 'club':       return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
+      case 'position':   return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case 'batch':      return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case 'name':       return na.localeCompare(nb);
+      case 'newest':     return tb - ta || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case 'oldest':     return ta - tb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       default:           return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
     }
   });
   return items;
 }
 
-// ---- render ----
+// ── RENDER ────────────────────────────────────────────────────────────────
 function render(items) {
-  const root = $('#dex');
+  const root = $('dex');
   root.innerHTML = '';
   for (const it of items) {
     const card = document.createElement('div');
@@ -285,22 +407,29 @@ function render(items) {
     const meta = document.createElement('div');
     meta.className = 'meta';
     const nm = document.createElement('div');
-    nm.className = 'name'; nm.textContent = it.name || it.card_id || '—';
+    nm.className = 'name';
+    nm.textContent = it.name || it.card_id || '—';
     const sb = document.createElement('div');
     sb.className = 'sub';
     const bits = [it.rarity, it.category, it.gko || it.position, it.batch, it.club].filter(Boolean);
     sb.textContent = bits.join(' • ');
-    meta.appendChild(nm); meta.appendChild(sb);
+    meta.appendChild(nm);
+    meta.appendChild(sb);
     card.appendChild(meta);
 
     const idline = document.createElement('div');
     idline.className = 'idline';
-    idline.innerHTML = `card_id: <b>${it.card_id || ''}</b>`;
+    idline.innerHTML = `<span>card_id: <b>${it.card_id || ''}</b></span>`;
     const btn = document.createElement('button');
-    btn.className = 'btn alt'; btn.textContent = 'Copy';
+    btn.className = 'btn';
+    btn.textContent = 'Copy';
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      try { await navigator.clipboard.writeText(it.card_id || ''); btn.textContent = 'Copied!'; setTimeout(()=>btn.textContent='Copy', 900); } catch {}
+      try {
+        await navigator.clipboard.writeText(it.card_id || '');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 900);
+      } catch {}
     });
     idline.appendChild(btn);
     card.appendChild(idline);
@@ -309,60 +438,131 @@ function render(items) {
   }
 }
 
-// ---- legend (hard-code figures here) ----
+// ── LEGEND ────────────────────────────────────────────────────────────────
 function renderLegend() {
   const L = {
-    CRAFT: { N: 6, R: 10, AR: 20, SR: 60, SSR: 200 },
-    SELL:  { N: 1,  R: 1,  AR: 3, SR: 8,  SSR: 30 }
+    CRAFT: { N: 6, R: 10, AR: 20, SR: 60, IR: 100, SSR: 200 },
+    SELL:  { N: 1, R: 1, AR: 3, SR: 8, IR: 15, SSR: 30 },
   };
-  const root = document.getElementById('legend');
+  const root = $('legend');
   root.innerHTML = '';
-  for (const r of ['SSR','SR','AR','R','N']) {
+  for (const r of ['SSR','IR','SR','AR','R','N']) {
     const box = document.createElement('div');
     box.className = 'box';
     box.innerHTML = `<div class="title">${r}</div>
-      <div class="kvs">Craft: <b>${L.CRAFT[r] ?? '-'}</b><br>Sell: <b>${L.SELL[r] ?? '-'}</b></div>`;
+      <div class="kvs">Craft: <b>${L.CRAFT[r] ?? '—'}</b><br>Sell: <b>${L.SELL[r] ?? '—'}</b></div>`;
     root.appendChild(box);
   }
 }
 
-// ---- lightbox ----
-const popup = document.getElementById('imgPopup');
+// ── LIGHTBOX ──────────────────────────────────────────────────────────────
+const popup = $('imgPopup');
 const popupImg = popup.querySelector('img');
-function openLightbox(src){ if (!src) return; popupImg.src = src; popup.style.display='flex'; }
-popup.addEventListener('click', () => { popup.style.display='none'; popupImg.src=''; });
+function openLightbox(src) { if (!src) return; popupImg.src = src; popup.style.display = 'flex'; }
+popup.addEventListener('click', () => { popup.style.display = 'none'; popupImg.src = ''; });
 
-// ---- wire up ----
+// ── BIND FILTERS ──────────────────────────────────────────────────────────
 function bindFilters() {
   const ids = ['q','category','p_type','rarity','position','batch','club','sortBy'];
-  ids.forEach(id => $(id).addEventListener('input', () => {
-    // enable/disable p_type dropdown depending on category
-    $('#p_type').disabled = ($('#category').value !== 'player' && $('#category').value !== 'ALL');
-    applyFilters();
-  }));
+  ids.forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('input', () => {
+      $('p_type').disabled = ($('category').value !== 'player' && $('category').value !== 'ALL');
+      applyFilters();
+    });
+  });
 }
 
-(async function init(){
+// ── AUTH FUNCTIONS ────────────────────────────────────────────────────────
+function showLoginModal() {
+  const m = $('loginModal');
+  if (m) m.style.display = 'flex';
+}
+
+async function loadUserProfile() {
+  try {
+    const res = await fetch(WORKER + '/auth/me', { headers: { 'X-Session-Token': sessionToken } });
+    const json = await res.json();
+    if (json.ok && json.user) currentUser = json.user;
+  } catch {}
+}
+
+function updateNav() {
+  if (!currentUser) return;
+  const avatarEl = $('navAvatar');
+  if (currentUser.avatar) {
+    avatarEl.innerHTML = `<img src="${currentUser.avatar}" alt="">`;
+  } else {
+    avatarEl.textContent = (currentUser.global_name || currentUser.username || '?').slice(0, 2).toUpperCase();
+  }
+  $('navUsername').textContent = currentUser.global_name || currentUser.username;
+  if (currentUser.is_admin) $('adminLink').style.display = 'block';
+  $('loginModal').style.display = 'none';
+}
+
+function toggleUserMenu() {
+  if (!currentUser) { showLoginModal(); return; }
+  $('navUser').classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+  const navUser = $('navUser');
+  if (navUser && !navUser.contains(e.target)) navUser.classList.remove('open');
+});
+
+async function doLogout() {
+  try {
+    await fetch(WORKER + '/auth/logout', { method: 'POST', headers: { 'X-Session-Token': sessionToken } });
+  } catch {}
+  sessionToken = '';
+  currentUser  = null;
+  localStorage.removeItem('tlk_session');
+  window.location.reload();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+(async function init() {
+  // Handle OAuth redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlSession = urlParams.get('session');
+  const authStatus = urlParams.get('auth');
+  if (urlSession) {
+    sessionToken = urlSession;
+    localStorage.setItem('tlk_session', sessionToken);
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (authStatus) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  // Auth (optional — dex is public but shows nav if logged in)
+  if (sessionToken) await loadUserProfile();
+  if (currentUser) {
+    updateNav();
+  } else {
+    // Show sign-in prompt briefly, then allow browsing without login
+    // (Dex is a read-only catalogue — no need to block)
+    showLoginModal();
+  }
+
+  // Prefill query filters
+  if (qs.get('r')) $('rarity').value  = qs.get('r');
+  if (qs.get('p')) $('position').value = qs.get('p');
+  if (qs.get('b')) $('batch').value    = qs.get('b');
+  if (qs.get('c')) $('club').value     = qs.get('c');
+  if (qs.get('cat')) $('category').value = qs.get('cat');
+
+  // Load cards
   try {
     renderLegend();
-    const payload = await callCollection(); // ONLY {action:"cards"}
+    const payload = await callCards();
     const items = Array.isArray(payload.items) ? payload.items : (Array.isArray(payload) ? payload : []);
     ALL = items.map(normalize);
-
-    // prefill from query string (optional)
-    if (qs.get('r')) $('#rarity').value = qs.get('r');
-    if (qs.get('p')) $('#position').value = qs.get('p');
-    if (qs.get('b')) $('#batch').value = qs.get('b');
-    if (qs.get('c')) $('#club').value = qs.get('c');
-    if (qs.get('cat')) $('#category').value = qs.get('cat');
-
     populateFilters(ALL);
     bindFilters();
     applyFilters();
   } catch (err) {
     console.error(err);
-    document.getElementById('dex').innerHTML =
-      `<div style="padding:12px;color:#ef9a9a">Failed to load dex: ${err.message}</div>`;
+    $('dex').innerHTML = `<div style="padding:32px;color:#ef9a9a;grid-column:1/-1">Failed to load dex: ${err.message}</div>`;
   }
 })();
 </script>

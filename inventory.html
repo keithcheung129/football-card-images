@@ -3,50 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TLK – Player Collection</title>
-  
+  <title>Collection — The Last Kick</title>
   <style>
-    :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--line:#1f2937}
-    html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:1200px;margin:0 auto;padding:20px}
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-    .hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
-    .hdr h1{font-size:18px;margin:0}
-    .muted{color:var(--muted);font-size:12px}
-    .row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:12px 16px}
-    .row .col-span-2{grid-column:span 2}
-    .input,select{width:100%;background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:10px;padding:10px;font-size:14px}
-    .btn{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
-    .btn.alt{background:#334155}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
-    .card{background:#0b1220;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-    .thumb{aspect-ratio:3/4;background:#060a12;display:block;width:100%;object-fit:cover}
-    /* make controls compact */
-    .toolbar .pill select,
-    .toolbar .pill input { width:auto; min-width:110px; }
-
-    #userId { min-width: 220px; max-width: 260px; }
-
-    .meta{padding:10px}
-    .meta .name{font-size:14px;font-weight:700}
-    .meta .sub{font-size:12px;color:var(--muted)}
-    .toolbar { display:flex; flex-wrap:wrap; align-items:center; gap: 10px 12px; }
-    .pill {
-      display:flex; align-items:center; gap:8px;
-      padding:6px 10px;
-      border:1px solid rgba(255,255,255,0.12);
-      border-radius:9999px;
-      background:#0b1220;
-      white-space:nowrap;
+    /* ── FONTS ── */
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans.otf') format('opentype'),
+           url('assets/fonts/Gill Sans MT.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
     }
-    /* inputs/selects inside pills */
-    /* pill controls */
-    .pill select,
-    .pill input[type="text"] {
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans Heavy.otf') format('opentype');
+      font-weight: 800;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'GillSans';
+      src: url('assets/fonts/Gill Sans Bold Italic.otf') format('opentype');
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b1220;
+      --panel: #0f172a;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --accent2: #38bdf8;
+      --line: #1f2937;
+      --gold: #c8963c;
+      --gold-light: #e8b458;
+      --danger: #f87171;
+      --border: rgba(255,255,255,0.08);
+      --border-blue: rgba(55,138,221,0.35);
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'GillSans', 'Gill Sans', 'Gill Sans MT', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 0.1em; margin-right: 28px; text-decoration: none; }
+    .nav-links { display: flex; flex: 1; }
+    .nav-link { padding: 0 14px; height: 52px; display: flex; align-items: center; color: var(--muted); text-decoration: none; font-size: 13px; border-bottom: 2px solid transparent; transition: color 0.2s; white-space: nowrap; }
+    .nav-link:hover { color: var(--text); }
+    .nav-link.active { color: var(--text); border-bottom-color: #378ADD; }
+    .nav-right { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+    .nav-balance { font-size: 12px; color: var(--muted); display: flex; gap: 12px; }
+    .nav-balance .val { color: #EF9F27; font-weight: 600; }
+    .nav-user { display: flex; align-items: center; gap: 8px; cursor: pointer; position: relative; }
+    .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #1a3a6e; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #7eb4f5; flex-shrink: 0; overflow: hidden; }
+    .nav-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .nav-username { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .nav-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; min-width: 160px; padding: 6px; z-index: 200; }
+    .nav-user.open .nav-dropdown { display: block; }
+    .nav-dropdown-item { padding: 9px 12px; font-size: 13px; color: var(--muted); border-radius: 6px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .nav-dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-dropdown-item.danger { color: var(--danger); }
+    .nav-dropdown-item.danger:hover { background: rgba(248,113,113,0.08); }
+
+    /* ── LAYOUT ── */
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+    .hdr { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .hdr h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    /* ── FILTERS / TOOLBAR ── */
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 9999px;
+      background: #0b1220;
+      white-space: nowrap;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .pill select, .pill input[type="text"] {
       appearance: none;
-      background: #0f172a;   /* field bg */
-      color: #fff;           /* field text */
+      background: #0f172a;
+      color: #fff;
       border: 0;
       outline: 0;
       height: 32px;
@@ -54,502 +120,436 @@
       padding: 0 10px;
       min-width: 120px;
       border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
     }
+    .pill select option, .pill select optgroup { background: #0b1220; color: #fff; }
+    .pill select:focus, .pill input[type="text"]:focus { outline: 2px solid #3b82f6; outline-offset: 2px; }
+    .pill-checkbox { padding-right: 12px; }
+    .pill-checkbox input[type="checkbox"] { width: 16px; height: 16px; }
 
-    /* the OPENED dropdown list */
-    .pill select option,
-    .pill select optgroup {
-      background: #0b1220;   /* list bg */
-      color: #fff;           /* list text */
-    }
+    /* Admin-only user lookup */
+    #adminSearch { display: none; align-items: center; gap: 8px; }
+    #adminSearch input { background: #0f172a; border: 1px solid #263042; color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-family: inherit; width: 200px; }
 
-    /* focus ring so it's visible on dark */
-    .pill select:focus,
-    .pill input[type="text"]:focus {
-      outline: 2px solid #3b82f6;
-      outline-offset: 2px;
-    }
+    /* ── BUTTONS ── */
+    .btn { background: #2563eb; border: 0; color: #fff; border-radius: 10px; padding: 0 14px; height: 34px; line-height: 34px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 13px; }
+    .btn.alt { background: #334155; }
 
-    /* checkbox pill */
-    .pill-checkbox { padding-right:12px; }
-    .pill-checkbox input[type="checkbox"] { width:16px; height:16px; }
-    /* small screens: allow nice wrapping */
-    /* buttons match pill height */
-    .btn, .btn-ghost { height:34px; line-height:34px; padding:0 12px; border-radius:10px; }
-    @media (max-width: 820px) {
-      .pill select, .pill input[type="text"] { min-width: 140px; }
-      #userId { min-width: 200px; }
-    }
-    .footer{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
-    .page{display:flex;gap:8px;align-items:center}
-    .page input{width:72px;text-align:center}
-    .balances{display:flex;gap:8px}
-    .badge{background:#0b1220;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
-    .hidden{display:none}
-    a{color:var(--accent2)}
+    /* ── CARD GRID ── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 16px; }
+    .card { background: #0b1220; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .thumb { aspect-ratio: 3/4; background: #060a12; display: block; width: 100%; object-fit: cover; }
+    .meta { padding: 10px; }
+    .meta .name { font-size: 14px; font-weight: 700; }
+    .meta .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-    .inv-loader{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;font-size:.95rem}
-    .inv-loader.hidden{display:none}
-    .inv-loader .spinner{
-      width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;
-      display:inline-block;animation:inv-spin .8s linear infinite
-    }
-    @keyframes inv-spin{to{transform:rotate(360deg)}}
+    /* ── FOOTER ── */
+    .footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; gap: 10px; }
+    .page { display: flex; gap: 8px; align-items: center; }
+    .page input { width: 56px; text-align: center; background: #0b1220; border: 1px solid #263042; color: var(--text); border-radius: 8px; padding: 6px; font-family: inherit; font-size: 13px; }
+    .page select { background: #0b1220; border: 1px solid #263042; color: var(--text); border-radius: 8px; padding: 6px; font-family: inherit; font-size: 13px; }
 
-    /* Image popup (lightbox) */
-    #imgPopup {
-      position: fixed;
-      display: none;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    #imgPopup img {
-      max-width: 90%;
-      max-height: 90%;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    }
-    #imgPopup.closeable { cursor: pointer; }
+    /* ── EMPTY STATE ── */
+    .empty-state { padding: 48px; text-align: center; color: var(--muted); font-size: 14px; }
 
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      nav { padding: 0 14px; }
+      .nav-balance { display: none; }
+      .nav-link { padding: 0 10px; font-size: 12px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="panel">
-      <div class="hdr">
-        <h1>TLK Collection <span class="muted" id="subtitle">(enter a Discord ID and search)</span></h1>
-        <div class="title-row">
-          <a href="dex.html" target="_blank" 
-             style="margin-left:15px; font-size:14px; color:#4da3ff; text-decoration:none;">
-            ➜ Open Card Dex
-          </a>
-        </div>
-        <div class="balances">
-          <div class="badge">🎟 Tickets: <span id="tickets">–</span></div>
-          <div class="badge">🪙 Tokens: <span id="tokens">–</span></div>
-        </div>
-      </div>
-      <div class="row" id="filters">
-        <input id="userId" class="input col-span-2" placeholder="Discord ID (preferred) or @username" />
-        <label class="pill">Rarity:
-          <select id="rarity">
-            <option value="ALL">Rarity: ALL</option>
-            <option>N</option><option>R</option><option>AR</option><option>SR</option><option>SSR</option>
-          </select>
-        </label>
-        <label class="pill">position:
-          <select id="position">
-            <option value="ALL">Position: ALL</option>
-            <option>GK</option><option>RB</option><option>LB</option><option>CB</option><option>DM</option><option>CM</option><option>AM</option><option>RW</option><option>LW</option><option>ST</option>
-          </select>
-        </label>
-        <label class="pill">batch:
-          <select id="batch">
-            <option value="ALL">Batch: ALL</option>
-            <option value="Base">Base</option>
-            <option value="Base U">Base U</option>
-          </select>
-        </label>
-        <label class="pill">Club:
-          <select id="club">
-            <option value="ALL" selected>ALL</option>
-          </select>
-        </label>
-        <label class="pill">Sort:
-          <select id="sortBy">
-            <option value="rarity_club" selected>Rarity</option>
-            <option value="club">Club</option>
-            <option value="position">Position (GK→ST)</option>
-            <option value="name">Name (A→Z)</option>
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="count_desc">Most dupes first</option>
-            <option value="count_asc">Least dupes first</option>
-            </select>
-        </label>
-        <label class="pill"><input type="checkbox" id="uniqueOnly"/> Unique only</label>
-        <div class="toolbar">
-          <button class="btn" id="btnSearch">Search</button>
-          <button class="btn alt" id="btnReset">Reset</button>
-        </div>
-        <div id="loader" class="inv-loader hidden" aria-live="polite">
-          <span class="spinner"></span> Loading…
-        </div>
-      </div>
 
+<!-- ── NAV ── -->
+<nav>
+  <a class="nav-logo" href="pack-opening.html">TLK</a>
+  <div class="nav-links">
+    <a class="nav-link" href="pack-opening.html">Open Packs</a>
+    <a class="nav-link active" href="inventory.html">Collection</a>
+    <a class="nav-link" href="dex.html">Card Dex</a>
+    <a class="nav-link" href="formation.html">Formation</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-balance" id="navBalance" style="display:none">
+      <span><span class="val" id="navTickets">—</span> tickets</span>
+      <span><span class="val" id="navTokens">—</span> tokens</span>
+    </div>
+    <div class="nav-user" id="navUser" onclick="toggleUserMenu()">
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <span class="nav-username" id="navUsername">Sign in</span>
+      <div class="nav-dropdown" id="navDropdown">
+        <div class="nav-dropdown-item" id="adminLink" style="display:none">⚙ Admin</div>
+        <div class="nav-dropdown-item danger" onclick="doLogout()">Sign out</div>
+      </div>
+    </div>
+  </div>
+</nav>
 
-      <div id="dex" class="grid" aria-live="polite"></div>
-      <div class="footer">
-        <div class="muted" id="countInfo">0 cards</div>
-        <div class="page">
-          <button class="btn alt" id="prevBtn">Prev</button>
-          <input id="page" class="input" value="1" />
-          <span class="muted">/ <span id="pages">1</span></span>
-          <select id="pageSize" class="input">
-            <option>24</option><option selected>48</option><option>96</option>
-          </select>
-          <button class="btn alt" id="nextBtn">Next</button>
-        </div>
+<!-- ── MAIN ── -->
+<div class="wrap">
+  <div class="panel">
+    <div class="hdr">
+      <h1>My Collection <span class="muted" id="subtitle"></span></h1>
+      <!-- Admin: view any player's collection by ID -->
+      <div id="adminSearch">
+        <input id="userId" placeholder="View player Discord ID…" />
+        <button class="btn" id="btnSearch">View</button>
       </div>
     </div>
 
-    <p class="muted" style="margin:12px 4px">Tip: share a link like <code>?u=123456789012345678&r=SSR&p=ST</code> to pre-fill filters for a user.</p>
+    <!-- Filters -->
+    <div class="toolbar" id="filters">
+      <label class="pill">
+        <select id="rarity">
+          <option value="ALL">Rarity: ALL</option>
+          <option>N</option><option>R</option><option>AR</option><option>SR</option><option>IR</option><option>SSR</option>
+        </select>
+      </label>
+      <label class="pill">
+        <select id="position">
+          <option value="ALL">Position: ALL</option>
+          <option>GK</option><option>RB</option><option>LB</option><option>CB</option>
+          <option>DM</option><option>CM</option><option>AM</option>
+          <option>RW</option><option>LW</option><option>ST</option>
+        </select>
+      </label>
+      <label class="pill">
+        <select id="batch">
+          <option value="ALL">Batch: ALL</option>
+          <option value="Base">Base</option>
+          <option value="Base U">Base U</option>
+        </select>
+      </label>
+      <label class="pill">
+        <select id="club">
+          <option value="ALL">Club: ALL</option>
+        </select>
+      </label>
+      <label class="pill">
+        <select id="sortBy">
+          <option value="rarity_club" selected>Sort: Rarity</option>
+          <option value="club">Club</option>
+          <option value="position">Position (GK→ST)</option>
+          <option value="name">Name (A→Z)</option>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </label>
+      <label class="pill pill-checkbox">
+        <input type="checkbox" id="uniqueOnly"/> Unique only
+      </label>
+      <button class="btn alt" id="btnReset">Reset</button>
+    </div>
+
+    <div id="dex" class="grid" aria-live="polite">
+      <div class="empty-state" style="grid-column:1/-1">Sign in to view your collection</div>
+    </div>
+
+    <div class="footer">
+      <div class="muted" id="countInfo">0 cards</div>
+      <div class="page">
+        <button class="btn alt" id="prevBtn">Prev</button>
+        <input id="page" value="1" />
+        <span class="muted">/ <span id="pages">1</span></span>
+        <select id="pageSize">
+          <option>24</option><option selected>48</option><option>96</option>
+        </select>
+        <button class="btn alt" id="nextBtn">Next</button>
+      </div>
+    </div>
   </div>
-  <div id="imgPopup" class="closeable">
-    <img src="" alt="preview">
-  </div> 
+</div>
+
+<!-- ── LOGIN MODAL ── -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,0.96);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--panel);border:1px solid rgba(200,150,60,0.3);border-radius:18px;padding:44px 36px;max-width:380px;width:100%;text-align:center">
+    <div style="font-size:36px;font-weight:800;color:var(--gold);letter-spacing:0.12em">TLK</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.2em;margin-bottom:32px;margin-top:4px">THE LAST KICK</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:28px">Sign in with Discord to view your card collection.</p>
+    <a href="https://the-last-kick.keithcheung129.workers.dev/auth/login"
+       style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#5865F2;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.05a19.9 19.9 0 0 0 5.992 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.995a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+      Login with Discord
+    </a>
+  </div>
+</div>
+
 <script>
-// ======= CONFIG =======
-// Force config: no localStorage, no prompts
-const API_BASE   = 'https://the-last-kick.keithcheung129.workers.dev/api';
-//------- const API_SECRET = ''; // not needed; Worker injects secret
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
+const WORKER   = 'https://the-last-kick.keithcheung129.workers.dev';
 
+// ── AUTH STATE ────────────────────────────────────────────────────────────
+let sessionToken = localStorage.getItem('tlk_session') || '';
+let currentUser  = null;
 
-// =======================
-
+// ── HELPERS ───────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(String(id).replace(/^#/, ''));
-const qs = new URLSearchParams(location.search);
+const val = (id, fallback = '') => ($(''+id)?.value ?? fallback);
+const chk = (id) => !!$(''+id)?.checked;
+const byId = (id) => { const el = document.getElementById(id); if (!el) console.warn(`Missing #${id}`); return el; };
 
-
-
-
-// helpers
-const byId = (id) => {
-  const el = document.getElementById(id);
-  if (!el) console.warn(`Missing element #${id}`);
-  return el;
-};
-const val = (id, fallback = "") => (byId(id)?.value ?? fallback);
-const chk = (id) => !!byId(id)?.checked;
-
-function setLoading(v){
-  const el  = $('loader');     // NOT '#loader'
-  const btn = $('btnSearch');  // NOT '#searchBtn'
-  if (el){
-    if (v) el.classList.remove('hidden');
-    else   el.classList.add('hidden');
-  }
-  if (btn) btn.disabled = !!v;
-}
-
-
-
-  
-// ---- sorting helpers ----
-const RARITY_ORDER   = ["GOD","SSR","SR","AR","R","N","U","ALL"]; // put your exact tiers here
-const POSITION_ORDER = ["GK","CB","RB","LB","DM","CM","AM","LW","RW","ST","MGR","STM","EVE","ALL"];
-
-const U = (s) => String(s ?? "").toUpperCase();
-const rank = (val, order) => {
-  const i = order.indexOf(U(val));
-  return i === -1 ? 999 : i;
-};
-
-let ALL_ITEMS = [];      // full result of the last search
-
-
-function toMs(v){
-  if (v == null || v === "") return 0;
-  if (typeof v === "number") return v < 1e12 ? v * 1000 : v; // seconds → ms
-  // string: try number first
-  const n = Number(v);
-  if (!Number.isNaN(n)) return n < 1e12 ? n * 1000 : n;
-  // ISO/date-like string
-  const d = Date.parse(v);
-  return Number.isNaN(d) ? 0 : d;
-}
-  
+// ── SORT HELPERS ──────────────────────────────────────────────────────────
+const RARITY_ORDER   = ['GOD','SSR','IR','SR','AR','R','N','U','ALL'];
+const POSITION_ORDER = ['GK','CB','RB','LB','DM','CM','AM','LW','RW','ST','MGR','STM','EVE','ALL'];
+const U = (s) => String(s ?? '').toUpperCase();
+const rank = (v, order) => { const i = order.indexOf(U(v)); return i === -1 ? 999 : i; };
 
 function sortItems(items, mode) {
-  // Build a “duplicate key” and counts for this array
-  const keyOf = (it) => String(
-    it.card_id || it.printcode || it.name || it.player || ''
-  );
-  const freq = items.reduce((m, it) => {
-    const k = keyOf(it);
-    m[k] = (m[k] || 0) + 1;
-    return m;
-  }, {});
-
   items.sort((a, b) => {
-    const ra = rank(a.rarity, RARITY_ORDER), rb = rank(b.rarity, RARITY_ORDER);
+    const ra = rank(a.rarity, RARITY_ORDER),   rb = rank(b.rarity, RARITY_ORDER);
     const pa = rank(a.position, POSITION_ORDER), pb = rank(b.position, POSITION_ORDER);
     const ca = U(a.club), cb = U(b.club);
     const ba = U(a.batch), bb = U(b.batch);
     const na = (a.name || a.player || a.printcode || a.card_id || '').toString();
     const nb = (b.name || b.player || b.printcode || b.card_id || '').toString();
-    const ta = toMs(a.acquired_ts ?? a.acquiredAt ?? a.ts);
-    const tb = toMs(b.acquired_ts ?? b.acquiredAt ?? b.ts);
-    const qa = freq[keyOf(a)] || 1;
-    const qb = freq[keyOf(b)] || 1;
-
+    const ta = Number(a.acquired_ts || a.acquiredAt || a.ts || 0);
+    const tb = Number(b.acquired_ts || b.acquiredAt || b.ts || 0);
     switch (mode) {
       case 'rarity_asc':  return rb - ra || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
       case 'club':        return ca.localeCompare(cb) || pa - pb || ra - rb || na.localeCompare(nb);
       case 'position':    return pa - pb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case 'batch':       return ba.localeCompare(bb) || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       case 'name':        return na.localeCompare(nb);
-      case 'newest':      return (tb - ta) || na.localeCompare(nb);
-      case 'oldest':      return (ta - tb) || na.localeCompare(nb);
-      case 'count_desc':  return (qb - qa) || na.localeCompare(nb);
-      case 'count_asc':   return (qa - qb) || na.localeCompare(nb);
-      case 'rarity_club': // your UI default
-      case 'rarity_desc':
+      case 'newest':      return tb - ta || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
+      case 'oldest':      return ta - tb || ra - rb || ca.localeCompare(cb) || na.localeCompare(nb);
       default:            return ra - rb || ca.localeCompare(cb) || pa - pb || na.localeCompare(nb);
     }
   });
   return items;
 }
 
-
-
-function applySortAndShow() {
-  const sortMode = $('#sortBy').value || 'rarity_club';
-  const page = Math.max(1, parseInt($('#page').value || '1') || 1);
-  const pageSize = Math.max(1, parseInt($('#pageSize').value || '48') || 48);
-
-  // sort a copy so we don’t mutate ALL_ITEMS
-  const arr = sortItems([...ALL_ITEMS], sortMode);
-
-  // slice for the current page
-  const start = (page - 1) * pageSize;
-  const view  = arr.slice(start, start + pageSize);
-
-  // render the current page
-  render(view);
-
-  // update counts / pager UI
-  updateCounts(arr.length, page, pageSize);
-  // also update “shown/total” text like you do today
-  $('#countInfo').textContent = `${view.length} shown • ${arr.length} total`;
-
-  // friendly empty state
-  if (!view.length) {
-    $('#dex').innerHTML = '<div style="padding:12px;opacity:.7">No cards match your filters for this user.</div>';
-  }
-}
-
-
-function buildQuery() {
-  return {
-    user_id: val("userId").trim(),
-    page: Math.max(1, parseInt(val("page", "1")) || 1),
-    page_size: Math.max(1, parseInt(val("pageSize", "48")) || 48),
-    unique_only: chk("uniqueOnly"),
-    rarity: val("rarity", "ALL") || "ALL",
-    position: val("position", "ALL") || "ALL",
-    batch: val("batch", "ALL") || "ALL",
-    club:     val("club", "ALL")     || "ALL",
-  };
-}
-
-
-
-function applyQS(){
-  if(qs.get('u')) $('#userId').value = qs.get('u');
-  if(qs.get('r')) $('#rarity').value = qs.get('r');
-  if(qs.get('p')) $('#position').value = qs.get('p');
-  if(qs.get('b')) $('#batch').value = qs.get('b');
-  if(qs.get('page')) $('#page').value = qs.get('page');
-  if(qs.get('c')) $('#club').value = qs.get('c');
-}
-
-
-
-
-
-async function callCollection(params){
-  // Simple request: no custom headers, and text/plain (NOT application/json)
+// ── API ───────────────────────────────────────────────────────────────────
+async function callCollection(params) {
   const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }, // JSON is fine; Worker handles CORS
-    body: JSON.stringify({ action: 'collection', ...params })
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Session-Token': sessionToken,
+    },
+    body: JSON.stringify({ action: 'collection', ...params }),
   });
-
-
   const text = await res.text();
-  if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0,500)}`);
-  
+  if (!res.ok) throw new Error(`API ${res.status}: ${text.slice(0, 500)}`);
   let body;
   try { body = JSON.parse(text); } catch { throw new Error('Bad JSON from API'); }
-
-  // Worker returns { ok, data, status }. Fall back to raw for legacy.
   return (body && typeof body === 'object' && 'ok' in body && 'data' in body) ? body.data : body;
-
-  
 }
 
-
-
-function render(items){
-  const root = $('#dex');
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render(items) {
+  const root = $('dex');
   root.innerHTML = '';
-  for(const it of items){
+  for (const it of items) {
     const div = document.createElement('div');
-    div.className='card';
+    div.className = 'card';
     const img = document.createElement('img');
-    img.className='thumb';
-    img.loading='lazy';
+    img.className = 'thumb';
+    img.loading = 'lazy';
     img.src = it.image_url || it.image_ref || '';
     img.alt = it.name || it.printcode || it.card_id || '';
     div.appendChild(img);
     const meta = document.createElement('div');
-    meta.className='meta';
+    meta.className = 'meta';
     const nm = document.createElement('div');
-    nm.className='name'; nm.textContent = it.name || it.player || it.printcode || it.card_id || '—';
+    nm.className = 'name';
+    nm.textContent = it.name || it.player || it.printcode || it.card_id || '—';
     const sb = document.createElement('div');
-    sb.className='sub';
-    const bits = [it.rarity, it.club, it.position, it.batch, it.serial?('#'+it.serial):null].filter(Boolean);
+    sb.className = 'sub';
+    const bits = [it.rarity, it.club, it.position, it.batch, it.serial ? ('#' + it.serial) : null].filter(Boolean);
     sb.textContent = bits.join(' • ');
-    meta.appendChild(nm); meta.appendChild(sb);
-    // NEW: show card_id under the card
-    if (it.card_id) {
-      const idRow = document.createElement('div');
-      idRow.className = 'sub';
-      idRow.textContent = 'ID: ' + it.card_id;
-      meta.appendChild(idRow);
-    }
-
-    enableImagePopup(img);
+    meta.appendChild(nm);
+    meta.appendChild(sb);
     div.appendChild(meta);
     root.appendChild(div);
   }
 }
 
-// --- Image popup ---
-const popup = document.getElementById("imgPopup");
-const popupImg = popup.querySelector("img");
-
-// open when any thumbnail is clicked
-function enableImagePopup(img) {
-  img.addEventListener("click", () => {
-    popupImg.src = img.src;
-    popup.style.display = "flex";
-  });
+function populateClubs(items) {
+  const sel = byId('club');
+  if (!sel) return;
+  const cur = sel.value || 'ALL';
+  const clubs = Array.from(new Set(items.map(it => (it.club || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '<option value="ALL">Club: ALL</option>' + clubs.map(c => `<option>${c}</option>`).join('');
+  if (Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
 }
 
-// close popup on click
-popup.addEventListener("click", () => {
-  popup.style.display = "none";
-  popupImg.src = "";
-});
-
-
-  
-function updateBalances(bal){
-  $('#tickets').textContent = bal?.tickets ?? '0';
-  $('#tokens').textContent = bal?.tokens ?? '0';
-}
-
-function updateCounts(total, page, pageSize){
+function updateCounts(total, page, pageSize) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
-  $('#countInfo').textContent = `${total} card${total===1?'':'s'}`;
-  $('#pages').textContent = pages;
-  $('#page').value = Math.min(page, pages);
-  $('#prevBtn').disabled = (page<=1);
-  $('#nextBtn').disabled = (page>=pages);
+  $('countInfo').textContent = `${total} card${total === 1 ? '' : 's'}`;
+  $('pages').textContent = pages;
+  $('page').value = Math.min(page, pages);
+  $('prevBtn').disabled = (page <= 1);
+  $('nextBtn').disabled = (page >= pages);
 }
 
-async function search() {
-  setLoading(true);
-  try {
-    // 1) Build query from inputs (keep your current helper)
-    const q = buildQuery();
-
-    // 2) Fetch ALL pages
-    const combined = [];
-    let page = 1;
-    const fetchSize = 200; // batch size per request (tune as needed)
-    let total = 0;
-
-    while (true) {
-      const res = await callCollection({ ...q, page, page_size: fetchSize });
-      const items = (res.items || []).map(it => ({
-        ...it,
-        printcode: it.printcode ?? it.card_id
-      }));
-      combined.push(...items);
-
-      total = Number(res.total ?? combined.length);
-      if (combined.length >= total) break;
-      page++;
-      // safety: stop runaway loops
-      if (page > 200) break;
-    }
-
-    // 3) Update club filter options based on the full set (same code you had)
-    (function populateClubs(items) {
-      const sel = byId('club');
-      if (!sel) return;
-      const cur = sel.value || 'ALL';
-      const clubs = Array.from(new Set(items.map(it => (it.club || '').trim()).filter(Boolean)))
-        .sort((a,b)=>a.localeCompare(b));
-      sel.innerHTML = '<option value="ALL">ALL</option>' + clubs.map(c=>`<option>${c}</option>`).join('');
-      if (Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
-    })(combined);
-
-    // 4) Balances (unchanged)
-    const balances = (combined.length && typeof res !== 'undefined' && res.balances) ? res.balances
-                     : { tickets: 0, tokens: 0 };
-    updateBalances(balances);
-
-    // 5) Save to memory and show the current page
-    ALL_ITEMS = combined;
-    applySortAndShow();
-
-  } catch (err) {
-    console.error(err);
-    alert('Failed to load collection. Check API base/secret in code.');
-  } finally {
-    setLoading(false);          // <-- add this block
+function updateNavBalance(data) {
+  const t   = data?.ticket_balance ?? data?.tickets ?? data?.balances?.tickets ?? null;
+  const tok = data?.token_balance  ?? data?.tokens  ?? data?.balances?.tokens  ?? null;
+  if (t !== null) {
+    $('navTickets').textContent = t;
+    $('navTokens').textContent  = tok ?? '—';
+    $('navBalance').style.display = 'flex';
   }
 }
 
+// ── SEARCH ────────────────────────────────────────────────────────────────
+function buildQuery() {
+  const adminId = val('userId', '').trim();
+  const q = {
+    page:        Math.max(1, parseInt(val('page', '1')) || 1),
+    page_size:   Math.max(1, parseInt(val('pageSize', '48')) || 48),
+    unique_only: chk('uniqueOnly'),
+    rarity:      val('rarity', 'ALL') || 'ALL',
+    position:    val('position', 'ALL') || 'ALL',
+    batch:       val('batch', 'ALL') || 'ALL',
+    club:        val('club', 'ALL') || 'ALL',
+  };
+  // Admin can pass an explicit user_id to view another player's collection
+  if (adminId) q.user_id = adminId;
+  return q;
+}
 
+async function search() {
+  const root = $('dex');
+  root.innerHTML = '<div class="empty-state" style="grid-column:1/-1;color:var(--muted)">Loading…</div>';
+  try {
+    const q = buildQuery();
+    const data = await callCollection(q);
+    const items = (data.items || []).map(it => ({ ...it, printcode: it.printcode ?? it.card_id }));
+    const total = Number(data.total ?? items.length);
+    const page  = parseInt(val('page', '1')) || 1;
+    const pageSize = parseInt(val('pageSize', '48')) || 48;
+    const sortMode = $('sortBy').value || 'rarity_club';
+    sortItems(items, sortMode);
+    populateClubs(items);
+    render(items);
+    updateCounts(total, page, pageSize);
+    updateNavBalance(data);
+    $('countInfo').textContent = `${items.length} shown • ${total} total`;
+    if (!items.length) {
+      root.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No cards match your filters.</div>';
+    }
+  } catch (err) {
+    console.error(err);
+    root.innerHTML = `<div class="empty-state" style="grid-column:1/-1;color:#f87171">Failed to load collection: ${err.message}</div>`;
+  }
+}
 
-// ---- Wire up safely after DOM is ready ----
-document.addEventListener('DOMContentLoaded', () => {
+// ── AUTH FUNCTIONS ────────────────────────────────────────────────────────
+function showLoginModal() {
+  const m = $('loginModal');
+  if (m) m.style.display = 'flex';
+}
+
+async function loadUserProfile() {
+  try {
+    const res = await fetch(WORKER + '/auth/me', { headers: { 'X-Session-Token': sessionToken } });
+    const json = await res.json();
+    if (json.ok && json.user) currentUser = json.user;
+  } catch {}
+}
+
+function updateNav() {
+  if (!currentUser) return;
+  const avatarEl = $('navAvatar');
+  if (currentUser.avatar) {
+    avatarEl.innerHTML = `<img src="${currentUser.avatar}" alt="">`;
+  } else {
+    avatarEl.textContent = (currentUser.global_name || currentUser.username || '?').slice(0, 2).toUpperCase();
+  }
+  $('navUsername').textContent = currentUser.global_name || currentUser.username;
+  if (currentUser.is_admin) {
+    $('adminLink').style.display = 'block';
+    $('adminSearch').style.display = 'flex'; // show the "View player" input for admins
+  }
+  $('loginModal').style.display = 'none';
+}
+
+function toggleUserMenu() {
+  if (!currentUser) { showLoginModal(); return; }
+  $('navUser').classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+  const navUser = $('navUser');
+  if (navUser && !navUser.contains(e.target)) navUser.classList.remove('open');
+});
+
+async function doLogout() {
+  try {
+    await fetch(WORKER + '/auth/logout', { method: 'POST', headers: { 'X-Session-Token': sessionToken } });
+  } catch {}
+  sessionToken = '';
+  currentUser  = null;
+  localStorage.removeItem('tlk_session');
+  window.location.reload();
+}
+
+// Page-specific init after auth
+function onAuthReady() {
+  // Pre-fill from ?u= (admin lookup via URL)
+  const qs = new URLSearchParams(location.search);
+  const uParam = qs.get('u');
+  if (uParam) {
+    const input = $('userId');
+    if (input) input.value = uParam;
+    // Show subtitle indicating we're viewing someone else
+    $('subtitle').textContent = `(viewing: ${uParam})`;
+  }
+  // Auto-search
+  search();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+(async function init() {
+  // Capture session from OAuth redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlSession = urlParams.get('session');
+  const authStatus = urlParams.get('auth');
+  if (urlSession) {
+    sessionToken = urlSession;
+    localStorage.setItem('tlk_session', sessionToken);
+    // Remove session param from URL but keep ?u= if present
+    const next = urlParams.get('u') ? `?u=${urlParams.get('u')}` : '';
+    window.history.replaceState({}, '', window.location.pathname + next);
+  } else if (authStatus) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  if (sessionToken) await loadUserProfile();
+
+  if (!currentUser) {
+    showLoginModal();
+  } else {
+    updateNav();
+    onAuthReady();
+  }
+
+  // Wire up filter controls
+  document.addEventListener('DOMContentLoaded', () => {});
+
   const safeOn = (id, evt, fn) => {
     const el = document.getElementById(id);
     if (!el) { console.warn(`Missing #${id}`); return; }
     el.addEventListener(evt, fn);
   };
 
-  safeOn('btnSearch', 'click', () => { byId('page').value = 1; search(); });
+  safeOn('btnSearch', 'click', () => { $('page').value = 1; search(); });
   safeOn('btnReset',  'click', () => { location.href = location.pathname; });
-  safeOn('prevBtn',   'click', () => {
-    const cur = +(val('page','1')); byId('page').value = Math.max(1, cur - 1);
-    applySortAndShow();
-  });
-  safeOn('club',      'change', () => { byId('page').value = 1; search(); }); // club changes the dataset → refetch
-  safeOn('sortBy',    'change', () => { byId('page').value = 1; applySortAndShow(); });
-  safeOn('nextBtn',   'click', () => {
-    const cur = +(val('page','1')); byId('page').value = cur + 1;
-    applySortAndShow();
-  });
-  safeOn('pageSize',  'change', () => { byId('page').value = 1; applySortAndShow(); });
-
-
-  // auto-search if ?u= is present
-  const u = new URLSearchParams(location.search).get('u');
-  if (u) { byId('userId').value = u; search(); }
-});
-
-
-
-// Keep the config shortcut
-window.addEventListener('keydown', (ev) => {
-  if (ev.key === 'c' && (ev.ctrlKey || ev.metaKey)) {
-    const base = prompt('API base URL', API_BASE);
-    if (base) localStorage.setItem('tlk_api_base', base);
-    location.reload();
-
-  }
-});
+  safeOn('prevBtn',   'click', () => { $('page').value = Math.max(1, parseInt(val('page', '1')) - 1); search(); });
+  safeOn('nextBtn',   'click', () => { $('page').value = parseInt(val('page', '1')) + 1; search(); });
+  safeOn('club',      'change', () => { $('page').value = 1; search(); });
+  safeOn('sortBy',    'change', () => { search(); });
+  safeOn('pageSize',  'change', () => { $('page').value = 1; search(); });
+  safeOn('rarity',    'change', () => { $('page').value = 1; search(); });
+  safeOn('position',  'change', () => { $('page').value = 1; search(); });
+  safeOn('batch',     'change', () => { $('page').value = 1; search(); });
+  safeOn('uniqueOnly','change', () => { $('page').value = 1; search(); });
+})();
 </script>
-
 </body>
 </html>
