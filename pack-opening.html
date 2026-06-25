@@ -632,8 +632,8 @@ function updateNav() {
 async function fetchBalance() {
   if (!sessionToken || !currentUser) return;
   try {
-    const res = await post({ action: 'collection', page: 1, page_size: 1 });
-    const d   = res?.data;
+    const res = await post({ action: 'balance' });
+    const d   = res?.data ?? res;
     const t   = d?.ticket_balance ?? d?.tickets ?? null;
     const tok = d?.token_balance  ?? d?.tokens  ?? null;
     if (t !== null) {
