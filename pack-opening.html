@@ -634,8 +634,8 @@ async function fetchBalance() {
   try {
     const res = await post({ action: 'balance' });
     const d   = res?.data ?? res;
-    const t   = d?.ticket_balance ?? d?.tickets ?? null;
-    const tok = d?.token_balance  ?? d?.tokens  ?? null;
+    const t   = d?.ticket_balance ?? d?.tickets ?? d?.balances?.tickets ?? d?.balance ?? null;
+    const tok = d?.token_balance  ?? d?.tokens  ?? d?.balances?.tokens  ?? null;
     if (t !== null) {
       document.getElementById('navTickets').textContent   = t;
       document.getElementById('navTokens').textContent    = tok ?? '—';

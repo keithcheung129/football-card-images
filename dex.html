@@ -33,9 +33,7 @@
     }
     @font-face {
       font-family: 'Maxime';
-      src: url('assets/fonts/Maxime W01 Bd SC/Web Fonts/f997711963438aad23e3a7930b4bc50b.woff2') format('woff2'),
-           url('assets/fonts/Maxime W01 Bd SC/Web Fonts/f997711963438aad23e3a7930b4bc50b.woff') format('woff'),
-           url('assets/fonts/Maxime W01 Bd SC/Web Fonts/f997711963438aad23e3a7930b4bc50b.ttf') format('truetype');
+      src: url('assets/font/Maxime W01 Bd SC.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
@@ -510,6 +508,26 @@ function updateNav() {
   $('loginModal').style.display = 'none';
 }
 
+async function fetchBalance() {
+  if (!sessionToken || !currentUser) return;
+  try {
+    const res = await fetch(WORKER + '/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken },
+      body: JSON.stringify({ action: 'balance' }),
+    });
+    const json = await res.json();
+    const d = json?.data ?? json;
+    const t   = d?.ticket_balance ?? d?.tickets ?? d?.balances?.tickets ?? d?.balance ?? null;
+    const tok = d?.token_balance  ?? d?.tokens  ?? d?.balances?.tokens  ?? null;
+    if (t !== null) {
+      $('navTickets').textContent  = t;
+      $('navTokens').textContent   = tok ?? '—';
+      $('navBalance').style.display = 'flex';
+    }
+  } catch { /* non-critical */ }
+}
+
 function toggleUserMenu() {
   if (!currentUser) { showLoginModal(); return; }
   $('navUser').classList.toggle('open');
@@ -548,6 +566,7 @@ async function doLogout() {
   if (sessionToken) await loadUserProfile();
   if (currentUser) {
     updateNav();
+    fetchBalance();
   } else {
     // Show sign-in prompt briefly, then allow browsing without login
     // (Dex is a read-only catalogue — no need to block)
