@@ -87,8 +87,9 @@
 
     /* ── PACK GRID ── */
     .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
-    .pack-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; }
+    .pack-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; }
     .pack-card:hover { border-color: var(--border-blue); transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.45); }
+    .pack-card.selected { border-color: rgba(55,138,221,0.7); box-shadow: 0 0 0 2px rgba(55,138,221,0.2); transform: translateY(-3px); }
     .pack-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; background: #0d1e3a; display: flex; align-items: center; justify-content: center; }
     .pack-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .pack-no-img { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%, #1a2c50 100%); }
@@ -96,9 +97,42 @@
     .pack-no-img-name { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 6px; letter-spacing: 0.08em; text-align: center; padding: 0 8px; }
     .pack-footer { padding: 12px 14px 14px; }
     .pack-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-    .pack-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
-    .pack-open-btn { width: 100%; padding: 9px; background: transparent; border: 1px solid var(--border-blue); border-radius: 6px; color: #7eb4f5; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.04em; transition: background 0.2s; }
-    .pack-open-btn:hover { background: rgba(55,138,221,0.18); }
+    .pack-meta { font-size: 11px; color: var(--text-muted); }
+
+    /* ── PACK DETAIL DRAWER ── */
+    .detail-drawer { display: none; background: var(--panel); border: 1px solid var(--border-blue); border-radius: 16px; margin-top: 20px; overflow: hidden; animation: drawerIn 0.25s ease-out; }
+    .detail-drawer.open { display: block; }
+    @keyframes drawerIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+    .drawer-inner { display: grid; grid-template-columns: 200px 1fr; }
+    .drawer-img-col { background: #0d1e3a; display: flex; align-items: stretch; }
+    .drawer-pack-img { width: 100%; object-fit: cover; display: block; min-height: 260px; }
+    .drawer-no-img { width: 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(160deg, #1a3a6e 0%, #0d1e3a 60%); }
+    .drawer-no-img-logo { font-family: 'Maxime', serif; font-size: 32px; color: var(--gold); }
+    .drawer-content { padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; }
+    .drawer-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .drawer-pack-name { font-family: 'Maxime', serif; font-size: 20px; color: var(--text); letter-spacing: 0.04em; }
+    .drawer-pack-id { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; margin-top: 3px; }
+    .btn-open-pack { flex-shrink: 0; padding: 11px 24px; background: linear-gradient(135deg, #c8963c, #e8b458); border: none; border-radius: 10px; color: #0b1220; font-size: 13px; font-weight: 800; cursor: pointer; letter-spacing: 0.06em; transition: opacity 0.15s, transform 0.1s; }
+    .btn-open-pack:hover { opacity: 0.9; transform: scale(1.02); }
+    .drawer-stats { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .drawer-stat { flex: 1; padding: 12px; text-align: center; border-right: 1px solid var(--border); }
+    .drawer-stat:last-child { border-right: none; }
+    .drawer-stat-val { font-size: 18px; font-weight: 700; color: var(--gold-light); }
+    .drawer-stat-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.06em; }
+    .drawer-desc { font-size: 13px; color: var(--text-muted); line-height: 1.65; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; }
+    .drawer-section-title { font-size: 11px; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; }
+    .odds-grid { display: flex; flex-direction: column; gap: 7px; }
+    .odds-row { display: flex; align-items: center; gap: 10px; }
+    .odds-rarity-label { font-size: 12px; font-weight: 700; width: 38px; flex-shrink: 0; }
+    .odds-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+    .odds-bar { height: 100%; border-radius: 4px; }
+    .odds-pct { font-size: 12px; color: var(--text-muted); width: 48px; text-align: right; flex-shrink: 0; }
+    .drawer-featured-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+    .featured-card-item { width: 80px; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); background: var(--panel2); }
+    .featured-card-item img { width: 100%; aspect-ratio: 5/7; object-fit: cover; display: block; }
+    .featured-card-label { padding: 4px 5px 5px; font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1.3; background: rgba(0,0,0,0.5); }
+    .featured-card-rarity { font-size: 10px; font-weight: 700; }
+    @media (max-width: 600px) { .drawer-inner { grid-template-columns: 1fr; } .drawer-img-col { display: none; } }
 
     /* ── SHARED MODAL BASE ── */
     .modal-backdrop {
@@ -369,51 +403,58 @@
 <main>
   <div class="page-title">Open Packs</div>
   <div class="page-sub">
-    Select a pack to open
+    Click a pack to see details
     <span id="balanceInline"></span>
   </div>
   <div id="packGrid" class="pack-grid">
     <div class="loading-state"><div class="spinner"></div><span>Loading packs…</span></div>
   </div>
-</main>
 
-<!-- ── CONFIRMATION MODAL ── -->
-<div class="modal-backdrop" id="confirmModal">
-  <div class="confirm-box">
-    <div class="confirm-img-banner">
-      <img id="confirmImg" src="" alt=""
-           onerror="this.style.display='none';document.getElementById('confirmNoImg').style.display='flex'">
-      <div class="no-img" id="confirmNoImg" style="display:none">
-        <div class="no-img-logo">TLK</div>
-      </div>
-      <div class="banner-gradient"></div>
-      <div class="banner-name" id="confirmPackName"></div>
-    </div>
-    <div class="confirm-body">
-      <div class="confirm-stats">
-        <div class="confirm-stat">
-          <div class="confirm-stat-val" id="confirmCost">—</div>
-          <div class="confirm-stat-label">TICKETS</div>
-        </div>
-        <div class="confirm-stat">
-          <div class="confirm-stat-val" id="confirmSize">5</div>
-          <div class="confirm-stat-label">CARDS</div>
-        </div>
-        <div class="confirm-stat">
-          <div class="confirm-stat-val" id="confirmBox">30</div>
-          <div class="confirm-stat-label">BOX SIZE</div>
+  <!-- ── PACK DETAIL DRAWER ── -->
+  <div class="detail-drawer" id="detailDrawer">
+    <div class="drawer-inner">
+      <div class="drawer-img-col">
+        <img class="drawer-pack-img" id="drawerImg" src="" alt=""
+             onerror="this.style.display='none';document.getElementById('drawerNoImg').style.display='flex'">
+        <div class="drawer-no-img" id="drawerNoImg" style="display:none">
+          <div class="drawer-no-img-logo">TLK</div>
         </div>
       </div>
-      <div class="confirm-note">
-        Each box of 30 packs is shared across all players. Guaranteed SRs and SSRs are hidden inside every box.
-      </div>
-      <div class="confirm-btns">
-        <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
-        <button class="btn-confirm" onclick="confirmOpen()">OPEN PACK !</button>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <div>
+            <div class="drawer-pack-name" id="drawerPackName"></div>
+            <div class="drawer-pack-id" id="drawerPackId"></div>
+          </div>
+          <button class="btn-open-pack" onclick="startOpenFlow()">OPEN PACK</button>
+        </div>
+        <div class="drawer-stats">
+          <div class="drawer-stat">
+            <div class="drawer-stat-val" id="drawerCost">—</div>
+            <div class="drawer-stat-label">TICKETS</div>
+          </div>
+          <div class="drawer-stat">
+            <div class="drawer-stat-val" id="drawerCards">5</div>
+            <div class="drawer-stat-label">CARDS</div>
+          </div>
+          <div class="drawer-stat">
+            <div class="drawer-stat-val" id="drawerBoxSize">—</div>
+            <div class="drawer-stat-label">BOX SIZE</div>
+          </div>
+        </div>
+        <div class="drawer-desc" id="drawerDesc" style="display:none"></div>
+        <div id="drawerOddsSection" style="display:none">
+          <div class="drawer-section-title">Pull Rates (best slot)</div>
+          <div class="odds-grid" id="drawerOddsGrid"></div>
+        </div>
+        <div id="drawerFeaturedSection" style="display:none">
+          <div class="drawer-section-title">Featured Cards</div>
+          <div class="drawer-featured-grid" id="drawerFeaturedGrid"></div>
+        </div>
       </div>
     </div>
   </div>
-</div>
+</main>
 
 <!-- ── TICKET CONFIRMATION MODAL ── -->
 <div class="modal-backdrop" id="ticketModal">
@@ -662,10 +703,13 @@ async function loadPacks() {
     grid.innerHTML = '<div class="loading-state" style="color:#f87171">Could not load packs — check your connection and try again.</div>';
     return;
   }
-  const active = packs.filter(p => {
-    const v = p.is_active;
-    return v !== false && v !== 'false' && v !== 0 && v !== '0';
-  });
+  const active = packs
+    .filter(p => {
+      const v = p.is_active;
+      return v !== false && v !== 'false' && v !== 0 && v !== '0';
+    })
+    .sort((a, b) => (b.pack_number ?? 9999) - (a.pack_number ?? 9999));
+
   if (!active.length) {
     grid.innerHTML = '<div class="loading-state">No packs available right now.</div>';
     return;
@@ -689,53 +733,117 @@ async function loadPacks() {
       <div class="pack-footer">
         <div class="pack-name">${pack.display_name}</div>
         <div class="pack-meta">${price} tickets · ${size} cards</div>
-        <button class="pack-open-btn"
-          data-pack='${JSON.stringify({packId:pack.pack_id,displayName:pack.display_name,imgUrl,price,size})}'
-          onclick="showConfirmFromEl(this)">
-          Open Pack
-        </button>
       </div>`;
+    card.addEventListener('click', () => showPackDetail(pack, card));
     grid.appendChild(card);
   });
 }
 
-function showConfirmFromEl(btn) {
-  const d = JSON.parse(btn.dataset.pack);
-  showConfirm(d.packId, d.displayName, d.imgUrl, d.price, d.size);
+// ── PACK DETAIL DRAWER ────────────────────────────────────────────────────
+function showPackDetail(pack, cardEl) {
+  const drawer   = document.getElementById('detailDrawer');
+  const wasSelected = cardEl.classList.contains('selected');
+
+  document.querySelectorAll('.pack-card').forEach(c => c.classList.remove('selected'));
+
+  if (wasSelected) {
+    drawer.classList.remove('open');
+    activePack = null;
+    return;
+  }
+
+  cardEl.classList.add('selected');
+  activePack = pack;
+
+  // Image
+  const imgUrl = pack.image_url ?? null;
+  const drawerImg   = document.getElementById('drawerImg');
+  const drawerNoImg = document.getElementById('drawerNoImg');
+  if (imgUrl) { drawerImg.src = imgUrl; drawerImg.style.display = 'block'; drawerNoImg.style.display = 'none'; }
+  else        { drawerImg.style.display = 'none'; drawerNoImg.style.display = 'flex'; }
+
+  // Header
+  document.getElementById('drawerPackName').textContent = pack.display_name;
+  document.getElementById('drawerPackId').textContent   = pack.pack_id;
+
+  // Stats
+  document.getElementById('drawerCost').textContent    = pack.price_tickets ?? '?';
+  document.getElementById('drawerCards').textContent   = pack.draw_size ?? 5;
+  document.getElementById('drawerBoxSize').textContent = pack.community_box?.box_size ?? '—';
+
+  // Description
+  const descEl = document.getElementById('drawerDesc');
+  if (pack.notes) { descEl.textContent = pack.notes; descEl.style.display = 'block'; }
+  else            { descEl.style.display = 'none'; }
+
+  // Pull rates + featured cards
+  renderOdds(pack.slots);
+  renderFeaturedCards(pack.featured_cards);
+
+  drawer.classList.add('open');
+  setTimeout(() => drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 }
 
-// ── CONFIRMATION MODAL ────────────────────────────────────────────────────
-function showConfirm(packId, displayName, imgUrl, price, size) {
+function renderOdds(slots) {
+  const section = document.getElementById('drawerOddsSection');
+  const grid    = document.getElementById('drawerOddsGrid');
+  grid.innerHTML = '';
+  if (!slots || typeof slots !== 'object') { section.style.display = 'none'; return; }
+  const slotKeys = Object.keys(slots).sort((a, b) => Number(a) - Number(b));
+  if (!slotKeys.length) { section.style.display = 'none'; return; }
+  const bestSlot = slots[slotKeys[slotKeys.length - 1]];
+  const weights  = bestSlot.weights ?? bestSlot ?? {};
+  const total    = Object.values(weights).reduce((s, v) => s + Number(v), 0);
+  if (!total) { section.style.display = 'none'; return; }
+  const RC_COLORS = { N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', IR:'#a855f7', SSR:'#EF9F27' };
+  ['SSR','IR','SR','AR','R','N'].filter(r => weights[r] != null).forEach(rarity => {
+    const pct   = Number(weights[rarity]) / total * 100;
+    const color = RC_COLORS[rarity] || '#888';
+    const row   = document.createElement('div');
+    row.className = 'odds-row';
+    row.innerHTML = `
+      <span class="odds-rarity-label" style="color:${color}">${rarity}</span>
+      <div class="odds-bar-wrap"><div class="odds-bar" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>
+      <span class="odds-pct">${pct < 0.1 ? pct.toFixed(3) : pct < 1 ? pct.toFixed(2) : pct.toFixed(1)}%</span>`;
+    grid.appendChild(row);
+  });
+  section.style.display = 'block';
+}
+
+function renderFeaturedCards(featuredCards) {
+  const section = document.getElementById('drawerFeaturedSection');
+  const grid    = document.getElementById('drawerFeaturedGrid');
+  grid.innerHTML = '';
+  if (!featuredCards || !featuredCards.length) { section.style.display = 'none'; return; }
+  const RC_COLORS = { N:'#888780', R:'#378ADD', AR:'#7F77DD', SR:'#BA7517', IR:'#a855f7', SSR:'#EF9F27' };
+  featuredCards.forEach(fc => {
+    const color = RC_COLORS[fc.rarity] || '#888';
+    const item  = document.createElement('div');
+    item.className = 'featured-card-item';
+    item.style.borderColor = color;
+    item.innerHTML = `
+      <img src="${fc.image_url || ''}" alt="${fc.name || ''}"
+           onerror="this.style.background='#1a2540';this.style.minHeight='112px'">
+      <div class="featured-card-label">
+        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fc.name || ''}</div>
+        <div class="featured-card-rarity" style="color:${color}">${fc.rarity || ''}</div>
+      </div>`;
+    grid.appendChild(item);
+  });
+  section.style.display = 'block';
+}
+
+// ── OPEN FLOW ─────────────────────────────────────────────────────────────
+function startOpenFlow() {
+  if (!activePack) return;
   if (!sessionToken) { showLoginModal(); return; }
-  activePack = { packId, displayName, imgUrl, price, size };
-
-  const img   = document.getElementById('confirmImg');
-  const noImg = document.getElementById('confirmNoImg');
-  if (imgUrl) { img.src = imgUrl; img.style.display = 'block'; noImg.style.display = 'none'; }
-  else        { img.style.display = 'none'; noImg.style.display = 'flex'; }
-
-  document.getElementById('confirmPackName').textContent = displayName;
-  document.getElementById('confirmCost').textContent     = price ?? '?';
-  document.getElementById('confirmSize').textContent     = size ?? 5;
-  document.getElementById('confirmBox').textContent      = 30;
-  document.getElementById('confirmModal').classList.add('active');
-}
-
-function closeConfirm() {
-  document.getElementById('confirmModal').classList.remove('active');
-}
-
-function confirmOpen() {
-  closeConfirm();
   const rawBalance = document.getElementById('navTickets').textContent.trim();
   const balance    = parseInt(rawBalance);
-  const cost       = activePack.price ?? 30;
-
-  document.getElementById('ticketModalPackName').textContent = activePack.displayName;
+  const cost       = activePack.price_tickets ?? 30;
+  document.getElementById('ticketModalPackName').textContent = activePack.display_name;
   document.getElementById('ticketModalCost').textContent     = `Use ${cost} tickets`;
   document.getElementById('ticketModalBalance').textContent  = !isNaN(balance)
-    ? `Current balance: ${balance} tickets`
-    : '';
+    ? `Current balance: ${balance} tickets` : '';
   document.getElementById('ticketModal').classList.add('active');
 }
 
@@ -747,11 +855,12 @@ function proceedOpen() {
   closeTicketModal();
   const img         = document.getElementById('packImg');
   const placeholder = document.getElementById('packPlaceholder');
-  document.getElementById('packPlaceholderSub').textContent = activePack.displayName.toUpperCase();
-  document.getElementById('overlayPackName').textContent    = activePack.displayName.toUpperCase();
+  const imgUrl      = activePack.image_url ?? null;
+  document.getElementById('packPlaceholderSub').textContent = activePack.display_name.toUpperCase();
+  document.getElementById('overlayPackName').textContent    = activePack.display_name.toUpperCase();
 
-  if (activePack.imgUrl) {
-    img.src = activePack.imgUrl; img.style.display = 'block';
+  if (imgUrl) {
+    img.src = imgUrl; img.style.display = 'block';
     placeholder.style.display = 'none';
   } else {
     img.style.display = 'none'; placeholder.style.display = 'flex';
@@ -785,7 +894,7 @@ async function triggerOpen() {
 
   let cards = [];
   try {
-    const res = await post({ action: 'open_pack', pack_id: activePack.packId });
+    const res = await post({ action: 'open_pack', pack_id: activePack.pack_id });
     cards = normalizeCards(res?.data);
   } catch (e) {
     showOverlayError(e.message || 'Could not open pack. Please try again.');
@@ -914,7 +1023,7 @@ function showSummary() {
   document.getElementById('summaryTitle').textContent =
     hasSSR ? '✦ Amazing Pull! ✦' : hasIR ? '◆ Rare Pull! ◆' : hasSR ? '★ Great Pull! ★' : 'Pack Opened!';
   document.getElementById('summarySubtitle').textContent =
-    `${pulledCards.length} new cards from ${activePack?.displayName || 'your pack'}`;
+    `${pulledCards.length} new cards from ${activePack?.display_name || 'your pack'}`;
 
   const grid = document.getElementById('summaryGrid');
   grid.innerHTML = '';
