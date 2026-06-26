@@ -16,18 +16,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #050810;
-      --panel:    #0b1120;
-      --border:   rgba(255,255,255,0.07);
-      --gold:     #EF9F27;
-      --gold-dim: rgba(239,159,39,0.15);
-      --blue:     #378ADD;
-      --text:     #e8eaf0;
-      --muted:    rgba(232,234,240,0.45);
+      --bg:     #050810;
+      --panel:  #0b1120;
+      --border: rgba(255,255,255,0.07);
+      --gold:   #EF9F27;
+      --blue:   #378ADD;
+      --text:   #e8eaf0;
+      --muted:  rgba(232,234,240,0.45);
     }
 
     html, body { height: 100%; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -42,15 +40,14 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 52px;
-      background: rgba(5,8,16,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(5,8,16,0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      padding: 0 20px;
-      gap: 0;
-      z-index: 100;
+      padding: 0 24px;
+      z-index: 200;
     }
     .nav-logo {
       font-family: 'Maxime', serif;
@@ -60,13 +57,16 @@
       text-decoration: none;
       margin-right: 8px;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    .nav-logo img { height: 28px; width: auto; }
     .nav-links { display: flex; flex: 1; }
     .nav-link {
       padding: 0 14px;
       height: 52px;
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       color: var(--muted);
       text-decoration: none;
       font-size: 13px;
@@ -89,7 +89,7 @@
     .nav-user-inner:hover { background: rgba(255,255,255,0.06); }
     .nav-avatar {
       width: 30px; height: 30px; border-radius: 50%;
-      background: var(--gold-dim);
+      background: rgba(239,159,39,0.15);
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; font-weight: 700; color: var(--gold);
       overflow: hidden; flex-shrink: 0;
@@ -113,238 +113,246 @@
       color: var(--text); font-size: 13px;
       text-decoration: none; text-align: left;
       background: transparent; border: none; cursor: pointer;
-      font-family: inherit;
-      transition: background 0.15s;
+      font-family: inherit; transition: background 0.15s;
     }
     .nav-dropdown a:hover, .nav-dropdown button:hover { background: rgba(255,255,255,0.06); }
-    .nav-dropdown a#adminLink { display: none; }
+    #adminLink { display: none; }
 
-    /* ── HERO ── */
+    /* ── HERO BANNER ── */
     .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 100px 24px 60px;
       position: relative;
+      margin-top: 52px;
+      width: 100%;
+      height: 580px;
       overflow: hidden;
+      background: #0a0f1e;
     }
-
-    /* subtle radial glow behind logo */
-    .hero::before {
-      content: '';
+    .hero-bg {
       position: absolute;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(ellipse at center, rgba(239,159,39,0.07) 0%, transparent 70%);
-      pointer-events: none;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    /* gradient: dark on left for text, fade to transparent right */
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        rgba(5,8,16,0.92) 0%,
+        rgba(5,8,16,0.65) 35%,
+        rgba(5,8,16,0.15) 62%,
+        transparent 100%
+      );
+    }
+    /* bottom fade into page bg */
+    .hero-fade-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 120px;
+      background: linear-gradient(to bottom, transparent, var(--bg));
     }
 
-    .hero-logo {
-      width: 110px;
-      height: 110px;
-      object-fit: contain;
-      margin-bottom: 28px;
+    .hero-content {
       position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      padding: 0 56px 60px;
+      max-width: 580px;
     }
-
+    .hero-inner { display: flex; flex-direction: column; gap: 10px; }
+    .hero-tag {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
     .hero-title {
       font-family: 'Maxime', serif;
-      font-size: clamp(36px, 6vw, 60px);
-      color: var(--gold);
-      letter-spacing: 0.12em;
+      font-size: clamp(28px, 4.5vw, 48px);
+      color: #fff;
+      letter-spacing: 0.06em;
       line-height: 1.1;
-      margin-bottom: 12px;
-      position: relative;
     }
-
-    .hero-subtitle {
-      font-size: 15px;
-      color: var(--muted);
-      letter-spacing: 0.05em;
-      margin-bottom: 40px;
-      position: relative;
+    .hero-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 2px;
     }
-
     .hero-actions {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
-      justify-content: center;
-      position: relative;
+      margin-top: 8px;
     }
-
     .btn-primary {
-      padding: 12px 28px;
+      padding: 11px 26px;
       background: var(--gold);
       color: #0a0a0a;
       border: none;
-      border-radius: 10px;
-      font-size: 14px;
+      border-radius: 8px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       text-decoration: none;
       font-family: inherit;
       transition: opacity 0.2s;
+      white-space: nowrap;
     }
-    .btn-primary:hover { opacity: 0.88; }
-
+    .btn-primary:hover { opacity: 0.85; }
     .btn-outline {
-      padding: 12px 28px;
+      padding: 11px 26px;
       background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 14px;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      font-size: 13px;
       cursor: pointer;
       text-decoration: none;
       font-family: inherit;
-      transition: border-color 0.2s, color 0.2s;
+      transition: border-color 0.2s;
+      white-space: nowrap;
     }
-    .btn-outline:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.6); }
 
-    /* ── MAIN CONTENT ── */
+    /* Featured card floating on right */
+    .hero-card {
+      position: absolute;
+      right: 8%;
+      bottom: 0;
+      z-index: 3;
+      height: 90%;
+      max-height: 520px;
+      width: auto;
+      object-fit: contain;
+      transform-origin: bottom center;
+      filter: drop-shadow(0 20px 60px rgba(0,0,0,0.7));
+      pointer-events: none;
+    }
+
+    /* ── MAIN ── */
     .main {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 0 24px 80px;
+      padding: 60px 24px 80px;
     }
 
     /* ── SECTION HEADER ── */
     .section-header {
       display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 20px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
     .section-title {
       font-family: 'Maxime', serif;
-      font-size: 18px;
+      font-size: 22px;
       color: var(--text);
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
     }
-    .section-line {
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* ── BANNER ── */
-    .banner-section { margin-bottom: 56px; }
-
-    .banner-card {
-      display: block;
-      position: relative;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      text-decoration: none;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .banner-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    }
-    .banner-card img {
-      width: 100%;
-      height: 280px;
-      object-fit: cover;
-      display: block;
-    }
-    .banner-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to right, rgba(5,8,16,0.75) 0%, transparent 60%);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 28px 32px;
-    }
-    .banner-tag {
-      font-size: 10px;
-      letter-spacing: 0.18em;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-    .banner-title {
-      font-family: 'Maxime', serif;
-      font-size: clamp(22px, 4vw, 34px);
-      color: #fff;
-      letter-spacing: 0.06em;
-      line-height: 1.15;
-      margin-bottom: 8px;
-    }
-    .banner-sub {
+    .section-more {
       font-size: 13px;
-      color: rgba(255,255,255,0.65);
-    }
-    .banner-placeholder {
-      width: 100%;
-      height: 280px;
-      background: linear-gradient(135deg, #0f1c35 0%, #1a0a20 100%);
+      color: var(--muted);
+      text-decoration: none;
       display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 28px 32px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      margin-bottom: 12px;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.2s;
     }
+    .section-more:hover { color: var(--text); }
 
-    /* ── FEATURE GRID ── */
-    .feature-grid {
+    /* ── NEWS GRID ── */
+    .news-section { margin-bottom: 64px; }
+    .news-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-bottom: 56px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
     }
-    .feature-card {
+    .news-card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 24px 20px;
+      overflow: hidden;
       text-decoration: none;
       color: var(--text);
       transition: border-color 0.2s, transform 0.2s;
       display: flex;
       flex-direction: column;
-      gap: 8px;
     }
-    .feature-card:hover {
-      border-color: rgba(255,255,255,0.18);
-      transform: translateY(-2px);
+    .news-card:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-2px); }
+    .news-card-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      background: #0f1c35;
     }
-    .feature-icon {
-      font-size: 26px;
-      margin-bottom: 4px;
+    .news-card-img-placeholder {
+      width: 100%; height: 160px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
     }
-    .feature-name {
-      font-family: 'Maxime', serif;
+    .news-card-body { padding: 18px 20px 20px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .news-card-tag {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .news-card-title {
       font-size: 15px;
-      letter-spacing: 0.06em;
+      font-weight: 600;
       color: var(--text);
+      line-height: 1.4;
     }
-    .feature-desc {
+    .news-card-desc {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.55;
+      margin-top: 2px;
     }
+    .news-card-date {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    /* ── FEATURE GRID ── */
+    .feature-section { margin-bottom: 40px; }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .feature-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 18px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.2s, transform 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .feature-card:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-2px); }
+    .feature-icon { font-size: 24px; margin-bottom: 2px; }
+    .feature-name { font-family: 'Maxime', serif; font-size: 14px; letter-spacing: 0.06em; }
+    .feature-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
     /* ── LOGIN MODAL ── */
     #loginModal {
-      display: none;
-      position: fixed; inset: 0;
+      display: none; position: fixed; inset: 0;
       background: rgba(5,8,16,0.96);
       z-index: 500;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
       padding: 16px;
     }
     #loginModal.active { display: flex; }
@@ -353,12 +361,11 @@
       border: 1px solid rgba(200,150,60,0.3);
       border-radius: 18px;
       padding: 44px 36px;
-      max-width: 380px;
-      width: 100%;
+      max-width: 380px; width: 100%;
       text-align: center;
     }
-    .login-logo { width: 60px; height: 60px; object-fit: contain; margin-bottom: 16px; }
-    .login-title { font-family: 'Maxime', serif; font-size: 28px; color: var(--gold); letter-spacing: 0.12em; margin-bottom: 4px; }
+    .login-logo { width: 56px; height: 56px; object-fit: contain; margin-bottom: 16px; }
+    .login-title { font-family: 'Maxime', serif; font-size: 26px; color: var(--gold); letter-spacing: 0.12em; margin-bottom: 4px; }
     .login-sub { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.2em; margin-bottom: 28px; }
     .login-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
     .btn-discord {
@@ -366,14 +373,21 @@
       width: 100%; padding: 14px;
       background: #5865F2; border-radius: 10px;
       color: #fff; font-size: 15px; font-weight: 700;
-      cursor: pointer; text-decoration: none; font-family: inherit;
-      border: none;
+      cursor: pointer; text-decoration: none; font-family: inherit; border: none;
+    }
+    .btn-discord-close {
+      margin-top: 12px; background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted); border-radius: 8px;
+      padding: 8px 20px; cursor: pointer;
+      font-family: inherit; font-size: 13px;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 700px) {
+      .hero { height: 420px; }
+      .hero-content { padding: 0 24px 40px; }
+      .hero-card { display: none; }
       .nav-link { padding: 0 10px; font-size: 12px; }
-      .banner-card img { height: 200px; }
-      .banner-placeholder { height: 200px; }
     }
   </style>
 </head>
@@ -381,7 +395,7 @@
 
 <!-- ── NAV ── -->
 <nav class="nav">
-  <a class="nav-logo" href="index.html">TLK</a>
+  <a class="nav-logo" href="index.html"><img src="https://keithcheung129.github.io/football-card-images/assets/icon.png" alt="TLK">TLK</a>
   <div class="nav-links">
     <a class="nav-link active" href="index.html">Home</a>
     <a class="nav-link" href="pack-opening.html">Open Packs</a>
@@ -407,77 +421,121 @@
   </div>
 </nav>
 
-<!-- ── HERO ── -->
+<!-- ── HERO BANNER ── -->
 <section class="hero">
-  <img class="hero-logo" src="assets/icon.png" alt="The Last Kick">
-  <h1 class="hero-title">The Last Kick</h1>
-  <p class="hero-subtitle">Premier League Card Game · Season 25/26</p>
-  <div class="hero-actions">
-    <a class="btn-primary" href="pack-opening.html">Open Packs</a>
-    <a class="btn-outline" href="dex.html">Browse Cards</a>
+  <img class="hero-bg" src="https://keithcheung129.github.io/football-card-images/assets/banners/PLCHAM26_banner.png" alt="Fire the Cannon 25/26">
+  <div class="hero-overlay"></div>
+  <div class="hero-fade-bottom"></div>
+
+  <div class="hero-content">
+    <div class="hero-inner">
+      <div class="hero-tag">New Pack · PLCHAM26</div>
+      <h1 class="hero-title">Fire the Cannon<br>25/26</h1>
+      <p class="hero-sub">Arsenal Champions · Illustration Rare · 6 new SSRs</p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="pack-opening.html">Open Packs</a>
+        <a class="btn-outline" href="dex.html">Browse Cards</a>
+      </div>
+    </div>
   </div>
+
+  <!--
+    Featured card: swap FEATURED_CARD_URL below for any card image from the repo.
+    E.g. https://keithcheung129.github.io/football-card-images/cards/P001.png
+    Remove this <img> tag to hide the featured card.
+  -->
+  <img class="hero-card" id="heroCard"
+       src="https://keithcheung129.github.io/football-card-images/cards/EX0046.png"
+       alt="Featured Card"
+       onerror="this.style.display='none'">
 </section>
 
 <!-- ── MAIN ── -->
 <main class="main">
 
-  <!-- LATEST -->
-  <div class="banner-section">
+  <!-- WHAT'S NEW -->
+  <section class="news-section">
     <div class="section-header">
-      <span class="section-title">Latest</span>
-      <div class="section-line"></div>
+      <span class="section-title">What's New</span>
     </div>
-    <a class="banner-card" href="pack-opening.html">
-      <img src="assets/banners/PLCHAM26-banner.jpg" alt="Fire the Cannon 25/26">
-      <div class="banner-overlay">
-        <div class="banner-tag">New Pack · PLCHAM26</div>
-        <div class="banner-title">Fire the Cannon<br>25/26</div>
-        <div class="banner-sub">Arsenal Champions · Illustration Rare · 6 new SSRs</div>
-      </div>
-    </a>
-  </div>
+    <div class="news-grid">
 
-  <!-- FEATURES -->
-  <div class="section-header">
-    <span class="section-title">Play</span>
-    <div class="section-line"></div>
-  </div>
-  <div class="feature-grid">
-    <a class="feature-card" href="pack-opening.html">
-      <div class="feature-icon">🎴</div>
-      <div class="feature-name">Open Packs</div>
-      <div class="feature-desc">Spend your tickets and pull new cards from the latest packs.</div>
-    </a>
-    <a class="feature-card" href="inventory.html">
-      <div class="feature-icon">📦</div>
-      <div class="feature-name">Collection</div>
-      <div class="feature-desc">View and manage all the cards you own.</div>
-    </a>
-    <a class="feature-card" href="dex.html">
-      <div class="feature-icon">📖</div>
-      <div class="feature-name">Card Dex</div>
-      <div class="feature-desc">Browse every card in the game — filter by rarity, club, and more.</div>
-    </a>
-    <a class="feature-card" href="formation.html">
-      <div class="feature-icon">⚽</div>
-      <div class="feature-name">Formation</div>
-      <div class="feature-desc">Build and save your best eleven from your collection.</div>
-    </a>
-  </div>
+      <a class="news-card" href="pack-opening.html">
+        <img class="news-card-img" src="https://keithcheung129.github.io/football-card-images/assets/packs/PLCHAM26.png" alt="PLCHAM26" style="object-fit:contain;background:#0f1c35;">
+        <div class="news-card-body">
+          <div class="news-card-tag">New Pack</div>
+          <div class="news-card-title">Fire the Cannon 25/26 — PLCHAM26 Now Live</div>
+          <div class="news-card-desc">Arsenal Champions pack is here. Pull for Illustration Rare cards and 6 brand new SSRs.</div>
+          <div class="news-card-date">26 Jun 2026</div>
+        </div>
+      </a>
+
+      <a class="news-card" href="pack-opening.html">
+        <div class="news-card-img-placeholder" style="background:linear-gradient(135deg,#0f1c35,#1a102a)">💜</div>
+        <div class="news-card-body">
+          <div class="news-card-tag">New Rarity</div>
+          <div class="news-card-title">Illustration Rare (IR) Introduced</div>
+          <div class="news-card-desc">A brand new rarity joins the game. IR cards feature full-art illustrations of Arsenal players lifting the trophy.</div>
+          <div class="news-card-date">26 Jun 2026</div>
+        </div>
+      </a>
+
+      <a class="news-card" href="pack-opening.html">
+        <div class="news-card-img-placeholder" style="background:linear-gradient(135deg,#0f1c35,#0a1f10)">🌐</div>
+        <div class="news-card-body">
+          <div class="news-card-tag">Update</div>
+          <div class="news-card-title">Web App Launched</div>
+          <div class="news-card-desc">Open packs, manage your collection, browse the card dex, and build formations — all in the browser. Discord bot still works as usual.</div>
+          <div class="news-card-date">26 Jun 2026</div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="feature-section">
+    <div class="section-header">
+      <span class="section-title">Play</span>
+    </div>
+    <div class="feature-grid">
+      <a class="feature-card" href="pack-opening.html">
+        <div class="feature-icon">🎴</div>
+        <div class="feature-name">Open Packs</div>
+        <div class="feature-desc">Spend your tickets and pull new cards.</div>
+      </a>
+      <a class="feature-card" href="inventory.html">
+        <div class="feature-icon">📦</div>
+        <div class="feature-name">Collection</div>
+        <div class="feature-desc">View and manage all the cards you own.</div>
+      </a>
+      <a class="feature-card" href="dex.html">
+        <div class="feature-icon">📖</div>
+        <div class="feature-name">Card Dex</div>
+        <div class="feature-desc">Browse every card in the game.</div>
+      </a>
+      <a class="feature-card" href="formation.html">
+        <div class="feature-icon">⚽</div>
+        <div class="feature-name">Formation</div>
+        <div class="feature-desc">Build your best eleven from your collection.</div>
+      </a>
+    </div>
+  </section>
 
 </main>
 
 <!-- ── LOGIN MODAL ── -->
 <div id="loginModal">
   <div class="login-box">
-    <img class="login-logo" src="assets/icon.png" alt="TLK">
+    <img class="login-logo" src="https://keithcheung129.github.io/football-card-images/assets/icon.png" alt="TLK">
     <div class="login-title">The Last Kick</div>
-    <div class="login-sub">PREMIER LEAGUE CARD GAME</div>
-    <p class="login-desc">Sign in with Discord to access your collection, open packs, and build your squad.</p>
+    <div class="login-sub">Premier League Card Game</div>
+    <p class="login-desc">Sign in with Discord to open packs, manage your collection, and build your squad.</p>
     <a class="btn-discord" href="https://the-last-kick.keithcheung129.workers.dev/auth/login">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.05a19.9 19.9 0 0 0 5.992 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.995a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
       Login with Discord
     </a>
+    <button class="btn-discord-close" onclick="document.getElementById('loginModal').classList.remove('active')">Browse without signing in</button>
   </div>
 </div>
 
@@ -489,7 +547,6 @@ let currentUser  = null;
 
 const $ = (id) => document.getElementById(id);
 
-// ── AUTH ──────────────────────────────────────────────────────────────────
 async function loadUserProfile() {
   try {
     const res  = await fetch(WORKER + '/auth/me', { headers: { 'X-Session-Token': sessionToken } });
@@ -554,9 +611,12 @@ function showLoginModal() {
   $('loginModal').classList.add('active');
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────
+function showLoginModal() {
+  document.getElementById('loginModal').classList.add('active');
+}
+
 (async function init() {
-  const params = new URLSearchParams(location.search);
+  const params     = new URLSearchParams(location.search);
   const urlSession = params.get('session');
   const authStatus = params.get('auth');
 
