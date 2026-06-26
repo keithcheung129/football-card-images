@@ -162,6 +162,63 @@
     /* ── EMPTY STATE ── */
     .empty-state { padding: 48px; text-align: center; color: var(--muted); font-size: 14px; }
 
+    /* ── CARD INTERACTION ── */
+    .card { position: relative; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+    /* ── COPY COUNT BADGE ── */
+    .card-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: #378ADD; color: #fff;
+      font-size: 11px; font-weight: 700;
+      min-width: 22px; height: 22px;
+      border-radius: 999px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px; line-height: 1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.55);
+      pointer-events: none; z-index: 2;
+    }
+    .card-tick {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(34,197,94,0.82); color: #fff;
+      width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; line-height: 1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.55);
+      pointer-events: none; z-index: 2;
+    }
+
+    /* ── LIGHTBOX ── */
+    #lightbox {
+      display: none; position: fixed; inset: 0;
+      background: rgba(5,8,16,0.92);
+      z-index: 600; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    #lightbox.open { display: flex; }
+    .lb-inner {
+      position: relative; max-width: 340px; width: 100%;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .lb-img {
+      max-height: 78vh; max-width: 100%; width: auto;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.65);
+      object-fit: contain;
+    }
+    .lb-meta { margin-top: 14px; text-align: center; }
+    .lb-name { font-size: 16px; font-weight: 700; }
+    .lb-sub  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .lb-close {
+      position: absolute; top: -14px; right: -14px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #1f2937; border: 1px solid var(--border);
+      color: var(--muted); font-size: 17px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1; transition: background 0.15s, color 0.15s;
+    }
+    .lb-close:hover { color: #fff; background: #374151; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 640px) {
       nav { padding: 0 14px; }
@@ -287,6 +344,18 @@
   </div>
 </div>
 
+<!-- ── LIGHTBOX ── -->
+<div id="lightbox" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="lb-inner">
+    <button class="lb-close" onclick="$('lightbox').classList.remove('open')">✕</button>
+    <img class="lb-img" id="lbImg" src="" alt="" />
+    <div class="lb-meta">
+      <div class="lb-name" id="lbName"></div>
+      <div class="lb-sub"  id="lbSub"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const API_BASE = 'https://the-last-kick.keithcheung129.workers.dev/api';
@@ -349,19 +418,58 @@ async function callCollection(params) {
   return (body && typeof body === 'object' && 'ok' in body && 'data' in body) ? body.data : body;
 }
 
+// ── LIGHTBOX ──────────────────────────────────────────────────────────────
+function openLightbox(it) {
+  const name = it.name || it.player || it.printcode || it.card_id || '—';
+  const bits  = [it.rarity, it.club, it.position, it.batch].filter(Boolean);
+  const count = it._count || 1;
+  $('lbImg').src  = it.image_url || it.image_ref || '';
+  $('lbImg').alt  = name;
+  $('lbName').textContent = name;
+  $('lbSub').textContent  = bits.join(' • ') + (count > 1 ? `  •  ×${count} owned` : '');
+  $('lightbox').classList.add('open');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') $('lightbox').classList.remove('open');
+});
+
 // ── RENDER ────────────────────────────────────────────────────────────────
 function render(items) {
   const root = $('dex');
   root.innerHTML = '';
+
+  // Group by card_id: count copies, keep first-seen (already sorted)
+  const grouped = new Map();
   for (const it of items) {
+    const key = it.card_id || it.printcode || it.name || it.player || String(Math.random());
+    if (!grouped.has(key)) grouped.set(key, { ...it, _count: 0 });
+    grouped.get(key)._count++;
+  }
+
+  for (const it of grouped.values()) {
     const div = document.createElement('div');
     div.className = 'card';
+    div.addEventListener('click', () => openLightbox(it));
+
+    // Badge: ×N for duplicates, tick for single copy
+    const badge = document.createElement('div');
+    if (it._count > 1) {
+      badge.className = 'card-badge';
+      badge.textContent = `×${it._count}`;
+    } else {
+      badge.className = 'card-tick';
+      badge.textContent = '✓';
+    }
+    div.appendChild(badge);
+
     const img = document.createElement('img');
     img.className = 'thumb';
     img.loading = 'lazy';
     img.src = it.image_url || it.image_ref || '';
     img.alt = it.name || it.printcode || it.card_id || '';
     div.appendChild(img);
+
     const meta = document.createElement('div');
     meta.className = 'meta';
     const nm = document.createElement('div');
