@@ -140,9 +140,19 @@
       padding: 9px 14px;
       background: rgba(55,138,221,0.07);
       border-bottom: 1px solid var(--border-blue);
+      cursor: pointer; user-select: none;
     }
+    .section-hdr:hover { background: rgba(55,138,221,0.12); }
     .section-name { font-family: 'Maxime', serif; font-size: 13px; color: var(--accent2); letter-spacing: 0.07em; }
     .section-count { font-size: 12px; color: var(--muted); }
+    .section-chevron {
+      font-size: 13px; color: var(--muted);
+      display: inline-block;
+      transition: transform 0.2s ease;
+      margin-left: 10px;
+    }
+    .section-wrap.collapsed .section-chevron { transform: rotate(-90deg); }
+    .section-wrap.collapsed .section-grid { display: none; }
     .section-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -378,7 +388,6 @@ const WORKER   = 'https://the-last-kick.keithcheung129.workers.dev';
 // Friendly display names for known batches
 const BATCH_NAMES = {
   'Base2526': 'Base 25/26',
-  'PLCHAM26': 'Champions 25/26',
   'Base U':   'Utility',
 };
 
@@ -592,12 +601,16 @@ function renderAll() {
     const section = document.createElement('div');
     section.className = 'section-wrap';
 
-    // Section header
+    // Section header (clickable to collapse/expand)
     const hdr = document.createElement('div');
     hdr.className = 'section-hdr';
     hdr.innerHTML =
       `<span class="section-name">${BATCH_NAMES[batchName] || batchName}</span>` +
-      `<span class="section-count">${ownedHere} / ${sorted.length}</span>`;
+      `<span style="display:flex;align-items:center;gap:8px">` +
+        `<span class="section-count">${ownedHere} / ${sorted.length}</span>` +
+        `<span class="section-chevron">▾</span>` +
+      `</span>`;
+    hdr.addEventListener('click', () => section.classList.toggle('collapsed'));
     section.appendChild(hdr);
 
     // Card grid
