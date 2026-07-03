@@ -531,7 +531,8 @@ async function dailyLogin() {
       headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken },
       body: JSON.stringify({ action: 'daily_login' }),
     });
-    const data = await res.json();
+    const json = await res.json();
+    const data = json.data ?? json;   // unwrap Worker envelope
     if (data.rewarded) { localStorage.setItem(todayKey, '1'); showDailyToast(data); }
   } catch (e) { console.log('daily_login skipped:', e.message); }
 }

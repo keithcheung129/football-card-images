@@ -1128,7 +1128,8 @@ async function dailyLogin() {
   const todayKey = 'tlk_daily_' + new Date().toISOString().slice(0, 10);
   if (localStorage.getItem(todayKey)) return;
   try {
-    const data = await post({ action: 'daily_login' });
+    const res  = await post({ action: 'daily_login' });
+    const data = res.data ?? res;   // unwrap Worker envelope
     if (data.rewarded) {
       localStorage.setItem(todayKey, '1');
       showDailyToast(data);
