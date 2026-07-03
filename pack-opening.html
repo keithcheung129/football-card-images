@@ -1045,6 +1045,15 @@ function showSummary() {
   showPhase('summary');
   document.getElementById('closeBtn').style.display = 'none';
 
+  // Fire Discord notification now — user has seen all cards, no spoilers
+  if (sessionToken && pulledCards.length > 0) {
+    fetch(API + '/notify-pack', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken },
+      body: JSON.stringify({ pack_id: activePack?.pack_id || '', cards: pulledCards }),
+    }).catch(() => {});
+  }
+
   const hasSSR = pulledCards.some(c => c.rarity === 'SSR');
   const hasIR  = pulledCards.some(c => c.rarity === 'IR');
   const hasSR  = pulledCards.some(c => c.rarity === 'SR');
