@@ -149,7 +149,7 @@
         <div class="news-card-body">
           <div class="news-card-tag">Update</div>
           <div class="news-card-title">Daily Login Rewards Are Here</div>
-          <div class="news-card-desc">Log in every day and earn free tickets — just for showing up. 30 tickets per day, 90 on a 7-day streak, 300 on a 30-day streak.</div>
+          <div class="news-card-desc">Log in every day and earn free tickets — just for showing up. 30 tickets per day, 90 tickets on day 7, 300 tickets on day 30.</div>
           <div class="news-card-date">4 Jul 2026</div>
         </div>
       </a>
@@ -206,7 +206,7 @@ function toggleUserMenu(){if(!currentUser){document.getElementById('loginModal')
 document.addEventListener('click',(e)=>{const nu=$('navUser');if(nu&&!nu.contains(e.target))nu.classList.remove('open');});
 async function doLogout(){try{await fetch(WORKER+'/auth/logout',{method:'POST',headers:{'X-Session-Token':sessionToken}});}catch{}sessionToken='';currentUser=null;localStorage.removeItem('tlk_session');window.location.reload();}
 function showDailyToast(title,body){const t=document.getElementById('dailyToast');document.getElementById('toastTitle').textContent=title;document.getElementById('toastBody').textContent=body;t.classList.add('visible');setTimeout(()=>t.classList.remove('visible'),5000);}
-async function dailyLogin(){const dk='tlk_daily_'+new Date().toISOString().slice(0,10);if(localStorage.getItem(dk))return;try{const r=await fetch(WORKER+'/api',{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':sessionToken},body:JSON.stringify({action:'daily_login'})});const j=await r.json();const d=j.data??j;if(d.rewarded){localStorage.setItem(dk,'1');const labels={daily:'Daily Login!',streak_7:'7-Day Streak! 🔥',streak_30:'30-Day Streak! 🏆'};const title=labels[d.reward_type]||'Daily Login!';const body=`+${d.tickets} tickets · Streak: ${d.streak} day${d.streak===1?'':'s'}`;showDailyToast(title,body);}else if(d.reason==='already_claimed'){localStorage.setItem(dk,'1');}}catch{}}
+async function dailyLogin(){const dk='tlk_daily_'+new Date().toISOString().slice(0,10);if(localStorage.getItem(dk))return;try{const r=await fetch(WORKER+'/api',{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':sessionToken},body:JSON.stringify({action:'daily_login'})});const j=await r.json();const d=j.data??j;if(d.rewarded){localStorage.setItem(dk,'1');const labels={daily:'Daily Login!',streak_7:'Day 7 Milestone! 🔥',streak_30:'Day 30 Milestone! 🏆'};const title=labels[d.reward_type]||'Daily Login!';const body=`+${d.tickets} tickets · Login Day ${d.streak}`;showDailyToast(title,body);}else if(d.reason==='already_claimed'){localStorage.setItem(dk,'1');}}catch{}}
 (async function init(){const p=new URLSearchParams(location.search);const us=p.get('session');const as=p.get('auth');if(us){sessionToken=us;localStorage.setItem('tlk_session',sessionToken);window.history.replaceState({},'',location.pathname);}else if(as){window.history.replaceState({},'',location.pathname);}if(sessionToken){await loadUserProfile();if(currentUser){updateNav();fetchBalance();dailyLogin();}else{sessionToken='';localStorage.removeItem('tlk_session');document.getElementById('loginModal').classList.add('active');}}else{document.getElementById('loginModal').classList.add('active');}})();
 </script>
 </body>
